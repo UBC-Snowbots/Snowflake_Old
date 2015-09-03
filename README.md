@@ -2,6 +2,10 @@
 
 A basic (work in progress) rebuild of our previous IGVC repository, with better dependency management, and a built-in Vagrant setup.
 
+Current contents: one tutorial package containing a solution to the python fizzbuzzprime with ROS integration. CPP version coming soon.
+
+To Snowbots members: any and all feedback on how to vagrant-up and build this repository is welcome. Please include any observations under Troubleshooting, or if there is an error in the Chef or Vagrant setup, you are welcome to try and commit a fix to that too.
+
 How to build this repository
 ----------------------------
 
@@ -13,9 +17,14 @@ Make the repository into a catkin workspace, and then run catkin_make. (requires
 
 ### With Vagrant ###
 
-Get Vagrant and the corresponding Vagrant Box `ubuntu/trusty32`, and then go to the repository and type `vagrant up`. Once this has completed, type `vagrant ssh`, then you will be inside a fully set up catkin workspace. Typing `catkin_make` will build the repository (note: it builds on start-up, so no need to build again when you've just loaded the VM), and all of the ROS command-line works as well.
+Get [Vagrant](http://www.vagrantup.com/downloads) and add the corresponding Vagrant Box `ubuntu/trusty32` (how to do this explained [here](https://docs.vagrantup.com/v2/boxes.html)), and then go to the repository and type `vagrant up`. Once this has completed, type `vagrant ssh`, then you will be inside a fully set up catkin workspace. Typing `catkin_make` will build the repository (note: it builds on start-up, so no need to build again when you've just loaded the VM), and all of the ROS command-line works as well.
 
-Once you have done your testing, keep editing on your host system. Your source folder is linked to the Vagrant workspace, so all your changes are will appear automatically inside the Vagrant VM.
+Once you have done your testing, keep editing on your host system. Your source folder is linked to the Vagrant workspace, so all your changes will appear automatically inside the Vagrant VM.
+
+Troubleshooting
+---------------
+
+Any observations/problems people encounter when trying to build/run go here.
 
 Modifications to the set-up files
 ---------------------------------
