@@ -1,6 +1,6 @@
 # Snowflake
 
-A basic (work in progress) rebuild of our previous IGVC repository, with better dependency management, and a build-in Vagrant setup.
+A basic (work in progress) rebuild of our previous IGVC repository, with better dependency management, and a built-in Vagrant setup.
 
 How to build this repository
 ----------------------------
