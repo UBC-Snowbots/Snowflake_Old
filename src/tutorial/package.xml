@@ -9,5 +9,6 @@
   <exec_depend>message_runtime</exec_depend>
   <exec_depend>rospy</exec_depend>
   <depend>std_msgs</depend>
+  <depend>roscpp</depend>
   <buildtool_depend>catkin</buildtool_depend>
 </package>

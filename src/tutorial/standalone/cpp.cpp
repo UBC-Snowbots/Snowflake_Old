@@ -2,11 +2,6 @@
 #include <cstdlib>
 #include <vector>
 
-#include <ros/ros.h>
-#include <std_msgs/String.h>
-
-#include <sstream>
-
 bool is_prime(unsigned int n){
 	if(n == 1) return false;
 	static std::vector<unsigned int> prev;
@@ -31,34 +26,26 @@ bool is_prime(unsigned int n){
 	return true;
 }
 
-int main(int argc, char** argv){
-	ros::init(argc, argv, "cpp");
-	ros::NodeHandle n;
-	ros::Publisher publisher = n.advertise<std_msgs::String>("primes", 1000);
+int main(){
 	for(int i = 1; i < 101; ++i){
-		std::ostringstream out;
 		if(is_prime(i)){
-			out << "prime";
+			std::cout << "prime";
 		}else{
 			bool fizzbuzz = false;
 			if(i % 3 == 0){
 				fizzbuzz = true;
-				out << "fizz";
+				std::cout << "fizz";
 			}
 			if(i % 5 == 0){
 				fizzbuzz = true;
-				out << "buzz";
+				std::cout << "buzz";
 			}
 			if(!fizzbuzz){
-				out << i;
+				std::cout << i;
 			}
 		}
-		std_msgs::String msg;
-		msg.data = out.str();
-		publisher.publish(msg);
-		ROS_INFO("%s\n", out.str().c_str());
+		std::cout << '\n';
 	}
-	ros::spin();
 	return EXIT_SUCCESS;
 }
 
