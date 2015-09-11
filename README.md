@@ -17,7 +17,9 @@ Make the repository into a catkin workspace, and then run catkin_make. (requires
 
 ### With Vagrant ###
 You will need to install the following before continuing on:
+
 [VirtualBox 4.3] *VirtualBox 5.0 is unfortunity not supported by vagrant at the moment.
+
 [Vagrant](http://www.vagrantup.com/downloads)
 
 1. Open a terminal and add the corresponding Vagrant Box `ubuntu/trusty32` (how to do this explained [here](https://docs.vagrantup.com/v2/boxes.html)). This could take a while depending on your internet speed.
