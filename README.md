@@ -18,7 +18,7 @@ Make the repository into a catkin workspace, and then run catkin_make. (requires
 ### With Vagrant ###
 You will need to install the following before continuing on:
 
-[VirtualBox 4.3] *VirtualBox 5.0 is unfortunity not supported by vagrant at the moment.
+[VirtualBox 4.3](http://www.virtualbox.org/wiki/Download_Old_Builds_4_3) *VirtualBox 5.0 is unfortunity not supported by vagrant at the moment.
 
 [Vagrant](http://www.vagrantup.com/downloads)
 
