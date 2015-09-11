@@ -2,6 +2,7 @@
 import rospy
 from std_msgs.msg import String
 
+#SOLUTION - DO NOT COPY
 primes = []
 def is_prime(n):
 	result = reduce(lambda prime_so_far, num: prime_so_far and (n % num != 0),
