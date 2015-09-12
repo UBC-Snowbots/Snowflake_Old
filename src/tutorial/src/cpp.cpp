@@ -3,7 +3,7 @@
 #include <vector>
 
 #include <ros/ros.h>
-#include <std_msgs/String.h>
+#include "tutorial/prime_request.h"
 
 #include <sstream>
 
@@ -32,10 +32,8 @@ bool is_prime(unsigned int n){
 	return true;
 }
 
-int main(int argc, char** argv){
-	ros::init(argc, argv, "cpp");
-	ros::NodeHandle n;
-	ros::Publisher publisher = n.advertise<std_msgs::String>("primes", 1000);
+std::string get_primes(){
+	std::string result;
 	for(int i = 1; i < 101; ++i){
 		std::ostringstream out;
 		if(is_prime(i)){
@@ -54,11 +52,23 @@ int main(int argc, char** argv){
 				out << i;
 			}
 		}
-		std_msgs::String msg;
-		msg.data = out.str();
-		publisher.publish(msg);
+		result += out.str() + '\n';
 		ROS_INFO("%s\n", out.str().c_str());
 	}
+	return result;
+}
+
+bool say_primes(tutorial::prime_request::Request& req, tutorial::prime_request::Response& res){
+	std_msgs::String msg;
+	msg.data = get_primes();
+	res.response = msg;
+	return true;
+}
+
+int main(int argc, char** argv){
+	ros::init(argc, argv, "cpp");
+	ros::NodeHandle n;
+	ros::ServiceServer service = n.advertiseService("prime_request", &say_primes);
 	ros::spin();
 	return EXIT_SUCCESS;
 }
