@@ -4,13 +4,13 @@ A basic (work in progress) rebuild of our previous IGVC repository, with better 
 
 To Snowbots members: any and all feedback on how to vagrant-up and build this repository is welcome. Please include any observations under Troubleshooting, or if there is an error in the Chef or Vagrant setup, you are welcome to try and commit a fix to that too.
 
-Before continueing onwards
+Before continuing onwards
 ----------------------------
-Make sure you've cloned with repository onto your system. For convience you can clone it onto your desktop by opening up a terminal (or Git Bash) and copy&paste the following:
+Make sure you've cloned with repository onto your system. For convience you can clone it onto your desktop by opening up a terminal (or [Git Bash](https://git-scm.com/downloads)) and paste the following:
 
 `git clone https://github.com/UBC-Snowbots/Snowflake.git Desktop/Snowflake`
 
-How to build this repository AFTER you've cloned this repository
+Building the repository AFTER you've cloned it
 ----------------------------
 
 ### Without Vagrant ###
@@ -24,7 +24,7 @@ You will need to install the following before continuing on:
 
 [VirtualBox 4.3](http://www.virtualbox.org/wiki/Download_Old_Builds_4_3) *VirtualBox 5.0 is unfortunity not supported by vagrant at the moment.
 
-[Vagrant](http://www.vagrantup.com/downloads)
+[Vagrant](http://www.vagrantup.com/downloads) *Installing this will require you to restart afterwards
 
 1) Change directory using the command `cd` and goto the Snowflake repository 
 
