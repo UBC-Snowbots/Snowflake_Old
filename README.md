@@ -2,9 +2,13 @@
 
 A basic (work in progress) rebuild of our previous IGVC repository, with better dependency management, and a built-in Vagrant setup.
 
-Current contents: one tutorial package containing a solution to the python fizzbuzzprime with ROS integration. CPP version coming soon.
-
 To Snowbots members: any and all feedback on how to vagrant-up and build this repository is welcome. Please include any observations under Troubleshooting, or if there is an error in the Chef or Vagrant setup, you are welcome to try and commit a fix to that too.
+
+Before continueing onwards
+----------------------------
+Make sure you've cloned with repository onto your system. For convience you can clone it onto your desktop by opening up a terminal (or Git Bash) and copy&paste the following:
+
+`git clone https://github.com/UBC-Snowbots/Snowflake.git Desktop/Snowflake`
 
 How to build this repository AFTER you've cloned this repository
 ----------------------------
@@ -28,7 +32,7 @@ Ex: If you've cloned your repository onto your desktop you can type `cd Desktop/
 
 2) Once in the repository type `vagrant up` this will start downloading a vagrant box.
 
-`The download can take several minutes depending on your internet connection. Be aware that the download can automatically disconnect (you can tell this if the rate is 0/s). If this happens stop the current download by pressing CTRL C, then resume the download again by either pressing the UP and ENTER.`
+`The download can take several minutes depending on your internet connection. Be aware that the download can automatically disconnect (you can tell this if the rate is 0/s). If this happens stop the current download by pressing CTRL C, then resume the download again by pressing the UP and ENTER or retyping the whole command again.`
 
 Once the download is complete it will automatically install itself; this procress and take around 10+ minutes. You'll know that the installation is done once your `$` prompt comes back on the terminal screen.
 
