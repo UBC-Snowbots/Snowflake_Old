@@ -38,9 +38,19 @@ Once the download is complete it will automatically install itself; this procres
 
 3) Type `vagrant ssh`, then you will be inside a fully set up catkin workspace. 
 
+If you're in the virtual machine your terminal prompt will be: `vagrant@vagrant-ubuntu-trusty-32:~$`
+
 4) Type `catkin_make` to build the repository (note: it builds on start-up, so no need to build again when you've just loaded the VM), and all of the ROS command-line works as well.
 
 Once you have done your testing, keep editing on your host system. Your source folder is linked to the Vagrant workspace, so all your changes will appear automatically inside the Vagrant VM.
+
+**Concluding remarks**
+
+You can exit your virtual machine with the `exit` command.
+
+In order to get back in again: `vagrant up` to turn on the virtual machine and `vagrant ssh` to login.
+
+If you leave your computer on (haven't shutdown/logout) you'll only have to `vagrant up` once.
 
 Troubleshooting
 ---------------
