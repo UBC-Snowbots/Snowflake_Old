@@ -5,6 +5,7 @@ run_list "recipe[snowbots]"
 override_attributes(
   :snowbots => {
     :vagrant_src_link => true,
-    :workspace => "/home/vagrant"
+    :workspace => "/home/vagrant",
+    :user => 'vagrant'
   }
 )
