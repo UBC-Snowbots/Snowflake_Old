@@ -12,13 +12,12 @@ ros 'indigo' do
   action [:install, :upgrade]
 end
 
-snowbots_workspace = "/home/vagrant"
+snowbots_workspace = node['snowbots']['workspace']
 
-directory snowbots_workspace do
-  owner 'vagrant'
-end
-link "#{snowbots_workspace}/src" do
+# link to src folder synchronised from the host machine - Vagrant only
+link File.join(snowbots_workspace, 'src') do
   to '/vagrant/src'
+  only_if { node['snowbots']['vagrant_src_link'] }
 end
 
 catkin 'snowbots' do
