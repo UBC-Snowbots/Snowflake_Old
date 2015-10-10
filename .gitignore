@@ -1,2 +1,7 @@
 .vagrant
+local_config.json
+/.catkin_workspace
 /src/CMakeLists.txt
+/build
+/devel
+/install
