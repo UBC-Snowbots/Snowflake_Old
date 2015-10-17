@@ -28,5 +28,6 @@ catkin 'snowbots' do
   workspace snowbots_workspace
 end
 
+apt_package 'gdb'
 apt_package 'ros-indigo-opencv3'
 
