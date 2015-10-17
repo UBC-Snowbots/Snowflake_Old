@@ -12,7 +12,7 @@ user_name = node['snowbots']['user']
 should_make_source_link = node['snowbots']['vagrant_src_link']
 
 ros 'indigo' do
-  config 'ros-base'
+  config 'ros-desktop'
   action [:install, :upgrade]
 end
 
