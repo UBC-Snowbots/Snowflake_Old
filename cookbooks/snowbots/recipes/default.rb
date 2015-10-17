@@ -27,3 +27,6 @@ catkin 'snowbots' do
   release 'indigo'
   workspace snowbots_workspace
 end
+
+apt_package 'ros-indigo-opencv3'
+
