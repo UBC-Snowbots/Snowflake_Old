@@ -30,4 +30,5 @@ end
 
 apt_package 'gdb'
 apt_package 'ros-indigo-opencv3'
+apt_package 'ros-indigo-hokuyo-node'
 
