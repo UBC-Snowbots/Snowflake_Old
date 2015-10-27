@@ -32,3 +32,6 @@ apt_package 'gdb'
 apt_package 'ros-indigo-opencv3'
 apt_package 'ros-indigo-hokuyo-node'
 
+catkin_package 'laser_geometry' do
+  source_uri 'https://github.com/ros-perception/laser_geometry.git'
+end

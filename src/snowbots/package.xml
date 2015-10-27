@@ -11,5 +11,7 @@
   <exec_depend>rospy</exec_depend>
   <depend>std_msgs</depend>
   <depend>roscpp</depend>
+  <build_depend>laser_geometry</build_depend>
+  <depend>eigen</depend>
   <buildtool_depend>catkin</buildtool_depend>
 </package>
