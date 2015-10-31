@@ -12,7 +12,7 @@ user_name = node['snowbots']['user']
 should_make_source_link = node['snowbots']['vagrant_src_link']
 
 ros 'indigo' do
-  config 'ros-base'
+  config 'desktop'
   action [:install, :upgrade]
 end
 
@@ -26,4 +26,12 @@ catkin 'snowbots' do
   user user_name
   release 'indigo'
   workspace snowbots_workspace
+end
+
+apt_package 'gdb'
+apt_package 'ros-indigo-opencv3'
+apt_package 'ros-indigo-hokuyo-node'
+
+catkin_package 'laser_geometry' do
+  source_uri 'https://github.com/ros-perception/laser_geometry.git'
 end

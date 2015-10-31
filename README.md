@@ -21,7 +21,7 @@ First, install [Chef](https://www.chef.io/chef/), usually by typing `sudo apt-ge
 
 The next step should set everything else up: `./local_setup`. Enter your password when prompted, and once it completes everything should be in the right places. When we release updates to the build (like adding new libraries such as OpenCV, or fixing bugs), you can safely re-run this script in order to painlessly install those updates.
 
-Note: do not run `sudo ./local_setup`. It will transfer ownershitp of your catkin workspace to root.
+Note: do not run `sudo ./local_setup`. It will transfer ownership of your catkin workspace to root.
 
 ### With Vagrant ###
 You will need to install the following before continuing on:

@@ -1,0 +1,17 @@
+<?xml version="1"?>
+<package format="2">
+  <name>snowbots</name>
+  <version>0.0.1</version>
+  <description>The software to run on UBC Snowbots' Snowflake robot</description>
+  <!-- TODO: Add other maintainers -->
+  <maintainer email="fhackett.py@gmail.com">Finn Hackett</maintainer>
+  <license>BSD</license>
+
+  <exec_depend>message_runtime</exec_depend>
+  <exec_depend>rospy</exec_depend>
+  <depend>std_msgs</depend>
+  <depend>roscpp</depend>
+  <build_depend>laser_geometry</build_depend>
+  <depend>eigen</depend>
+  <buildtool_depend>catkin</buildtool_depend>
+</package>
