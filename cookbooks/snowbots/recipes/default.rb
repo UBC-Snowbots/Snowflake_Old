@@ -29,12 +29,18 @@ catkin 'snowbots' do
 end
 
 apt_package 'gdb'
+
 apt_package 'libgtk2.0-dev'
 apt_package 'ros-indigo-hokuyo-node'
 # apt_package 'vision_opencv'
 apt_package 'x11-xserver-utils'
 apt_package 'git'
 
+#might install own version of opencv
+#apt_package 'ros-indigo-opencv3'
+apt_package 'ros-indigo-hokuyo-node'
+
 catkin_package 'laser_geometry' do
   source_uri 'https://github.com/ros-perception/laser_geometry.git'
 end
+
