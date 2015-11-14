@@ -20,10 +20,10 @@ from sbp.client.loggers.json_logger import JSONLogger
 from sbp.navigation import SBP_MSG_BASELINE_NED, MsgBaselineNED, SBP_MSG_BASELINE_ECEF
 import argparse
 import rospy
-from std_msgs.msg import String
+from std_msgs.msg import String, Float64MultiArray
 
 def main():
-  pub = rospy.Publisher("GPS_DATA", String, queue_size=10)
+  pub = rospy.Publisher("GPS_DATA", Float64MultiArray, queue_size=10)
   rospy.init_node("talker", anonymous=True)
   rate = rospy.Rate(50)
   parser = argparse.ArgumentParser(description="Swift Navigation SBP Example.")
@@ -40,7 +40,7 @@ def main():
         for msg, metadata in source.filter(SBP_MSG_BASELINE_NED):
           # Print out the N, E, D coordinates of the baseline
 
-          data="%.4f,%.4f,%.4f" % (msg.n * 1e-3, msg.e * 1e-3, msg.d * 1e-3)
+          data=[msg.n * 1e-3, msg.e * 1e-3, msg.d * 1e-3]
           pub.publish(data)
          # print msg
       except KeyboardInterrupt:
