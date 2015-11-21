@@ -21,9 +21,10 @@ from sbp.navigation import SBP_MSG_BASELINE_NED, MsgBaselineNED, SBP_MSG_BASELIN
 import argparse
 import rospy
 from std_msgs.msg import String, Float64MultiArray
+from geometry_msgs.msg import Point
 
 def main():
-  pub = rospy.Publisher("GPS_DATA", Float64MultiArray, queue_size=10)
+  pub = rospy.Publisher("GPS_DATA", Point, queue_size=10)
   rospy.init_node("talker", anonymous=True)
   rate = rospy.Rate(50)
   parser = argparse.ArgumentParser(description="Swift Navigation SBP Example.")
