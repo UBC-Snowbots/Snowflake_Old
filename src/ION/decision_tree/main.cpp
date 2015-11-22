@@ -25,6 +25,7 @@ coordinates : a std::pair<int, int>
 
 
 float CUTOFF = 100; // Distance away from the robot to search for obstacles
+float POINTED_AT_DESTINATION_MIN_ANGLE = 5;
 float RIGHT_ANGLE = 90; 
 float LEFT_ANGLE = -90;
 float BACK_RIGHT = 135; 
@@ -34,27 +35,18 @@ float BACK_LEFT = -135;
 /*~~~~~~~~~~~~~~~~~~~~~~~~~~ CLASSES ~~~~~~~~~~~~~~~~~~~~~~~~~~*/
 
 //Command is a command to send the the robot where:
-//  - Type is one of: "turn" "move" or "turn-move"
 //  - Value is the value of a given command, ie) 1 meter (1), 30 degrees (30), 1 meter and 30 degrees (1,30)
 class command {
-	std::string type;
-	int move_value = 0;
-	int turn_value = 0;
+	int move_value_data = 0;
+	int turn_value_data = 0;
 
 	public:
-		void makeMoveCommand(double value) {
-			type = "move";
-			move_value = value;
+		command(float move_value, float turn_value) {
+			move_value_data = move_value;
+			turn_value_data = turn_value;
 		}
-		void makeTurnCommand(double value) {
-			type = "turn";
-			turn_value = value;
-		}
-		void makeMoveTurnCommand(double move_val, double turn_val) {
-			type = "turn-move";
-			move_value = move_val;
-			turn_value = turn_val;
-		}
+		float move_val() { return move_value_data; };
+		float turn_val() { return turn_value_data; };
 };
 
 
@@ -295,30 +287,8 @@ How the area around the robot is searched for obstacles
 +-------------------------------------------------+
 */
 
-/*
-ONLY ROUGH ANGLES - ACTUAL ANGLES DEFINED ELSEWHERE
-DIAGRAM NOT PRESENTLY VALID, USING ANGLE RELATIVE TO CENTER OF ROBOT AND ROBOTS PRESENT ROT_ANGLE INSTEAD
-+-----------------------------------------+
-|       *   front-   *  front-    *       |
-|        *   left    *   right   *        |
-|         *          *          *         |
-|          *         *         *          |
-|   left    *      front      *   right   |
-|            +---------------+            |
-|*           |               |           *|
-| **         |               |         ** |
-|   **       |               |       **   |
-|     **     |               |     **     |
-|       **   |               |   **       |
-|         ** |               | **         |
-|           *+---------------+*           |
-|                                         |
-|                  behind                 |
-+-----------------------------------------+
-*/
 
-
-//Gets which sector a given obstacle is in from it's relative angle to the robot
+//Gets which sector a given obstacle is in, from it's relative angle to the robot
 obstacle addSector(obstacle obstacle_with_unkown_sector, robot snowflake, std::pair<int, int> current_coor) {
 	std::pair<int, int> obstacle_coors = std::make_pair(obstacle_with_unkown_sector.x(), obstacle_with_unkown_sector.y());
 
@@ -387,6 +357,7 @@ obstacle checkColumn(std::vector<int> &map, int map_width, int column_num, int y
 	return obstacle("none", "none", -1, -1);
 }
 
+//Returns the closest obstacle to the present coordinates of the robot
 obstacle getClosestObstacle(std::pair<int, int> current_coor, std::vector<int> &map, int map_width, robot snowflake) {
 
 	//Moves out from the center position of the robot, checking each row and column as it goes
@@ -418,13 +389,11 @@ obstacle getClosestObstacle(std::pair<int, int> current_coor, std::vector<int> &
 }
 
 
-// Checks whether or not the robot is directly facing the destination
-// !!!
-bool directlyFacingDest(std::pair<int,int> current_coor, std::pair<int,int> destination_coor, robot snowflake) {
+//Returns the angle of the destination, relative to the angle that the robot is pointing
+float get_relative_angle_robot_destination(std::pair<int, int> current_coor, std::pair<int, int> destination_coor, robot snowflake) {
 	float angle_robot_destination = slopeToDegrees((current_coor.second - destination_coor.second) / (current_coor.first - destination_coor.first));
 	float relative_angle_robot_destination = angle_robot_destination - snowflake.rot_angle();
-	//If robot is pointed less then 5 degrees off of the destination
-	return ((abs(relative_angle_robot_destination) < 5));
+	return relative_angle_robot_destination;
 }
 
 
@@ -433,41 +402,53 @@ bool directlyFacingDest(std::pair<int,int> current_coor, std::pair<int,int> dest
 // gets the next command to send to the robot
 command getNextCommand(std::vector<int> &map, int map_width, robot snowflake, std::pair<int, int> current_coor, std::pair<int, int> destination_coor) {
 	if (notAtTarget(snowflake, current_coor, destination_coor)) {
+		//The closest obstacle
 		obstacle closest_obstacle = getClosestObstacle(current_coor, map, map_width, snowflake);
+		//Angle to destination relative to robots current angle of rotation
+		float destination_angle = get_relative_angle_robot_destination(current_coor, destination_coor, snowflake);
+
 		if ((closest_obstacle.sector() == "back")) {  // Not facing obstacle
-			if (directlyFacingDest(current_coor, destination_coor, snowflake)) {
-
+			if ((abs(destination_angle) < POINTED_AT_DESTINATION_MIN_ANGLE)) //Pointed at destination
+			{
+				return command(10, 0);  // command to move straight forward
 			}
-			else { //Not directly facing the destination
-
+			else  //Not directly facing the destination
+			{
+				if (destination_angle < 0)  // Pointed to left of destination
+				{
+					return command(10, 10);  // command to move forward and turn right
+				}
+				else  // Pointed to right of destination
+				{
+					return command(10, -10);  // command to move forward and turn left
+				}
 			}
 		}
 		else if (closest_obstacle.type() == "pole") {
 			if (closest_obstacle.sector() == "left") {
-
+				return command(10, 0);  // command to move straight forward
 			}
-			else if (closest_obstacle.sector() == "right"){
-
+			else if (closest_obstacle.sector() == "right") {
+				return command(10, 0);  // command to move straight forward
 			}
 			else { // obstacle_sector == front
-
+				return command(4, -10);  // command to move forward SLIGHTLY and turn left
 			}
 		}
 		else {  // Facing wall
-			if ((closest_obstacle.sector() == "left") || (closest_obstacle.sector() == "front-left")) {
-
+			if ((closest_obstacle.sector() == "left") || (closest_obstacle.sector() == "front-left"))  // Wall to left of robot
+			{
+				return command(10, 10);  // command to move forward and turn right
 			}
-			else if ((closest_obstacle.sector() == "right") || (closest_obstacle.sector() == "front-right")) {
-
-			}
-			else { // obstacle_sector == front
-
+			else if ((closest_obstacle.sector() == "right") || (closest_obstacle.sector() == "front-right"))  // Wall to right of robot
+			{
+				return command(10, -10);  // command to move forward and turn left
 			}
 		}
 	}
-	command next_command;
-	next_command.makeMoveCommand(0);
-	return next_command;
+
+	//If this function ever reaches this point.... well it shouldn't happen
+	return command(0,0);
 }
 
 /*~~~~~~~~~~ Funtions To Publish Information ~~~~~~~~~~*/
