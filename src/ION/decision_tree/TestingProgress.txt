@@ -1,0 +1,34 @@
+FUNCTIONS TO TEST:
+	command
+		makeMoveCommand
+		makeTurnCommand
+		makeMoveTurnCommand
+	robot
+		robot
+		set_rot_angle
+		width
+		length
+		front_right
+		front_left
+		back_right
+		back_left
+	obstacle
+		obstacle
+		make_sector (PASS)
+		type
+		sector (PASS)
+		x
+		y
+
+	notAtTarget
+		isBetween
+	getClosestObstacle
+		degreesToSlope (PASS)
+		checkRow
+			mapValAt (PASS)
+		checkColumn
+			mapValAt (PASS)
+		addSector (PASS)
+			slopeToDegrees (PASS)
+
+	get_relative_angle_robot_destination (PASS)
