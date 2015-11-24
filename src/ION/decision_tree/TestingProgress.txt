@@ -1,3 +1,5 @@
+
+
 FUNCTIONS TO TEST:
 	command
 		makeMoveCommand
@@ -24,9 +26,9 @@ FUNCTIONS TO TEST:
 		isBetween
 	getClosestObstacle
 		degreesToSlope (PASS)
-		checkRow
+		checkRow (PASS)
 			mapValAt (PASS)
-		checkColumn
+		checkColumn (PASS)
 			mapValAt (PASS)
 		addSector (PASS)
 			slopeToDegrees (PASS)

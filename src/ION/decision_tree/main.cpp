@@ -327,15 +327,30 @@ obstacle addSector(obstacle obstacle_with_unkown_sector, robot snowflake, std::p
 
 }
 
-// Checks a given row for obstacles from a given y-min value to a given y-max value on a given map
+// Checks a given row for obstacles from a given x-min value to a given x-max value on a given map
 // If found, returns the obstacle as: obstacle((pole or wall), "unkown", x_coor, y_coor) 
 //                       else returns obstacle("none", "none", -1, -1)
 obstacle checkRow(std::vector<int> &map, int map_width, int row_num, int x_min, int x_max) {
+
 	for (int i = 0; i < (x_max - x_min); i++) {
 		int x_coor = x_min + i;
 		int y_coor = row_num;
 
-		int present_node_val = mapValAt(map, map_width, x_coor, y_coor);
+		int present_node_val = 0;
+
+		if (x_coor >= map_width) {
+			return obstacle("none", "none", -1, -1);
+		}
+		try
+		{
+			present_node_val = map.at((y_coor * map_width) + x_coor);
+		}
+		// If an error is thrown here, probably trying to access node off of the map, so return no obstacle
+		catch (const std::exception & r_e)
+		{
+			return obstacle("none", "none", -1, -1);
+		}
+
 		if (present_node_val == 1) {
 			return obstacle("pole", "unkown", x_coor, y_coor);
 			break;
@@ -348,16 +363,21 @@ obstacle checkRow(std::vector<int> &map, int map_width, int row_num, int x_min, 
 	return obstacle("none", "none", -1, -1);
 }
 
-// Checks a given column for obstacles from a given x-min value to a given x-max value on a given map
+// Checks a given column for obstacles from a given y-min value to a given y-max value on a given map
 // If found, returns the obstacle as: obstacle((pole or wall), "unkown", x_coor, y_coor) 
 //                       else returns obstacle("none", "none", -1, -1)
 obstacle checkColumn(std::vector<int> &map, int map_width, int column_num, int y_min, int y_max) {
+	//If x_coor is greater then map width, node does not exist, so return no obstacle
+	if (column_num >= map_width) {
+		return obstacle("none", "none", -1, -1);
+	}
+	
 	for (int i = 0; i < (y_max - y_min); i++) {
 		int x_coor = column_num;
 		int y_coor = y_min + i;
 		
 		int present_node_val = 0;
-		
+
 		try 
 		{
 			present_node_val = map.at((y_coor * map_width) + x_coor);
@@ -367,9 +387,6 @@ obstacle checkColumn(std::vector<int> &map, int map_width, int column_num, int y
 		{
 			return obstacle("none", "none", -1, -1);
 		}
-		
-
-		present_node_val = mapValAt(map, map_width, x_coor, y_coor);
 
 		if (present_node_val == 1) {
 			return obstacle("pole", "unkown", x_coor, y_coor);
@@ -609,10 +626,40 @@ TEST_CASE("checkColumn", "[checkColumn]") {
 	REQUIRE(checkColumn(testmap1, 10, 1, 1, 5).y() == 2);
 
 	//Checking a column outside the map
-	//REQUIRE(checkColumn(testmap1, 10, 50, 1, 5).sector() == "none");
-	//REQUIRE(checkColumn(testmap1, 10, 50, 1, 5).type() == "none");
-	//REQUIRE(checkColumn(testmap1, 10, 50, 1, 5).x() == -1);
+	REQUIRE(checkColumn(testmap1, 10, 50, 1, 5).sector() == "none");
+	REQUIRE(checkColumn(testmap1, 10, 50, 1, 5).type() == "none");
+	REQUIRE(checkColumn(testmap1, 10, 50, 1, 5).x() == -1);
 	REQUIRE(checkColumn(testmap1, 10, 50, 1, 5).y() == -1);
+
+	//Checking a column just barely outside the map
+	REQUIRE(checkColumn(testmap1, 10, 10, 1, 5).sector() == "none");
+	REQUIRE(checkColumn(testmap1, 10, 10, 1, 5).type() == "none");
+	REQUIRE(checkColumn(testmap1, 10, 10, 1, 5).x() == -1);
+	REQUIRE(checkColumn(testmap1, 10, 10, 1, 5).y() == -1);
 }
 
+TEST_CASE("checkRow", "[checkRow]") {
+	std::vector<int> testmap1 = getMap("map2_width_10.map");
+	REQUIRE(checkRow(testmap1, 10, 0, 1, 5).sector() == "unkown");
+	REQUIRE(checkRow(testmap1, 10, 0, 1, 5).type() == "pole");
+	REQUIRE(checkRow(testmap1, 10, 0, 1, 5).x() == 1);
+	REQUIRE(checkRow(testmap1, 10, 0, 1, 5).y() == 0);
+
+	REQUIRE(checkRow(testmap1, 10, 3, 1, 5).sector() == "unkown");
+	REQUIRE(checkRow(testmap1, 10, 3, 1, 5).type() == "pole");
+	REQUIRE(checkRow(testmap1, 10, 3, 1, 5).x() == 4);
+	REQUIRE(checkRow(testmap1, 10, 3, 1, 5).y() == 3);
+
+	REQUIRE(checkRow(testmap1, 10, 4, 1, 5).sector() == "none");
+	REQUIRE(checkRow(testmap1, 10, 4, 1, 5).type() == "none");
+	REQUIRE(checkRow(testmap1, 10, 4, 1, 5).x() == -1);
+	REQUIRE(checkRow(testmap1, 10, 4, 1, 5).y() == -1);
+
+	//Try row just outside the map
+	REQUIRE(checkRow(testmap1, 10, 7, 1, 5).sector() == "none");
+	REQUIRE(checkRow(testmap1, 10, 7, 1, 5).type() == "none");
+	REQUIRE(checkRow(testmap1, 10, 7, 1, 5).x() == -1);
+	REQUIRE(checkRow(testmap1, 10, 7, 1, 5).y() == -1);
+
+}
 
