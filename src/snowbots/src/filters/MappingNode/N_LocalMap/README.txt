@@ -1,13 +1,13 @@
 Snowbots 2015-2016
 
-Author: Tracey Lui
+Author: Tracey Lui, Jun Goh
 
 Description: 
 This node recieves local maps from both the lidar and the camera, and combines the two maps into one local map.
 
 Subscription Topics:
-  local_lidar_map
-  local_vision_map
+- local_lidar_map
+- local_vision_map
 
 Published Topics:
-  local_map
+- local_map

@@ -5,6 +5,6 @@ Author: Jagjot Jhajj
 Description: 
 This is the system that saves the most recently generated global map and loads the map at the start of the run if there are any existing maps.
 
-Operations:
+Server Operations:
 - save(global_map)
 - load()
