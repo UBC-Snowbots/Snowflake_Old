@@ -14,5 +14,5 @@ include_directories(
 )
 
 add_executable(mapping_node ${MAIN} src/main.cpp)
-target_link_libraries(mapping_node ${catkin_LIBRARIES})
+target_link_libraries(listener ${catkin_LIBRARIES})
 

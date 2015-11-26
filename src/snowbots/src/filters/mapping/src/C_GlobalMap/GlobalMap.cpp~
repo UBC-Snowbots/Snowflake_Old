@@ -6,6 +6,11 @@ GlobalMap::GlobalMap(int x, int y)
   mapSize = x*y;
 }
 
+void GlobalMap::LocalMapCallback(const nav_msgs::OccupancyGrid::ConstPtr& map)
+{
+  return;
+}
+
 int GlobalMap::GetMapSize()
 {
   return mapSize;

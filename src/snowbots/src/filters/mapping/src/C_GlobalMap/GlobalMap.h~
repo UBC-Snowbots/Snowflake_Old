@@ -1,5 +1,4 @@
 // Header file for global map class
-#pragma once
 #include "ros/ros.h"
 #include <nav_msgs/OccupancyGrid.h>
 

@@ -1,5 +1,4 @@
 // Header file for localization class
-#pragma once
 #include "ros/ros.h"
 #include <nav_msgs/OccupancyGrid.h>
 #include "../C_GlobalMap/GlobalMap.h"
