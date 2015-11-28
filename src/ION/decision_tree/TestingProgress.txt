@@ -22,13 +22,13 @@ FUNCTIONS TO TEST:
 		x
 		y
 
-	notAtTarget
-		isBetween
-	getClosestObstacle
+	notAtTarget (PASS)
+		isBetween (NO LONGER USED)
+	getClosestObstacle (~~PASS) (Need to test with larger maps)
 		degreesToSlope (PASS)
-		checkRow (PASS)
-			mapValAt (PASS)
-		checkColumn (PASS)
+		checkRow (~~PASS) (Need to test with larger maps)
+			mapValAt (PASS) (NO LONGER USED)
+		checkColumn (~~PASS) (Need to test with larger maps)
 			mapValAt (PASS)
 		addSector (PASS)
 			slopeToDegrees (PASS)

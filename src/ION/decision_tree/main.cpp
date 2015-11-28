@@ -27,12 +27,13 @@ variables having the same name as external ones being passed in to internal clas
 #include <cmath>
 
 
-float CUTOFF = 100; // Distance away from the robot to search for obstacles
+float CUTOFF = 10; // Distance away from the robot to search for obstacles
 float POINTED_AT_DESTINATION_MIN_ANGLE = 5;
 float RIGHT_ANGLE = 60;
 float LEFT_ANGLE = -60;
 float BACK_RIGHT = 135;
 float BACK_LEFT = -135;
+float AT_TARGET_RADIUS = 3;
 
 
 /*~~~~~~~~~~~~~~~~~~~~~~~~~~ CLASSES ~~~~~~~~~~~~~~~~~~~~~~~~~~*/
@@ -232,7 +233,8 @@ std::pair<int, int> getDestination() {
 
 // Checks whether the robot has arrived at the target
 // (Whether or not the target is between the 4 corners of the robot)
-bool notAtTarget(robot snowflake, std::pair<int, int> current_coor, std::pair<int, int> destination_coor) {
+/*
+bool atTarget(robot snowflake, std::pair<int, int> current_coor, std::pair<int, int> destination_coor) {
 
 	int robot_x_coors[4] = { // List of x coordinates for all corners of robot
 		(snowflake.front_left().first + current_coor.first),
@@ -261,7 +263,15 @@ bool notAtTarget(robot snowflake, std::pair<int, int> current_coor, std::pair<in
 		return false;
 	}
 }
+*/
 
+bool atDestination(std::pair<int, int> current_coor, std::pair<int, int> destination_coor) {
+	//use pythagorean theorem to check if the distance between the current_coor and the destination_coor
+	//is less then the pre-set tolerance
+	return ((sqrt(pow((destination_coor.second - current_coor.second), 2)) + 
+		pow((destination_coor.first - current_coor.first), 2)) 
+		< AT_TARGET_RADIUS);
+}
 
 /*~~ Find Closest Obstacle ~~*/
 // Gets the closest obstacle to the Robot
@@ -332,7 +342,7 @@ obstacle addSector(obstacle obstacle_with_unkown_sector, robot snowflake, std::p
 //                       else returns obstacle("none", "none", -1, -1)
 obstacle checkRow(std::vector<int> &map, int map_width, int row_num, int x_min, int x_max) {
 
-	for (int i = 0; i < (x_max - x_min); i++) {
+	for (int i = 0; i < ((x_max - x_min) + 1); i++) {
 		int x_coor = x_min + i;
 		int y_coor = row_num;
 
@@ -372,7 +382,7 @@ obstacle checkColumn(std::vector<int> &map, int map_width, int column_num, int y
 		return obstacle("none", "none", -1, -1);
 	}
 	
-	for (int i = 0; i < (y_max - y_min); i++) {
+	for (int i = 0; i < ((y_max - y_min) + 1); i++) {
 		int x_coor = column_num;
 		int y_coor = y_min + i;
 		
@@ -404,9 +414,9 @@ obstacle checkColumn(std::vector<int> &map, int map_width, int column_num, int y
 obstacle getClosestObstacle(std::pair<int, int> current_coor, std::vector<int> &map, int map_width, robot snowflake) {
 
 	//Moves out from the center position of the robot, checking each row and column as it goes
-	for (int i = 1; i < CUTOFF; i++) {
+	for (int i = 0; i < CUTOFF; i++) {
 		int y_max = current_coor.second + i; // The max y value to checked on each column AND the top row to be checked
-		int y_min = current_coor.second + i; // The min y value to checked on each column AND the bottom row to be checked
+		int y_min = current_coor.second - i; // The min y value to checked on each column AND the bottom row to be checked
 		int x_max = current_coor.first + i;  // The max x value to be checked on each row AND the left column to be checked
 		int x_min = current_coor.first - i;  // The min x value to be checked on each row AND the right column to be checked
 
@@ -414,7 +424,7 @@ obstacle getClosestObstacle(std::pair<int, int> current_coor, std::vector<int> &
 		obstacle possible_obstacles[4] = {
 			checkRow(map, map_width, y_max, x_min, x_max),
 			checkRow(map, map_width, y_min, x_min, x_max),
-			checkColumn(map, map_width, x_min, y_min, y_max),
+			checkColumn(map, map_width, x_max, y_min, y_max),
 			checkColumn(map, map_width, x_min, y_min, y_max)
 		};
 
@@ -453,7 +463,7 @@ float get_relative_angle_robot_destination(std::pair<int, int> current_coor, std
 /*~~~~~~~~~~ Main Decision Tree ~~~~~~~~~~*/
 // gets the next command to send to the robot
 command getNextCommand(std::vector<int> &map, int map_width, robot snowflake, std::pair<int, int> current_coor, std::pair<int, int> destination_coor) {
-	if (notAtTarget(snowflake, current_coor, destination_coor)) {
+	if (!atDestination(current_coor, destination_coor)) {
 		//The closest obstacle
 		obstacle closest_obstacle = getClosestObstacle(current_coor, map, map_width, snowflake);
 		//Angle to destination relative to robots current angle of rotation
@@ -616,7 +626,7 @@ TEST_CASE("obstacle functions", "[obstacle]") {
 TEST_CASE("checkColumn", "[checkColumn]") {
 	std::vector<int> testmap1 = getMap("map2_width_10.map");
 	REQUIRE(checkColumn(testmap1, 10, 0, 2, 5).sector() == "unkown");
-	REQUIRE(checkColumn(testmap1, 10, 0, 2, 5).type() == "pole");
+	REQUIRE(checkColumn(testmap1, 10, 0, 2, 5).type() == "wall");
 	REQUIRE(checkColumn(testmap1, 10, 0, 2, 5).x() == 0);
 	REQUIRE(checkColumn(testmap1, 10, 0, 2, 5).y() == 2);
 
@@ -641,7 +651,7 @@ TEST_CASE("checkColumn", "[checkColumn]") {
 TEST_CASE("checkRow", "[checkRow]") {
 	std::vector<int> testmap1 = getMap("map2_width_10.map");
 	REQUIRE(checkRow(testmap1, 10, 0, 1, 5).sector() == "unkown");
-	REQUIRE(checkRow(testmap1, 10, 0, 1, 5).type() == "pole");
+	REQUIRE(checkRow(testmap1, 10, 0, 1, 5).type() == "wall");
 	REQUIRE(checkRow(testmap1, 10, 0, 1, 5).x() == 1);
 	REQUIRE(checkRow(testmap1, 10, 0, 1, 5).y() == 0);
 
@@ -663,3 +673,43 @@ TEST_CASE("checkRow", "[checkRow]") {
 
 }
 
+TEST_CASE("getClosestObstacle", "[getClosestObstacle]") {
+	std::vector<int> testmap1 = getMap("map2_width_10.map");
+	robot snowflake = robot(1, 1, 0);
+
+	// Pole directly beside the right side of robot
+	REQUIRE(getClosestObstacle(std::make_pair(3, 3), testmap1, 10, snowflake).sector() == "right");
+	REQUIRE(getClosestObstacle(std::make_pair(3, 3), testmap1, 10, snowflake).type() == "pole");
+	REQUIRE(getClosestObstacle(std::make_pair(3, 3), testmap1, 10, snowflake).x() == 4);
+	REQUIRE(getClosestObstacle(std::make_pair(3, 3), testmap1, 10, snowflake).y() == 3);
+
+	// Pole directly to left of robot, two nodes away
+	REQUIRE(getClosestObstacle(std::make_pair(6, 3), testmap1, 10, snowflake).sector() == "left");
+	REQUIRE(getClosestObstacle(std::make_pair(6, 3), testmap1, 10, snowflake).type() == "pole");
+	REQUIRE(getClosestObstacle(std::make_pair(6, 3), testmap1, 10, snowflake).x() == 4);
+	REQUIRE(getClosestObstacle(std::make_pair(6, 3), testmap1, 10, snowflake).y() == 3);
+
+	// Pole in the front-left sector
+	REQUIRE(getClosestObstacle(std::make_pair(5, 2), testmap1, 10, snowflake).sector() == "front-left");
+	REQUIRE(getClosestObstacle(std::make_pair(5, 2), testmap1, 10, snowflake).type() == "pole");
+	REQUIRE(getClosestObstacle(std::make_pair(5, 2), testmap1, 10, snowflake).x() == 4);
+	REQUIRE(getClosestObstacle(std::make_pair(5, 2), testmap1, 10, snowflake).y() == 3);
+
+	// Wall directly to right (NOTE: Due to the way that checkColumn works (it starts at the top of a column and goes down))
+	// the first "wall" section found is in the front-right section
+	REQUIRE(getClosestObstacle(std::make_pair(8, 2), testmap1, 10, snowflake).sector() == "front-right");
+	REQUIRE(getClosestObstacle(std::make_pair(8, 2), testmap1, 10, snowflake).type() == "wall");
+	REQUIRE(getClosestObstacle(std::make_pair(8, 2), testmap1, 10, snowflake).x() == 9);
+	REQUIRE(getClosestObstacle(std::make_pair(8, 2), testmap1, 10, snowflake).y() == 3);
+}
+
+TEST_CASE("atDestination", "[atDestination]") {
+	REQUIRE(atDestination(std::make_pair(1, 1), std::make_pair(5, 5)) == false);
+	REQUIRE(atDestination(std::make_pair(2, 3), std::make_pair(3, 3)) == true);
+	REQUIRE(atDestination(std::make_pair(10, 10), std::make_pair(5, 5)) == false);
+}
+
+TEST_CASE("getNextCommand", "[getNextCommand]") {
+	std::vector<int> testmap3 = getMap("map3_width_10.map");
+	REQUIRE(getNextCommand(testmap3, 512, robot(1,1,0), std::make_pair(,70),))
+}
