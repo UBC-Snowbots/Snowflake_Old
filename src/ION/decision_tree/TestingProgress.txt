@@ -1,5 +1,4 @@
 
-
 FUNCTIONS TO TEST:
 	command
 		makeMoveCommand
