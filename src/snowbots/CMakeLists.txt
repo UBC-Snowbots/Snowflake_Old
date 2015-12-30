@@ -4,8 +4,14 @@ find_package(catkin REQUIRED COMPONENTS message_generation
 	std_msgs rospy roscpp sensor_msgs
 	laser_geometry tf2)
 
+set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} ${CMAKE_CURRENT_SOURCE_DIR}/cmake-modules)
+
+include(Catch)
+
 add_subdirectory(msg)
 add_subdirectory(srv)
+
+add_definitions(--std=c++11)
 
 catkin_package(
   CATKIN_DEPENDS message_runtime std_msgs roscpp
@@ -14,6 +20,7 @@ catkin_package(
 include_directories(
     ${catkin_INCLUDE_DIRS}
     ${laser_geometry_INCLUDE_DIRS}
+    ./include
 )
 
 add_subdirectory(src)
