@@ -98,12 +98,6 @@ bool isBetween(float num_1, float num_2, float num_in_between) {
 	else return false;
 }
 
-// Returns the value of a map node on a given map at a given x and y postion
-// LARGELY DEPRECEATED RIGHT NOW, CHECK FOR DEPENDENCIES ON IT AND REMOVE IF POSSIBLE
-int mapValAt(std::vector<int> &map, int map_width, int x_coor, int y_coor) {
-	return (map[y_coor * map_width + x_coor]);
-}
-
 //Converts a given angle in degrees to a slope value
 float degreesToSlope(float angle_in_degrees) {
 	return tan((angle_in_degrees * 3.14159) / 180);
@@ -130,9 +124,9 @@ std::string getFileNameOf(std::string file_description) {
 
 
 // Gets the map from a file !!! WILL NEED TO BE CHANGED FOR ROS INTEGRATION
-std::vector<int> getMap(std::string map_file_name) {
+vector_map getMap(std::string map_file_name, int width) {
 	std::ifstream map_file(map_file_name);
-	std::vector<int> map;
+	std::vector<int> map_data;
 	int present_line;
 
 	//Checks to make sure the map was succesfully opened, asks the user for another file if not
@@ -142,10 +136,10 @@ std::vector<int> getMap(std::string map_file_name) {
 
 	//Gets the integers from the file
 	while (map_file >> present_line) {
-		map.push_back(present_line);
+		map_data.push_back(present_line);
 	}
 
-	return map;
+	return vector_map(std::move(map_data), width, map_data.size() / width);
 }
 
 
@@ -269,7 +263,7 @@ obstacle addSector(obstacle obstacle_with_unkown_sector, robot snowflake, std::p
 // Checks a given row for obstacles from a given x-min value to a given x-max value on a given map
 // If found, returns the obstacle as: obstacle((pole or wall), "unkown", x_coor, y_coor) 
 //                       else returns obstacle("none", "none", -1, -1)
-obstacle checkRow(std::vector<int> &map, int map_width, int row_num, int x_min, int x_max) {
+obstacle checkRow(const map_interface &map, int row_num, int x_min, int x_max) {
 
 	for (int i = 0; i < ((x_max - x_min) + 1); i++) {
 		int x_coor = x_min + i;
@@ -277,15 +271,15 @@ obstacle checkRow(std::vector<int> &map, int map_width, int row_num, int x_min, 
 
 		int present_node_val = 0;
 
-		if (x_coor >= map_width) {
+		if (x_coor >= map.width()) {
 			return obstacle("none", "none", -1, -1);
 		}
 		try
 		{
-			present_node_val = map.at((y_coor * map_width) + x_coor);
+			present_node_val = map.at(x_coor, y_coor);
 		}
-		// If an error is thrown here, probably trying to access node off of the map, so return no obstacle
-		catch (const std::exception & r_e)
+		// If out of bounds, there is no obstacle
+		catch (const std::out_of_range & r_e)
 		{
 			return obstacle("none", "none", -1, -1);
 		}
@@ -305,9 +299,9 @@ obstacle checkRow(std::vector<int> &map, int map_width, int row_num, int x_min, 
 // Checks a given column for obstacles from a given y-min value to a given y-max value on a given map
 // If found, returns the obstacle as: obstacle((pole or wall), "unkown", x_coor, y_coor) 
 //                       else returns obstacle("none", "none", -1, -1)
-obstacle checkColumn(std::vector<int> &map, int map_width, int column_num, int y_min, int y_max) {
+obstacle checkColumn(const map_interface &map, int column_num, int y_min, int y_max) {
 	//If x_coor is greater then map width, node does not exist, so return no obstacle
-	if (column_num >= map_width) {
+	if (column_num >= map.width()) {
 		return obstacle("none", "none", -1, -1);
 	}
 	
@@ -319,10 +313,10 @@ obstacle checkColumn(std::vector<int> &map, int map_width, int column_num, int y
 
 		try 
 		{
-			present_node_val = map.at((y_coor * map_width) + x_coor);
+			present_node_val = map.at(x_coor, y_coor);
 		} 
-		// If an error is thrown here, probably trying to access node off of the map, so return no obstacle
-		catch (const std::exception & r_e)
+		// If out of range, there is no obstacle
+		catch (const std::out_of_range & r_e)
 		{
 			return obstacle("none", "none", -1, -1);
 		}
@@ -340,7 +334,7 @@ obstacle checkColumn(std::vector<int> &map, int map_width, int column_num, int y
 }
 
 //Returns the closest obstacle to the present coordinates of the robot
-obstacle getClosestObstacle(std::pair<int, int> current_coor, std::vector<int> &map, int map_width, robot snowflake) {
+obstacle getClosestObstacle(std::pair<int, int> current_coor, const map_interface &map, robot snowflake) {
 
 	//Moves out from the center position of the robot, checking each row and column as it goes
 	for (int i = 0; i < CUTOFF; i++) {
@@ -351,10 +345,10 @@ obstacle getClosestObstacle(std::pair<int, int> current_coor, std::vector<int> &
 
 											 //Look for any obstacles in the top and bottom rows, left and right columns, at i nodes away from the robot
 		obstacle possible_obstacles[4] = {
-			checkRow(map, map_width, y_max, x_min, x_max),
-			checkRow(map, map_width, y_min, x_min, x_max),
-			checkColumn(map, map_width, x_max, y_min, y_max),
-			checkColumn(map, map_width, x_min, y_min, y_max)
+			checkRow(map, y_max, x_min, x_max),
+			checkRow(map, y_min, x_min, x_max),
+			checkColumn(map, x_max, y_min, y_max),
+			checkColumn(map, x_min, y_min, y_max)
 		};
 
 		//Look through all obstacles in possible obstacles, and return the first obstacle found
@@ -391,10 +385,10 @@ float get_relative_angle_robot_destination(std::pair<int, int> current_coor, std
 
 /*~~~~~~~~~~ Main Decision Tree ~~~~~~~~~~*/
 // gets the next command to send to the robot
-command getNextCommand(std::vector<int> &map, int map_width, robot snowflake, std::pair<int, int> current_coor, std::pair<int, int> destination_coor) {
+command getNextCommand(const map_interface &map, robot snowflake, std::pair<int, int> current_coor, std::pair<int, int> destination_coor) {
 	if (!atDestination(current_coor, destination_coor)) {
 		//The closest obstacle
-		obstacle closest_obstacle = getClosestObstacle(current_coor, map, map_width, snowflake);
+		obstacle closest_obstacle = getClosestObstacle(current_coor, map, snowflake);
 		//Angle to destination relative to robots current angle of rotation
 		float destination_angle = get_relative_angle_robot_destination(current_coor, destination_coor, snowflake);
 
@@ -443,7 +437,7 @@ command getNextCommand(std::vector<int> &map, int map_width, robot snowflake, st
 }
 
 /*~~~~~~~~~~ Funtions To Publish Information ~~~~~~~~~~*/
-// Publishs the command to the correct ROS topic in the correct format !!! WILL NEED TO BE CHANGED FOR ROS INTEGRATION
+// Publishes the command to the correct ROS topic in the correct format !!! WILL NEED TO BE CHANGED FOR ROS INTEGRATION
 void publishCommand(command cmd) {
 
 }

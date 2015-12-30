@@ -44,12 +44,12 @@ TEST_CASE("Relative angle of robot to destination", "[get_relative_angle_robot_d
 }
 
 TEST_CASE("Map Value at Position", "[mapValAt]") {
-	std::vector<int> testmap1 = getMap("map1_width_6.map");
-	CHECK(mapValAt(testmap1, 6, 0, 0) == 1);
-	CHECK(mapValAt(testmap1, 6, 1, 1) == 0);
-	CHECK(mapValAt(testmap1, 6, 2, 1) == 0);
-	CHECK(mapValAt(testmap1, 6, 4, 2) == 1);
-	CHECK(mapValAt(testmap1, 6, 5, 3) == 1);
+	vector_map testmap1 = getMap("map1_width_6.map", 6);
+	CHECK(testmap1.at(0, 0) == 1);
+	CHECK(testmap1.at(1, 1) == 0);
+	CHECK(testmap1.at(2, 1) == 0);
+	CHECK(testmap1.at(4, 2) == 1);
+	CHECK(testmap1.at(5, 3) == 1);
 }
 
 TEST_CASE("slopeToDegrees", "[slopeToDegrees]") {
@@ -73,83 +73,83 @@ TEST_CASE("addSector", "[addSector]") {
 
 
 TEST_CASE("checkColumn", "[checkColumn]") {
-	std::vector<int> testmap1 = getMap("map2_width_10.map");
-	CHECK(checkColumn(testmap1, 10, 0, 2, 5).sector() == "unkown");
-	CHECK(checkColumn(testmap1, 10, 0, 2, 5).type() == "wall");
-	CHECK(checkColumn(testmap1, 10, 0, 2, 5).x() == 0);
-	CHECK(checkColumn(testmap1, 10, 0, 2, 5).y() == 2);
+	vector_map testmap1 = getMap("map2_width_10.map", 10);
+	CHECK(checkColumn(testmap1, 0, 2, 5).sector() == "unkown");
+	CHECK(checkColumn(testmap1, 0, 2, 5).type() == "wall");
+	CHECK(checkColumn(testmap1, 0, 2, 5).x() == 0);
+	CHECK(checkColumn(testmap1, 0, 2, 5).y() == 2);
 
-	CHECK(checkColumn(testmap1, 10, 1, 1, 5).sector() == "unkown");
-	CHECK(checkColumn(testmap1, 10, 1, 1, 5).type() == "pole");
-	CHECK(checkColumn(testmap1, 10, 1, 1, 5).x() == 1);
-	CHECK(checkColumn(testmap1, 10, 1, 1, 5).y() == 2);
+	CHECK(checkColumn(testmap1, 1, 1, 5).sector() == "unkown");
+	CHECK(checkColumn(testmap1, 1, 1, 5).type() == "pole");
+	CHECK(checkColumn(testmap1, 1, 1, 5).x() == 1);
+	CHECK(checkColumn(testmap1, 1, 1, 5).y() == 2);
 
 	//Checking a column outside the map
-	CHECK(checkColumn(testmap1, 10, 50, 1, 5).sector() == "none");
-	CHECK(checkColumn(testmap1, 10, 50, 1, 5).type() == "none");
-	CHECK(checkColumn(testmap1, 10, 50, 1, 5).x() == -1);
-	CHECK(checkColumn(testmap1, 10, 50, 1, 5).y() == -1);
+	CHECK(checkColumn(testmap1, 50, 1, 5).sector() == "none");
+	CHECK(checkColumn(testmap1, 50, 1, 5).type() == "none");
+	CHECK(checkColumn(testmap1, 50, 1, 5).x() == -1);
+	CHECK(checkColumn(testmap1, 50, 1, 5).y() == -1);
 
 	//Checking a column just barely outside the map
-	CHECK(checkColumn(testmap1, 10, 10, 1, 5).sector() == "none");
-	CHECK(checkColumn(testmap1, 10, 10, 1, 5).type() == "none");
-	CHECK(checkColumn(testmap1, 10, 10, 1, 5).x() == -1);
-	CHECK(checkColumn(testmap1, 10, 10, 1, 5).y() == -1);
+	CHECK(checkColumn(testmap1, 10, 1, 5).sector() == "none");
+	CHECK(checkColumn(testmap1, 10, 1, 5).type() == "none");
+	CHECK(checkColumn(testmap1, 10, 1, 5).x() == -1);
+	CHECK(checkColumn(testmap1, 10, 1, 5).y() == -1);
 }
 
 TEST_CASE("checkRow", "[checkRow]") {
-	std::vector<int> testmap1 = getMap("map2_width_10.map");
-	CHECK(checkRow(testmap1, 10, 0, 1, 5).sector() == "unkown");
-	CHECK(checkRow(testmap1, 10, 0, 1, 5).type() == "wall");
-	CHECK(checkRow(testmap1, 10, 0, 1, 5).x() == 1);
-	CHECK(checkRow(testmap1, 10, 0, 1, 5).y() == 0);
+	vector_map testmap1 = getMap("map2_width_10.map", 10);
+	CHECK(checkRow(testmap1, 0, 1, 5).sector() == "unkown");
+	CHECK(checkRow(testmap1, 0, 1, 5).type() == "wall");
+	CHECK(checkRow(testmap1, 0, 1, 5).x() == 1);
+	CHECK(checkRow(testmap1, 0, 1, 5).y() == 0);
 
-	CHECK(checkRow(testmap1, 10, 3, 1, 5).sector() == "unkown");
-	CHECK(checkRow(testmap1, 10, 3, 1, 5).type() == "pole");
-	CHECK(checkRow(testmap1, 10, 3, 1, 5).x() == 4);
-	CHECK(checkRow(testmap1, 10, 3, 1, 5).y() == 3);
+	CHECK(checkRow(testmap1, 3, 1, 5).sector() == "unkown");
+	CHECK(checkRow(testmap1, 3, 1, 5).type() == "pole");
+	CHECK(checkRow(testmap1, 3, 1, 5).x() == 4);
+	CHECK(checkRow(testmap1, 3, 1, 5).y() == 3);
 
-	CHECK(checkRow(testmap1, 10, 4, 1, 5).sector() == "none");
-	CHECK(checkRow(testmap1, 10, 4, 1, 5).type() == "none");
-	CHECK(checkRow(testmap1, 10, 4, 1, 5).x() == -1);
-	CHECK(checkRow(testmap1, 10, 4, 1, 5).y() == -1);
+	CHECK(checkRow(testmap1, 4, 1, 5).sector() == "none");
+	CHECK(checkRow(testmap1, 4, 1, 5).type() == "none");
+	CHECK(checkRow(testmap1, 4, 1, 5).x() == -1);
+	CHECK(checkRow(testmap1, 4, 1, 5).y() == -1);
 
 	//Try row just outside the map
-	CHECK(checkRow(testmap1, 10, 7, 1, 5).sector() == "none");
-	CHECK(checkRow(testmap1, 10, 7, 1, 5).type() == "none");
-	CHECK(checkRow(testmap1, 10, 7, 1, 5).x() == -1);
-	CHECK(checkRow(testmap1, 10, 7, 1, 5).y() == -1);
+	CHECK(checkRow(testmap1, 7, 1, 5).sector() == "none");
+	CHECK(checkRow(testmap1, 7, 1, 5).type() == "none");
+	CHECK(checkRow(testmap1, 7, 1, 5).x() == -1);
+	CHECK(checkRow(testmap1, 7, 1, 5).y() == -1);
 
 }
 
 TEST_CASE("getClosestObstacle", "[getClosestObstacle]") {
-	std::vector<int> testmap1 = getMap("map2_width_10.map");
+	vector_map testmap1 = getMap("map2_width_10.map", 10);
 	robot snowflake = robot(1, 1, 0);
 
 	// Pole directly beside the right side of robot
-	CHECK(getClosestObstacle(std::make_pair(3, 3), testmap1, 10, snowflake).sector() == "right");
-	CHECK(getClosestObstacle(std::make_pair(3, 3), testmap1, 10, snowflake).type() == "pole");
-	CHECK(getClosestObstacle(std::make_pair(3, 3), testmap1, 10, snowflake).x() == 4);
-	CHECK(getClosestObstacle(std::make_pair(3, 3), testmap1, 10, snowflake).y() == 3);
+	CHECK(getClosestObstacle(std::make_pair(3, 3), testmap1, snowflake).sector() == "right");
+	CHECK(getClosestObstacle(std::make_pair(3, 3), testmap1, snowflake).type() == "pole");
+	CHECK(getClosestObstacle(std::make_pair(3, 3), testmap1, snowflake).x() == 4);
+	CHECK(getClosestObstacle(std::make_pair(3, 3), testmap1, snowflake).y() == 3);
 
 	// Pole directly to left of robot, two nodes away
-	CHECK(getClosestObstacle(std::make_pair(6, 3), testmap1, 10, snowflake).sector() == "left");
-	CHECK(getClosestObstacle(std::make_pair(6, 3), testmap1, 10, snowflake).type() == "pole");
-	CHECK(getClosestObstacle(std::make_pair(6, 3), testmap1, 10, snowflake).x() == 4);
-	CHECK(getClosestObstacle(std::make_pair(6, 3), testmap1, 10, snowflake).y() == 3);
+	CHECK(getClosestObstacle(std::make_pair(6, 3), testmap1, snowflake).sector() == "left");
+	CHECK(getClosestObstacle(std::make_pair(6, 3), testmap1, snowflake).type() == "pole");
+	CHECK(getClosestObstacle(std::make_pair(6, 3), testmap1, snowflake).x() == 4);
+	CHECK(getClosestObstacle(std::make_pair(6, 3), testmap1, snowflake).y() == 3);
 
 	// Pole in the front-left sector
-	CHECK(getClosestObstacle(std::make_pair(5, 2), testmap1, 10, snowflake).sector() == "front-left");
-	CHECK(getClosestObstacle(std::make_pair(5, 2), testmap1, 10, snowflake).type() == "pole");
-	CHECK(getClosestObstacle(std::make_pair(5, 2), testmap1, 10, snowflake).x() == 4);
-	CHECK(getClosestObstacle(std::make_pair(5, 2), testmap1, 10, snowflake).y() == 3);
+	CHECK(getClosestObstacle(std::make_pair(5, 2), testmap1, snowflake).sector() == "front-left");
+	CHECK(getClosestObstacle(std::make_pair(5, 2), testmap1, snowflake).type() == "pole");
+	CHECK(getClosestObstacle(std::make_pair(5, 2), testmap1, snowflake).x() == 4);
+	CHECK(getClosestObstacle(std::make_pair(5, 2), testmap1, snowflake).y() == 3);
 
 	// Wall directly to right (NOTE: Due to the way that checkColumn works (it starts at the top of a column and goes down))
 	// the first "wall" section found is in the front-right section
-	CHECK(getClosestObstacle(std::make_pair(8, 2), testmap1, 10, snowflake).sector() == "front-right");
-	CHECK(getClosestObstacle(std::make_pair(8, 2), testmap1, 10, snowflake).type() == "wall");
-	CHECK(getClosestObstacle(std::make_pair(8, 2), testmap1, 10, snowflake).x() == 9);
-	CHECK(getClosestObstacle(std::make_pair(8, 2), testmap1, 10, snowflake).y() == 3);
+	CHECK(getClosestObstacle(std::make_pair(8, 2), testmap1, snowflake).sector() == "front-right");
+	CHECK(getClosestObstacle(std::make_pair(8, 2), testmap1, snowflake).type() == "wall");
+	CHECK(getClosestObstacle(std::make_pair(8, 2), testmap1, snowflake).x() == 9);
+	CHECK(getClosestObstacle(std::make_pair(8, 2), testmap1, snowflake).y() == 3);
 }
 
 TEST_CASE("atDestination", "[atDestination]") {
@@ -159,7 +159,7 @@ TEST_CASE("atDestination", "[atDestination]") {
 }
 
 TEST_CASE("getNextCommand", "[getNextCommand]") {
-	std::vector<int> testmap3 = getMap("map3_width_10.map");
+	vector_map testmap3 = getMap("map3_width_10.map", 10);
 }
 
 

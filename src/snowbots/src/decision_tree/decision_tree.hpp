@@ -70,19 +70,50 @@ public:
 	std::pair<int, int> back_left();
 };
 
+/**
+ * Interface for maps
+ */
+class map_interface{
+	public:
+	virtual int at(int x, int y) const = 0;
+	virtual int width() const = 0;
+	virtual int height() const = 0;
+	virtual ~map_interface(){}
+};
+
+class vector_map: public map_interface{
+	std::vector<int> data;
+	int width_data;
+	int height_data;
+	public:
+	vector_map(std::vector<int>&& data, int width, int height):
+			data(std::move(data)),
+			width_data(width),
+			height_data(height)
+		{}
+	int width() const override{
+		return width_data;
+	}
+	int height() const override{
+		return height_data;
+	}
+	int at(int x, int y) const override{
+		return data.at(x + y*width_data);
+	}
+};
+
 /*~~~~~~~~~ FUNCTIONS ~~~~~~~~~*/
 float degreesToSlope(float angle_in_degrees);
-std::vector<int> getMap(std::string map_file_name);
-int mapValAt(std::vector<int> &map, int map_width, int x_coor, int y_coor);
+vector_map getMap(std::string map_file_name, int width);
 float slopeToDegrees(float slope);
 
 float get_relative_angle_robot_destination(std::pair<int, int> current_coor, std::pair<int, int> destination_coor, robot snowflake);
 obstacle addSector(obstacle obstacle_with_unkown_sector, robot snowflake, std::pair<int, int> current_coor);
-obstacle checkColumn(std::vector<int> &map, int map_width, int column_num, int y_min, int y_max);
-obstacle checkRow(std::vector<int> &map, int map_width, int row_num, int x_min, int x_max);
-obstacle getClosestObstacle(std::pair<int, int> current_coor, std::vector<int> &map, int map_width, robot snowflake);
+obstacle checkColumn(const map_interface &map, int col_num, int y_min, int y_max);
+obstacle checkRow(const map_interface &map, int row_num, int x_min, int x_max);
+obstacle getClosestObstacle(std::pair<int, int> current_coor, const map_interface &map, robot snowflake);
 bool atDestination(std::pair<int, int> current_coor, std::pair<int, int> destination_coor);
-command getNextCommand(std::vector<int> &map, int map_width, robot snowflake, std::pair<int, int> current_coor, std::pair<int, int> destination_coor);
+command getNextCommand(const map_interface &map, robot snowflake, std::pair<int, int> current_coor, std::pair<int, int> destination_coor);
 
 
 #endif
