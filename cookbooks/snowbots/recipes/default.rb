@@ -38,6 +38,8 @@ apt_package 'git'
 apt_package 'ros-indigo-vision-opencv'
 apt_package 'ros-indigo-hokuyo-node'
 
+python_pip 'docopt'
+
 catkin_package 'laser_geometry' do
   source_uri 'https://github.com/ros-perception/laser_geometry.git'
 end
