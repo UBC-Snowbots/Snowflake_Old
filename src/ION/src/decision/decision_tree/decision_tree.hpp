@@ -78,6 +78,8 @@ class map_interface{
 	virtual int at(int x, int y) const = 0;
 	virtual int width() const = 0;
 	virtual int height() const = 0;
+	virtual void set(int x, int y, int value) = 0;
+	virtual bool withinBounds(int x, int y) = 0;
 	virtual ~map_interface(){}
 };
 
@@ -86,7 +88,7 @@ class vector_map: public map_interface{
 	int width_data;
 	int height_data;
 	public:
-	vector_map(std::vector<int>&& data, int width, int height):
+	vector_map(std::vector<int>& data, int width, int height):
 			data(std::move(data)),
 			width_data(width),
 			height_data(height)
@@ -100,9 +102,18 @@ class vector_map: public map_interface{
 	int at(int x, int y) const override{
 		return data.at(x + y*width_data);
 	}
+	void set(int x, int y, int value) override {
+		data[x + y*width_data] = value;
+	}
+	bool withinBounds(int x, int y) override {
+		return (x < width_data && x >= 0) && (y < height_data && y >= 0);
+	}
 };
 
 /*~~~~~~~~~ FUNCTIONS ~~~~~~~~~*/
+int checkNeighbours(int x, int y, vector_map map); 
+vector_map processMap(vector_map map);
+
 float degreesToSlope(float angle_in_degrees);
 vector_map getMap(std::string map_file_name, int width);
 float slopeToDegrees(float slope);

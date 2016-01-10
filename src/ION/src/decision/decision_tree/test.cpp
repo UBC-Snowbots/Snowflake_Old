@@ -1,14 +1,15 @@
 /*~~~~~~~~~~ Unit Testing ~~~~~~~~~~*/
 
 #define CATCH_CONFIG_MAIN  // This tells Catch to provide a main() - only do this in one cpp file
+
+#include "catch.hpp"
 #include "decision_tree.hpp"
-#include <catch.hpp>
 
 
 //EXAMPLE
 /*
 unsigned int Factorial(unsigned int number) {
-return number <= 1 ? number : Factorial(number - 1)*number;
+return number <= 1 ? number : Factorial(number - 1)* number;
 }
 
 TEST_CASE("Factorials are computed", "[factorial]") {
@@ -160,6 +161,30 @@ TEST_CASE("atDestination", "[atDestination]") {
 
 TEST_CASE("getNextCommand", "[getNextCommand]") {
 	vector_map testmap3 = getMap("map3_width_10.map", 10);
+}
+
+
+TEST_CASE("mapProcessor", "[mapProcessor]") {
+	vector_map testmap1 = getMap("map3_width_10.map", 10);
+
+	std::cout << "Before Processing" << std::endl;
+
+	for (int y = 0; y < testmap1.height(); y++) {
+		for (int x = 0; x < testmap1.width(); x++) {
+			std::cout << testmap1.at(x, y);
+		}
+		std::cout << std::endl;
+	}
+
+	std::cout << "After Processing" << std::endl;
+
+	testmap1 = processMap(testmap1);
+	for (int y = 0; y < testmap1.height(); y++) {
+		for (int x = 0; x < testmap1.width(); x++) {
+			std::cout << testmap1.at(x, y);
+		}
+		std::cout << std::endl;
+	}
 }
 
 
