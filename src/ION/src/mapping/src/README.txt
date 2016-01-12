@@ -30,9 +30,9 @@ How To Use:
   In 4 different terminals, type in these commands:
 
   > roscore
-  > rosrun snowbots main
-  > rosrun snowbots locallidarnode
-  > rosrun snowbots localmapnode
+  > rosrun ION main
+  > rosrun ION locallidarnode
+  > rosrun ION localmapnode
   
 
 
