@@ -5,6 +5,7 @@
   <description>The software to run on UBC Snowbots' Snowflake robot</description>
   <!-- TODO: Add other maintainers -->
   <maintainer email="fhackett.py@gmail.com">Finn Hackett</maintainer>
+  <maintainer email="gareth.ellis0@gmail.com">Gareth Ellis</maintainer>
   <license>BSD</license>
 
   <exec_depend>message_runtime</exec_depend>
