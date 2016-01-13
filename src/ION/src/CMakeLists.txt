@@ -1,6 +1,4 @@
 add_subdirectory(drivers)
 add_subdirectory(map)
 add_subdirectory(mapping)
-add_subdirectory(filters)
 add_subdirectory(decision)
-add_subdirectory(decision_tree)

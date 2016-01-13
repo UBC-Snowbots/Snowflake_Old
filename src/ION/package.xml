@@ -1,6 +1,6 @@
 <?xml version="1"?>
 <package format="2">
-  <name>snowbots</name>
+  <name>ION</name>
   <version>0.0.1</version>
   <description>The software to run on UBC Snowbots' Snowflake robot</description>
   <!-- TODO: Add other maintainers -->
