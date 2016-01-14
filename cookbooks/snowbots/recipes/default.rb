@@ -28,25 +28,23 @@ catkin 'snowbots' do
   workspace snowbots_workspace
 end
 
+
 apt_package 'gdb'
+apt_package "python-pip"
 
 apt_package 'libgtk2.0-dev'
-apt_package 'ros-indigo-hokuyo-node'
 apt_package 'x11-xserver-utils'
 apt_package 'git'
 
 apt_package 'ros-indigo-vision-opencv'
 apt_package 'ros-indigo-hokuyo-node'
 apt_package 'ros-indigo-rosbash'
-
-apt_package "python-pip"
+apt_package 'ros-indigo-scan-tools'
 
 python_pip 'docopt'
+
 
 catkin_package 'laser_geometry' do
   source_uri 'https://github.com/ros-perception/laser_geometry.git'
 end
-
-catkin_package 'laser_scan_matcher' do
-    source_uri ''
 
