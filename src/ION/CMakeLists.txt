@@ -9,6 +9,7 @@ find_package(catkin REQUIRED COMPONENTS
     rospy
     sensor_msgs
     std_msgs
+    tf
     tf2
     )
 
@@ -22,7 +23,7 @@ add_subdirectory(srv)
 add_definitions(--std=c++11)
 
 catkin_package(
-  CATKIN_DEPENDS message_runtime std_msgs roscpp
+  CATKIN_DEPENDS message_runtime std_msgs roscpp tf geometry_msgs
 )
 
 include_directories(
