@@ -47,3 +47,6 @@ catkin_package 'laser_geometry' do
   source_uri 'https://github.com/ros-perception/laser_geometry.git'
 end
 
+catkin_package 'laser_scan_matcher' do
+    source_uri ''
+
