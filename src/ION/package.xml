@@ -7,10 +7,15 @@
   <maintainer email="fhackett.py@gmail.com">Finn Hackett</maintainer>
   <maintainer email="gareth.ellis0@gmail.com">Gareth Ellis</maintainer>
   <license>BSD</license>
+  
+
+  <depend>std_msgs</depend>
+  <depend>nav_msgs</depend>
+  <depend>sensor_msgs</depend>
+  <depend>tf</depend>
 
   <exec_depend>message_runtime</exec_depend>
   <exec_depend>rospy</exec_depend>
-  <depend>std_msgs</depend>
   <depend>roscpp</depend>
   <build_depend>laser_geometry</build_depend>
   <depend>eigen</depend>

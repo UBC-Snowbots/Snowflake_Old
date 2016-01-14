@@ -1,8 +1,16 @@
 cmake_minimum_required(VERSION 2.8.3)
 project(ION)
-find_package(catkin REQUIRED COMPONENTS message_generation
-	std_msgs rospy roscpp sensor_msgs
-	laser_geometry tf2)
+find_package(catkin REQUIRED COMPONENTS 
+    geometry_msgs
+    laser_geometry
+    message_generation
+    nav_msgs
+    roscpp
+    rospy
+    sensor_msgs
+    std_msgs
+    tf2
+    )
 
 set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} ${CMAKE_CURRENT_SOURCE_DIR}/cmake-modules)
 
