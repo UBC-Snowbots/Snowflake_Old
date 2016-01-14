@@ -40,6 +40,7 @@ apt_package 'ros-indigo-vision-opencv'
 apt_package 'ros-indigo-hokuyo-node'
 apt_package 'ros-indigo-rosbash'
 apt_package 'ros-indigo-scan-tools'
+apt_package 'ros-indigo-gmapping'
 
 python_pip 'docopt'
 
