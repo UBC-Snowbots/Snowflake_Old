@@ -37,12 +37,6 @@ float BACK_RIGHT = 135;
 float BACK_LEFT = -135;
 float AT_TARGET_RADIUS = 3;
 
-// Constants for map processing
-const static int WALL = 2;
-const static int OBSTACLE = 1;
-
-const static int WALL_CUTOFF = 4;
-
 
 /*~~~~~~~~~~~~~~~~~~~~~~~~~~ CLASSES ~~~~~~~~~~~~~~~~~~~~~~~~~~*/
 
@@ -88,66 +82,6 @@ std::pair<int, int> robot::back_left() { return back_left_data; };
 /*~~~~~~~~~~~~~~~~~~~~~~~~~~ FUNCTIONS ~~~~~~~~~~~~~~~~~~~~~~~~~~*/
 
 /*~~~~~~~~~~ Utility Functions ~~~~~~~~~~*/
-
-
-// Checks in the cardinal directions around a node to see if it is a wall
-// int checkNeighbours(int x, int y, vector_map map) {
-// 	int adjacentObstacles = 0;
-
-// 	if (map.withinBounds(x + 1, y) && (map.at(x + 1, y) == OBSTACLE || map.at(x + 1, y) == WALL)) {
-// 		adjacentObstacles++;
-// 		if (map.withinBounds(x + 2, y) && (map.at(x + 2, y) == OBSTACLE || map.at(x + 2, y) == WALL)) 
-// 			adjacentObstacles++;
-// 	}
-// 	if (map.withinBounds(x, y - 1) && (map.at(x, y - 1) == OBSTACLE || map.at(x, y - 1) == WALL)) {
-// 		adjacentObstacles++; 
-// 		if (map.withinBounds(x, y - 2) && (map.at(x, y - 2) == OBSTACLE || map.at(x, y - 2) == WALL)) 
-// 			adjacentObstacles++; 
-// 	}
-// 	if (map.withinBounds(x - 1, y) && (map.at(x - 1, y) == OBSTACLE || map.at(x - 1, y) == WALL)) {
-// 		adjacentObstacles++; 
-// 		if (map.withinBounds(x - 2, y) && (map.at(x - 2, y) == OBSTACLE || map.at(x - 2, y) == WALL)) 
-// 			adjacentObstacles++; 
-// 	}
-// 	if (map.withinBounds(x, y + 1) && (map.at(x, y + 1) == OBSTACLE || map.at(x, y + 1) == WALL)) {
-// 		adjacentObstacles++; 
-// 		if (map.withinBounds(x, y + 2) && (map.at(x, y + 2) == OBSTACLE || map.at(x, y + 2) == WALL))
-// 			adjacentObstacles++; 
-// 	}
-
-// 	return adjacentObstacles;
-// }
-
-
-// This function checks a box 5x5 around a node to see if it is a wall
-int checkNeighbours(int x, int y, vector_map map) {
-	int adjacentObstacles = -1; // so that we don't count the node itself
-	for (int width = x - 2; width <= x + 2; width++) {
-		for (int height = y - 2; height <= y + 2; height++) {
-			if (map.withinBounds(width, height) && (map.at(width, height) == OBSTACLE || map.at(width, height) == WALL))
-				adjacentObstacles++;
-		}
-	}
-	return adjacentObstacles;
-}
-
-// Map Pre-Processor
-vector_map processMap(vector_map map) {
-	for (int x = 0; x < map.width(); x++) {
-		for (int y = 0; y < map.height(); y++) {
-			if (map.at(x, y) == OBSTACLE) {
-				int adjacentObstacles = checkNeighbours(x, y, map);
-
-				// Map square borders enough obstacles to be considered a wall.
-				if (adjacentObstacles >= WALL_CUTOFF)
-					map.set(x, y, WALL);
-			}
-		}
-	}
-	return map;
-}
-
-
 
 //Prints all elements in a vector<char>
 void printIntVector(std::vector<int> int_vector) {

@@ -164,27 +164,27 @@ TEST_CASE("getNextCommand", "[getNextCommand]") {
 }
 
 
-TEST_CASE("mapProcessor", "[mapProcessor]") {
-	vector_map testmap1 = getMap("map3_width_10.map", 10);
+// TEST_CASE("mapProcessor", "[mapProcessor]") {
+// 	vector_map testmap1 = getMap("map3_width_10.map", 10);
 
-	std::cout << "Before Processing" << std::endl;
+// 	std::cout << "Before Processing" << std::endl;
 
-	for (int y = 0; y < testmap1.height(); y++) {
-		for (int x = 0; x < testmap1.width(); x++) {
-			std::cout << testmap1.at(x, y);
-		}
-		std::cout << std::endl;
-	}
+// 	for (int y = 0; y < testmap1.height(); y++) {
+// 		for (int x = 0; x < testmap1.width(); x++) {
+// 			std::cout << testmap1.at(x, y);
+// 		}
+// 		std::cout << std::endl;
+// 	}
 
-	std::cout << "After Processing" << std::endl;
+// 	std::cout << "After Processing" << std::endl;
 
-	testmap1 = processMap(testmap1);
-	for (int y = 0; y < testmap1.height(); y++) {
-		for (int x = 0; x < testmap1.width(); x++) {
-			std::cout << testmap1.at(x, y);
-		}
-		std::cout << std::endl;
-	}
-}
+// 	testmap1 = processMap(testmap1);
+// 	for (int y = 0; y < testmap1.height(); y++) {
+// 		for (int x = 0; x < testmap1.width(); x++) {
+// 			std::cout << testmap1.at(x, y);
+// 		}
+// 		std::cout << std::endl;
+// 	}
+// }
 
 

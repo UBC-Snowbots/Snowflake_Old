@@ -3,6 +3,7 @@
 #include <utility>
 #include <vector>
 #include <string>
+#include "map_interface.hpp"
 
 #ifndef DECISION_TREE
 #define DECISION_TREE
@@ -70,19 +71,6 @@ public:
 	std::pair<int, int> back_left();
 };
 
-/**
- * Interface for maps
- */
-class map_interface{
-	public:
-	virtual int at(int x, int y) const = 0;
-	virtual int width() const = 0;
-	virtual int height() const = 0;
-	virtual void set(int x, int y, int value) = 0;
-	virtual bool withinBounds(int x, int y) = 0;
-	virtual ~map_interface(){}
-};
-
 class vector_map: public map_interface{
 	std::vector<int> data;
 	int width_data;
@@ -111,8 +99,6 @@ class vector_map: public map_interface{
 };
 
 /*~~~~~~~~~ FUNCTIONS ~~~~~~~~~*/
-int checkNeighbours(int x, int y, vector_map map); 
-vector_map processMap(vector_map map);
 
 float degreesToSlope(float angle_in_degrees);
 vector_map getMap(std::string map_file_name, int width);
