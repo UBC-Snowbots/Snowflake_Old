@@ -28,7 +28,15 @@ name="laser_scan_matcher_node" output="screen">
 #### publish laser -> base_link transform #####################
 <node pkg="tf" type="static_transform_publisher" name="laser_to_base_link" args="0 0 0 0 0 0 /laser /base_link 100"/>
 
-#### publish base_link -> odom transform #####################
+#### publish base_link -> odom transform ######################
 <node pkg="tf" type="static_transform_publisher" name="base_link_to_odom" args="0 0 0 0 0 0 /base_link /odom 100"/>
+
+#### start slam_gmapping ######################################
+<node pkg = "gmapping" type="slam_gmapping"
+name="slam_gmapping" output="screen">
+
+    <param name="temporal_update" value = "1"/>
+
+</node>
 
 </launch>
