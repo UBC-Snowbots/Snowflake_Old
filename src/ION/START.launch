@@ -5,7 +5,7 @@
 name="hokuyo_node" output="screen">
 </node>
 
-#### publish an example base_link -> laser transform ###########
+#### publish base_link -> laser transform ######################
 <node pkg="tf" type="static_transform_publisher" name="base_link_to_laser" args="0 0 0 0 0 0 /base_link /laser 100"/>
 
 #### start the laser scan_matcher ##############################
@@ -25,7 +25,10 @@ name="laser_scan_matcher_node" output="screen">
 
 </node>
 
-#### publish an example laser -> base_link transform ###########
+#### publish laser -> base_link transform #####################
 <node pkg="tf" type="static_transform_publisher" name="laser_to_base_link" args="0 0 0 0 0 0 /laser /base_link 100"/>
+
+#### publish base_link -> odom transform #####################
+<node pkg="tf" type="static_transform_publisher" name="base_link_to_odom" args="0 0 0 0 0 0 /base_link /odom 100"/>
 
 </launch>
