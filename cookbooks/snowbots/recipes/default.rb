@@ -16,6 +16,11 @@ ros 'indigo' do
   action [:install, :upgrade]
 end
 
+group 'dialout' do
+  members [user_name]
+  append true
+end
+
 # link to src folder synchronised from the host machine - Vagrant only
 link File.join(snowbots_workspace, 'src') do
   to '/vagrant/src'
