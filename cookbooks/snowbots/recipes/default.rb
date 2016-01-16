@@ -46,6 +46,7 @@ apt_package 'ros-indigo-hokuyo-node'
 apt_package 'ros-indigo-rosbash'
 apt_package 'ros-indigo-scan-tools'
 apt_package 'ros-indigo-gmapping'
+apt_package 'ros-indigo-sicktoolbox-wrapper'
 
 python_pip 'docopt'
 
