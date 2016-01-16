@@ -17,14 +17,15 @@ printing them out.
 from sbp.client.drivers.pyserial_driver import PySerialDriver
 from sbp.client import Handler, Framer
 from sbp.client.loggers.json_logger import JSONLogger
-from sbp.navigation import SBP_MSG_BASELINE_NED, MsgBaselineNED, SBP_MSG_BASELINE_ECEF
+from sbp.navigation import SBP_MSG_BASELINE_NED, MsgBaselineNED, SBP_MSG_BASELINE_ECEF, SBP_MSG_VEL_NED, MsgVelNED
 import argparse
 import rospy
 from std_msgs.msg import String, Float64MultiArray
 from geometry_msgs.msg import Point
 
 def main():
-  pub = rospy.Publisher("GPS_DATA", Point, queue_size=10)
+  pub_pos = rospy.Publisher("GPS_POS_DATA", Point, queue_size=10)
+  pub_vel = rospy.Publisher("GPS_VEL_DATA", Point, queue_size=10)
   rospy.init_node("talker", anonymous=True)
   rate = rospy.Rate(50)
   parser = argparse.ArgumentParser(description="Swift Navigation SBP Example.")
@@ -38,12 +39,18 @@ def main():
     with Handler(Framer(driver.read, None, verbose=True)) as source:
       print source
       try:
-        for msg, metadata in source.filter(SBP_MSG_BASELINE_NED):
+        for msg, metadata in source.filter([SBP_MSG_BASELINE_NED, SBP_MSG_VEL_NED]):
           # Print out the N, E, D coordinates of the baseline
-
-          data=[msg.n * 1e-3, msg.e * 1e-3, msg.d * 1e-3]
-          pub.publish(data)
-         # print msg
+          if isinstance(msg, MsgBaselineNED):
+            data=[msg.n * 1e-3, msg.e * 1e-3, msg.d * 1e-3]
+            pub_pos.publish(data)
+          elif isinstance(msg, MsgVelNED):
+            data=[msg.n * 1e-3, msg.e * 1e-3, msg.d * 1e-3]
+            pub_vel.publish(data)
+          else:
+            # error handling or whatever will go here eventually
+            pass
+        
       except KeyboardInterrupt:
         pass
 
