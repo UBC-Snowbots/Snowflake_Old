@@ -27,8 +27,13 @@ name="laser_scan_matcher_node" output="screen">
 <node pkg = "gmapping" type="slam_gmapping"
 name="slam_gmapping" output="screen">
     
-    <param name="map_update_interval" value="1.0"/>
+    <param name="map_update_interval" value="0.5"/>
     <param name="delta" value="0.02"/>
+    <param name="maxUrange" value="4.0"/>
+    <param name="linear_update" value="0.2"/>
+    <param name="angularUpdate" value="0.2"/>
+    <!-- <param name="delta" value="0.01"/> -->
+    <param name="occ_thresh" value="0.1"/>
 
 </node>
 
