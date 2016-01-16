@@ -16,6 +16,11 @@ ros 'indigo' do
   action [:install, :upgrade]
 end
 
+#group 'dialout' do
+#  members [user_name]
+#  append true
+#end
+
 # link to src folder synchronised from the host machine - Vagrant only
 link File.join(snowbots_workspace, 'src') do
   to '/vagrant/src'
@@ -28,10 +33,25 @@ catkin 'snowbots' do
   workspace snowbots_workspace
 end
 
+
 apt_package 'gdb'
-apt_package 'ros-indigo-opencv3'
+apt_package "python-pip"
+
+apt_package 'libgtk2.0-dev'
+apt_package 'x11-xserver-utils'
+apt_package 'git'
+
+apt_package 'ros-indigo-vision-opencv'
 apt_package 'ros-indigo-hokuyo-node'
+apt_package 'ros-indigo-rosbash'
+apt_package 'ros-indigo-scan-tools'
+apt_package 'ros-indigo-gmapping'
+
+python_pip 'docopt'
+
 
 catkin_package 'laser_geometry' do
   source_uri 'https://github.com/ros-perception/laser_geometry.git'
 end
+
+
