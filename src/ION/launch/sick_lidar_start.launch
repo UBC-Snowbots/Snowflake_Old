@@ -1,8 +1,8 @@
 <launch>
 
-#### start the hokoyu_node #####################################
-<node pkg="hokuyo_node" type="hokuyo_node"
-name="hokuyo_node" output="screen">
+#### start the sick node ######################################
+<node pkg="sicktoolbox_wrapper" type="sicklms"
+name="sicklms" output="screen">
 </node>
 
 #### publish initial base_link -> laser transform ######################
@@ -27,8 +27,12 @@ name="laser_scan_matcher_node" output="screen">
 <node pkg = "gmapping" type="slam_gmapping"
 name="slam_gmapping" output="screen">
     
-    <param name="map_update_interval" value="1.0"/>
-    <param name="delta" value="0.02"/>
+    <param name="map_update_interval" value="0.5"/>
+    <param name="maxUrange" value="4.0"/>
+    <param name="linear_update" value="0.2"/>
+    <param name="angularUpdate" value="0.2"/>
+    <param name="delta" value="0.04"/>
+    <param name="occ_thresh" value="0.1"/>
 
 </node>
 

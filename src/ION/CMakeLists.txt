@@ -7,7 +7,6 @@ find_package(catkin REQUIRED COMPONENTS
     message_generation
     nav_msgs
     roscpp
-    rospy
     sensor_msgs
     std_msgs
     tf
@@ -23,7 +22,7 @@ add_subdirectory(srv)
 add_definitions(--std=c++11)
 
 catkin_package(
-  CATKIN_DEPENDS message_runtime std_msgs roscpp tf geometry_msgs
+  CATKIN_DEPENDS std_msgs roscpp tf geometry_msgs
 )
 
 find_package(Armadillo REQUIRED)

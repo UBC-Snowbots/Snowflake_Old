@@ -1,0 +1,12 @@
+include_directories(
+    ${catkin_INCLUDE_DIRS}
+    )
+
+
+add_library(sb_serial_communication SerialCommunication.cpp)
+
+add_executable(sb_driver_elsa elsa_driver.cpp)
+
+add_dependencies(sb_driver_elsa sb_msgs_generate_messages_cpp)
+
+target_link_libraries(sb_driver_elsa sb_serial_communication ${catkin_LIBRARIES})
