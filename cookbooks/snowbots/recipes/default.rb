@@ -39,7 +39,8 @@ apt_package "python-pip"
 
 apt_package 'libgtk2.0-dev'
 apt_package 'x11-xserver-utils'
-apt_package 'git'
+
+apt_package 'libarmadillo-dev'
 
 apt_package 'ros-indigo-vision-opencv'
 apt_package 'ros-indigo-hokuyo-node'
