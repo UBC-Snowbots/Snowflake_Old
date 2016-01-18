@@ -14,11 +14,22 @@ geometry_msgs::Twist commandToTwist(const Command& command){
 }
 
 int main(int argc, char **argv){
-	ros::init(argc, argv, "goForward");
-	ros::NodeHandle n;
+	ros::init(argc, argv, "move_straight_line");
+	ros::NodeHandle public_nh;
+	
+	ros::NodeHandle private_nh("~");
 
-	ros::Publisher forward_pub = n.advertise<geometry_msgs::Twist>("driveCommand", 10);
+	ros::Publisher forward_pub = private_nh.advertise<geometry_msgs::Twist>("command", 10);
 	ros::Rate loop_rate(10);
+	
+	double stop_threshold;
+	if(!private_nh.getParam("stop_threshold", stop_threshold)){
+		stop_threshold = 0.1;
+	}
+	double move_speed;
+	if(!private_nh.getParam("move_speed", move_speed)){
+		move_speed = 1;
+	}
 	
 	State initState;
 	initState.position = {0,0};
@@ -30,20 +41,35 @@ int main(int argc, char **argv){
 	Mover mover(
 		initState,
 		initDestination,
-		1,
-		0.1);
+		move_speed,
+		stop_threshold);
+	
+	bool have_pose = false, have_destination = false; // flag to wait on first pose update
 
-	n.subscribe<geometry_msgs::Pose2D>("robot_pose", 10, boost::function<void(geometry_msgs::Pose2D)>([&](geometry_msgs::Pose2D pose){
+	public_nh.subscribe<geometry_msgs::Pose2D>("current_pose", 10, boost::function<void(geometry_msgs::Pose2D)>([&](geometry_msgs::Pose2D pose){
+		have_pose = true;
+		
 		State currentState;
 		currentState.position = arma::vec{pose.x, pose.y};
 		currentState.direction = direction_vector(pose.theta);
 		mover.setCurrentState(currentState);
 	}));
+	
+	public_nh.subscribe<geometry_msgs::Pose2D>("destination", 10, boost::function<void(geometry_msgs::Pose2D)>([&](geometry_msgs::Pose2D pose){
+		have_destination = true;
+		
+		State dest;
+		dest.position = arma::vec{pose.x, pose.y};
+		dest.direction = direction_vector(pose.theta);
+		mover.setDestination(dest);
+	}));
 
 	while (ros::ok()){
-		Command command = mover.getCommand();
-		geometry_msgs::Twist twistCommand = commandToTwist(command);
-		forward_pub.publish(twistCommand);
+		if(have_pose && have_destination){
+			Command command = mover.getCommand();
+			geometry_msgs::Twist twistCommand = commandToTwist(command);
+			forward_pub.publish(twistCommand);
+		}
 
 		loop_rate.sleep();
 	}

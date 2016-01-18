@@ -94,6 +94,11 @@ namespace ION{
 				 * Note: angles are not enforced at the moment, only position.
 				 */
 				Command getCommand() const;
+				
+				/**
+				 * Are we there yet?
+				 */
+				bool atDestination() const;
 			};
 		}
 	}

@@ -78,10 +78,8 @@ namespace ION{
 			Command Mover::getCommand() const{
 				Command retCommand;
 				
-				vec offset_from_dest = current_state.position - destination.position;
-				double distance_remaining = sqrt(dot(offset_from_dest, offset_from_dest));
-				
-				bool stop = distance_remaining > stop_threshold;
+				// stop if at destination
+				bool stop = atDestination();
 				
 				retCommand.dx = stop ? forward_move_speed : 0;
 				retCommand.dy = 0;
@@ -89,6 +87,13 @@ namespace ION{
 				retCommand.turn = stop ? getCorrectionAngleToDestination() : 0;
 				
 				return retCommand;
+			}
+			
+			bool Mover::atDestination() const{
+				vec offset_from_dest = current_state.position - destination.position;
+				double distance_remaining = sqrt(dot(offset_from_dest, offset_from_dest));
+				
+				return distance_remaining > stop_threshold;
 			}
 		}
 	}
