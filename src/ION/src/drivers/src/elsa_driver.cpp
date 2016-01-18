@@ -149,64 +149,7 @@ int main(int argc, char** argv)
 			char test[24];
 	 link.readData(24, test);
 			cout << test;
-	    //processData(test,state);//" -19,      0,      0."
-	    //robot_state.publish(state);
-     
-	    
-	    //vth=th+state.compass*M_PI/180;
-	    //th=state.compass*M_PI/180;//check units is degres what you need?
-	    //vy=(state.RightVelo+state.LeftVelo)/2;
-
-	    /*
-	    //compute odometry in a typical way given the velocities of the robot
-	    double dt = (current_time - last_time).toSec();
-  	double delta_x = (vx * cos(th) - vy * sin(th)) * dt;
-  	double delta_y = (vx * sin(th) + vy * cos(th)) * dt;
-  	x += delta_x;
-  	y += delta_y;
-	    
-	    current_time = ros::Time::now();//odom stuff
-	    //since all odometry is 6DOF we'll need a quaternion created from yaw
-	    geometry_msgs::Quaternion odom_quat = tf::createQuaternionMsgFromYaw(th);//units of compass right? (degrees)
-  	
-  	//first, we'll publish the transform over tf
-  	geometry_msgs::TransformStamped odom_trans;
-  	odom_trans.header.stamp = current_time;
-  	odom_trans.header.frame_id = "odom";
-  	odom_trans.child_frame_id = "base_link";
-  	
-  	odom_trans.transform.translation.x = x;
-  	odom_trans.transform.translation.y = y;
-  	odom_trans.transform.translation.z = 0.0;
-  	odom_trans.transform.rotation = odom_quat;
-  
-  	//send the transform
-  	odom_broadcaster.sendTransform(odom_trans);
-  	
-  	//next, we'll publish the odometry message over ROS
-  	nav_msgs::Odometry odom;
-  	odom.header.stamp = current_time;
-  	odom.header.frame_id = "odom";
-  	
-  	//set the position
-  	odom.pose.pose.position.x = x;
-  	odom.pose.pose.position.y = y;
-  	odom.pose.pose.position.z = 0.0;
-  	odom.pose.pose.orientation = odom_quat;
-  	//set the velocity
-  	odom.child_frame_id = "base_link";
-  	odom.twist.twist.linear.x = vx;
-  	odom.twist.twist.linear.y = vy;
-  	odom.twist.twist.angular.z = vth;
-  	//publish the message
-  	odom_pub.publish(odom);
-	    */
-	    
-	    //clear buffer (MAY NOT WORK)
-	    link.clearBuffer();
-	    
-	    //log and loop
-	   // ROS_INFO("%i,%i,%i",mech.twist_x, mech.twist_y, mech.twist_z);
+	   
 	    spinOnce();
 		loop_rate.sleep();
 	}
@@ -219,49 +162,7 @@ int main(int argc, char** argv)
 	return 0;
 }
 
-//dummy function
-/*
-void processData(string data,sb_msgs::RobotState &state)
-{
-//	state.compass.push_back(data[0] << 8|data[1]);
-	/*state.compass=data[0] << 8|data[1];//Replaced push_back
-	long right=(data[2] << 24|data[3] << 16|data[4] << 8|data[5]);
-	long left=(data[6] << 24|data[7] << 16|data[8] << 8|data[9]);
 
-	cout << "data: " << data << endl;
-	
-	int right, left; 
-	int compass_d;
-	
-	if (data.size() >= 5) 
-	{
-	 compass_d = atoi(data.substr(0,4).c_str());
-		cout << "1: " << compass_d << endl;
-	}
-	
-  if (data.size() >= 6)
-  {
-
-	  right=atoi(data.substr(5,7).c_str());
-    cout << "2: " << right << endl;
-  }
-
-  if (data.size() >= 14)
-  {
-    cout << "3: " << data.substr(13,7) << endl;
-	  left=atoi(data.substr(13,7).c_str());
-  }
-  
-	state.RightVelo = (float) (right/1000);
-	state.LeftVelo = (float) (left/1000);
-	cout << compass_d << endl;
-	state.compass = (int) compass_d;
-
-//	state.RightVelo.push_back(float(right)/1000);
-//	statee.LeftVelo.push_back(float(left)/1000);
-}
-*/
-//car_command_callback
 void car_command_callback(const geometry_msgs::TwistConstPtr& msg_ptr)
 {
 
