@@ -9,11 +9,11 @@ import serial
 import rospy
 from sensor_msgs.msg import Imu
 from geometry_msgs.msg import Quaternion, Vector3
-from std_msgs.ms import string
+from std_msgs.msg import String
 import math
 	
 def main ():
-        pub = rospy.Publisher ('imu/data', string, queue_size=10)
+        pub = rospy.Publisher ('imu/data', String, queue_size=10)
 	rospy.init_node('sb_gyro_accelerometer')
 	rate = rospy.Rate(10) # 10HZ
 	link = serial.Serial(port="/dev/ttyACM0",baudrate=9600)
