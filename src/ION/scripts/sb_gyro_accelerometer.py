@@ -16,7 +16,7 @@ def main ():
         pub = rospy.Publisher ('imu/data', Imu, queue_size=10)
 	rospy.init_node('sb_gyro_accelerometer')
 	rate = rospy.Rate(10) # 10HZ
-	link = serial.Serial(port="/dev/ttyACM0",baudrate=1000000)
+	link = serial.Serial(port="/dev/ttyACM0",baudrate=9600)
 	seqID = 0 #Sequently increasing ID for header in IMU
 	h = Header()
 	
