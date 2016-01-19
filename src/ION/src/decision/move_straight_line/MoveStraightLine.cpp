@@ -79,12 +79,12 @@ namespace ION{
 				Command retCommand;
 				
 				// stop if at destination
-				bool stop = atDestination();
+				bool move = !atDestination();
 				
-				retCommand.dx = stop ? forward_move_speed : 0;
+				retCommand.dx = move ? forward_move_speed : 0;
 				retCommand.dy = 0;
 				
-				retCommand.turn = stop ? getCorrectionAngleToDestination() : 0;
+				retCommand.turn = move ? getCorrectionAngleToDestination() : 0;
 				
 				return retCommand;
 			}
@@ -93,7 +93,7 @@ namespace ION{
 				vec offset_from_dest = current_state.position - destination.position;
 				double distance_remaining = sqrt(dot(offset_from_dest, offset_from_dest));
 				
-				return distance_remaining > stop_threshold;
+				return distance_remaining <= stop_threshold;
 			}
 		}
 	}

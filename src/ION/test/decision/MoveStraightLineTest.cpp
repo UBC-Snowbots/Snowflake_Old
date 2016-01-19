@@ -58,11 +58,18 @@ TEST_CASE("Mover"){
 		
 		Command cmd = mover.getCommand();
 		CHECK(cmd == (Command{0, 0, 0}));
+		CHECK(mover.atDestination());
+	}
+	SECTION("stop threshold"){
+		CHECK(!mover.atDestination());
+		mover.setStopThreshold(4);
+		CHECK(mover.atDestination());
 	}
 	SECTION("Go forward"){
 		Command cmd = mover.getCommand();
 		Command expected{0, MOVE_SPEED, 0};
 		CHECK(cmd == expected);
+		CHECK(!mover.atDestination());
 	}
 	SECTION("Go left"){
 		State state;
@@ -73,6 +80,7 @@ TEST_CASE("Mover"){
 		Command cmd = mover.getCommand();
 		Command expected{-arma::datum::pi/2, MOVE_SPEED, 0};
 		CHECK(cmd == expected);
+		CHECK(!mover.atDestination());
 	}
 	SECTION("Go right"){
 		State state;
@@ -83,6 +91,7 @@ TEST_CASE("Mover"){
 		Command cmd = mover.getCommand();
 		Command expected{arma::datum::pi/2, MOVE_SPEED, 0};
 		CHECK(cmd == expected);
+		CHECK(!mover.atDestination());
 	}
 	SECTION("Go back"){
 		State state;
@@ -93,5 +102,6 @@ TEST_CASE("Mover"){
 		Command cmd = mover.getCommand();
 		Command expected{arma::datum::pi, MOVE_SPEED, 0};
 		CHECK(cmd == expected);
+		CHECK(!mover.atDestination());
 	}
 }

@@ -1,6 +1,7 @@
 #include <ros/ros.h>
 #include <geometry_msgs/Twist.h>
 #include <geometry_msgs/Pose2D.h>
+#include <std_msgs/Bool.h>
 
 #include <ION/decision/move_straight_line/MoveStraightLine.hpp>
 
@@ -20,6 +21,7 @@ int main(int argc, char **argv){
 	ros::NodeHandle private_nh("~");
 
 	ros::Publisher forward_pub = private_nh.advertise<geometry_msgs::Twist>("command", 10);
+	ros::Publisher at_destination_pub = private_nh.advertise<std_msgs::Bool>("at_destination", 10);
 	ros::Rate loop_rate(10);
 	
 	double stop_threshold;
@@ -69,6 +71,9 @@ int main(int argc, char **argv){
 			Command command = mover.getCommand();
 			geometry_msgs::Twist twistCommand = commandToTwist(command);
 			forward_pub.publish(twistCommand);
+			std_msgs::Bool at_dest;
+			at_dest.data = mover.atDestination();
+			at_destination_pub.publish(at_dest);
 		}
 
 		loop_rate.sleep();
