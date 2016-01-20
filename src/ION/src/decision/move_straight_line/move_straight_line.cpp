@@ -23,7 +23,7 @@ int main(int argc, char **argv){
 	ros::NodeHandle private_nh("~");
 
 	ros::Publisher forward_pub = private_nh.advertise<geometry_msgs::Twist>("command", 10);
-	ros::Publisher at_destination_pub = private_nh.advertise<std_msgs::Bool>("at_destination", 10);
+	ros::Publisher at_destination_pub = private_nh.advertise<std_msgs::Bool>("at_destination", 10, true);
 	ros::Rate loop_rate(10);
 	
 	double stop_threshold;
@@ -66,15 +66,22 @@ int main(int argc, char **argv){
 		dest.direction = direction_vector_from_north(pose.theta);
 		mover.setDestination(dest);
 	}));
+	
+	bool was_at_destination = false;
 
 	while (ros::ok()){
 		if(have_pose && have_destination){
 			Command command = mover.getCommand();
 			geometry_msgs::Twist twistCommand = commandToTwist(command);
 			forward_pub.publish(twistCommand);
-			std_msgs::Bool at_dest;
-			at_dest.data = mover.atDestination();
-			at_destination_pub.publish(at_dest);
+			
+			bool at_destination = mover.atDestination();
+			if(at_destination != was_at_destination){
+				was_at_destination = at_destination;
+				std_msgs::Bool at_dest;
+				at_dest.data = at_destination;
+				at_destination_pub.publish(at_dest);
+			}
 		}
 		
 		ros::spinOnce();
