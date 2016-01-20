@@ -3,6 +3,9 @@
 #### start the sick node #######################################
 <node pkg="sicktoolbox_wrapper" type="sicklms"
 name="sicklms" output="screen">
+	
+	<param name="port" value="/dev/ttyUSB0" />
+	
 </node>
 
 <!--
