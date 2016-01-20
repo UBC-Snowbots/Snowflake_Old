@@ -28,7 +28,7 @@ name="laser_scan_matcher_node" output="screen">
 
 </node>
 
-#### start slam_gmapping ######################################
+#### start slam_gmapping #######################################
 <node pkg = "gmapping" type="slam_gmapping"
 name="slam_gmapping" output="screen">
     
@@ -40,5 +40,9 @@ name="slam_gmapping" output="screen">
     <param name="occ_thresh" value="0.1"/>
 
 </node>
+
+#### start waypoint_creator ####################################
+<node pkg = "ION" type="sb_waypoint_creator"
+name="waypoint_creator" output="screen"/>
 
 </launch>
