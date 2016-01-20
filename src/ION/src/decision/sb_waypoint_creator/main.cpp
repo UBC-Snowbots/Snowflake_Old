@@ -54,14 +54,25 @@ int main(int argc, char **argv){
         at_destination = at_destination;
     }));      
    
-    // Create first waypoint 4 m directly ahead and add to list
+    // Create waypoints and add to list
     geometry_msgs::Pose2D dest1;
     dest1.x = 4;
     dest1.y = 0;
     dest1.theta = 0;
+    geometry_msgs::Pose2D dest2;
+    dest2.x = 0;
+    dest2.y = 0;
+    dest1.theta = 0;
+    geometry_msgs::Pose2D dest3;
+    dest3.x = 2;
+    dest3.y = 0;
+    dest3.theta = 0;
 
+    
     Destinations destinations;
     destinations.add(dest1);
+    destinations.add(dest2);
+    destinations.add(dest3);
     
     // Main Loop to run while node is running
     while (ros::ok()){
