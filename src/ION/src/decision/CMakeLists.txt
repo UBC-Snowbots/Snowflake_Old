@@ -1,2 +1,3 @@
 add_subdirectory(decision_tree)
 add_subdirectory(move_straight_line)
+add_subdirectory(sb_waypoint_creator)
