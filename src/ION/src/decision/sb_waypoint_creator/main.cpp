@@ -1,5 +1,4 @@
 #include <ros/ros.h>
-#include <ros/console.h>
 #include <geometry_msgs/Pose2D.h>
 #include <nav_msgs/OccupancyGrid.h>
 #include <std_msgs/Bool.h>
