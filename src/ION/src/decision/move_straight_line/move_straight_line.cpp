@@ -48,7 +48,7 @@ int main(int argc, char **argv){
 	
 	bool have_pose = false, have_destination = false; // flag to wait on first pose update
 
-	public_nh.subscribe<geometry_msgs::Pose2D>("current_pose", 10, boost::function<void(geometry_msgs::Pose2D)>([&](geometry_msgs::Pose2D pose){
+	public_nh.subscribe<geometry_msgs::Pose2D>("pose2D", 10, boost::function<void(geometry_msgs::Pose2D)>([&](geometry_msgs::Pose2D pose){
 		have_pose = true;
 		
 		State currentState;
