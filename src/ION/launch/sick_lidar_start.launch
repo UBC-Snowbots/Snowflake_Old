@@ -1,11 +1,16 @@
 <launch>
 
-#### start the sick node ######################################
+#### start the sick node #######################################
 <node pkg="sicktoolbox_wrapper" type="sicklms"
 name="sicklms" output="screen">
 </node>
 
-#### publish initial base_link -> laser transform ######################
+<!--
+#### start sensor drivers ######################################
+<node pkg="ION" type="sb_gyro_accelerometer.py" name="sb_gyro_accelerometer" output="screen"/>
+-->
+
+#### publish initial base_link -> laser transform ##############
 <node pkg="tf" type="static_transform_publisher" name="base_link_to_laser" args="0 0 0 0 0 0 /base_link /laser 40"/>
 
 #### start the laser scan_matcher ##############################
