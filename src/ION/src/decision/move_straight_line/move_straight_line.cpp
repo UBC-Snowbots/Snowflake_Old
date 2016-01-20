@@ -3,6 +3,8 @@
 #include <geometry_msgs/Pose2D.h>
 #include <std_msgs/Bool.h>
 
+#include <cstdio>
+
 #include <ION/decision/move_straight_line/MoveStraightLine.hpp>
 
 using namespace ION::decision::move_straight_line;
@@ -48,8 +50,9 @@ int main(int argc, char **argv){
 	
 	bool have_pose = false, have_destination = false; // flag to wait on first pose update
 
-	public_nh.subscribe<geometry_msgs::Pose2D>("pose2D", 10, boost::function<void(geometry_msgs::Pose2D)>([&](geometry_msgs::Pose2D pose){
+	ros::Subscriber pose2d = public_nh.subscribe<geometry_msgs::Pose2D>("pose2D", 10, boost::function<void(geometry_msgs::Pose2D)>([&](geometry_msgs::Pose2D pose){
 		have_pose = true;
+		printf("pose2D\n");
 		
 		State currentState;
 		currentState.position = arma::vec{pose.x, pose.y};
@@ -57,9 +60,9 @@ int main(int argc, char **argv){
 		mover.setCurrentState(currentState);
 	}));
 	
-	public_nh.subscribe<geometry_msgs::Pose2D>("destination", 10, boost::function<void(geometry_msgs::Pose2D)>([&](geometry_msgs::Pose2D pose){
+	ros::Subscriber dest = public_nh.subscribe<geometry_msgs::Pose2D>("destination", 10, boost::function<void(geometry_msgs::Pose2D)>([&](geometry_msgs::Pose2D pose){
 		have_destination = true;
-		
+		printf("destination\n");
 		State dest;
 		dest.position = arma::vec{pose.x, pose.y};
 		dest.direction = direction_vector(pose.theta);
@@ -67,7 +70,9 @@ int main(int argc, char **argv){
 	}));
 
 	while (ros::ok()){
+		printf("test %i %i\n", have_pose, have_destination);
 		if(have_pose && have_destination){
+			printf("publish\n");
 			Command command = mover.getCommand();
 			geometry_msgs::Twist twistCommand = commandToTwist(command);
 			forward_pub.publish(twistCommand);

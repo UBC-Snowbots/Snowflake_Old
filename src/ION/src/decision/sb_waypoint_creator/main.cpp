@@ -20,13 +20,13 @@ class Destinations{
 
         // NEED TO REMEMBER TO DEAL WITH CASE OF NO DESTINATIONS HERE
         geometry_msgs::Pose2D getDestination(){
-            return destinations[0];
+            return destinations.front();
         }
         
         // Removes the first destination and returns new first destination
         geometry_msgs::Pose2D getNextDestination(){
             destinations.erase(destinations.begin());
-            return destinations[0];            
+            return destinations.front();            
         }
 };
 
@@ -39,12 +39,12 @@ int main(int argc, char **argv){
     ros::Publisher forward_pub = nh.advertise<geometry_msgs::Pose2D>("destination", 10);
 
     // Get map data
-    nh.subscribe<nav_msgs::OccupancyGrid>("map", 10, boost::function<void(nav_msgs::OccupancyGrid)>([&](nav_msgs::OccupancyGrid map){
+    ros::Subscriber map = nh.subscribe<nav_msgs::OccupancyGrid>("map", 10, boost::function<void(nav_msgs::OccupancyGrid)>([&](nav_msgs::OccupancyGrid map){
     
     }));
 
     // Get pose data
-    nh.subscribe<geometry_msgs::Pose2D>("pose2D", 10, boost::function<void(geometry_msgs::Pose2D)>([&](geometry_msgs::Pose2D pose){
+    ros::Subscriber pose2d = nh.subscribe<geometry_msgs::Pose2D>("pose2D", 10, boost::function<void(geometry_msgs::Pose2D)>([&](geometry_msgs::Pose2D pose){
         
     }));
 
