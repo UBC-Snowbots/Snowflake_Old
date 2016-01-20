@@ -73,6 +73,7 @@ namespace ION{
 				double stop_threshold;
 				double forward_move_speed;
 				public:
+				Mover();
 				Mover(const State& current_state,
 					const State& destination,
 					double forward_move_speed,

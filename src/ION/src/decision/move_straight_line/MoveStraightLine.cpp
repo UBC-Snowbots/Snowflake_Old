@@ -34,6 +34,14 @@ namespace ION{
 					angle;
 			}
 			
+			Mover::Mover(): Mover(
+					State{},
+					State{},
+					1,
+					0.1
+				)
+				{}
+			
 			Mover::Mover(const State& current_state,
 				const State& destination,
 				double forward_move_speed,

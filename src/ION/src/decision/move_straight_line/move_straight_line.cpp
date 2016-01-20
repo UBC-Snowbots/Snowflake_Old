@@ -16,6 +16,19 @@ geometry_msgs::Twist commandToTwist(const Command& command){
 	return twist;
 }
 
+Mover mover;
+bool have_pose = false;
+
+void receive_pose(geometry_msgs::Pose2D pose){
+	have_pose = true;
+	printf("pose2D\n");
+	
+	State currentState;
+	currentState.position = arma::vec{pose.x, pose.y};
+	currentState.direction = direction_vector(pose.theta);
+	mover.setCurrentState(currentState);
+}
+
 int main(int argc, char **argv){
 	ros::init(argc, argv, "move_straight_line");
 	ros::NodeHandle public_nh;
@@ -41,24 +54,13 @@ int main(int argc, char **argv){
 	State initDestination;
 	initDestination.position = {4, 0};
 	initDestination.direction = {1, 0};
-
-	Mover mover(
-		initState,
-		initDestination,
-		move_speed,
-		stop_threshold);
 	
-	bool have_pose = false, have_destination = false; // flag to wait on first pose update
+	mover.setMoveSpeed(move_speed);
+	mover.setStopThreshold(stop_threshold);
+	
+	bool have_destination = false; // flag to wait on first pose update
 
-	ros::Subscriber pose2d = public_nh.subscribe<geometry_msgs::Pose2D>("pose2D", 10, boost::function<void(geometry_msgs::Pose2D)>([&](geometry_msgs::Pose2D pose){
-		have_pose = true;
-		printf("pose2D\n");
-		
-		State currentState;
-		currentState.position = arma::vec{pose.x, pose.y};
-		currentState.direction = direction_vector(pose.theta);
-		mover.setCurrentState(currentState);
-	}));
+	ros::Subscriber pose2d = public_nh.subscribe<geometry_msgs::Pose2D>("pose2D", 10, &receive_pose);
 	
 	ros::Subscriber dest = public_nh.subscribe<geometry_msgs::Pose2D>("destination", 10, boost::function<void(geometry_msgs::Pose2D)>([&](geometry_msgs::Pose2D pose){
 		have_destination = true;
