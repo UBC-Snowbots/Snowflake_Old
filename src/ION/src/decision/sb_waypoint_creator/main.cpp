@@ -1,4 +1,5 @@
 #include <ros/ros.h>
+#include <ros/console.h>
 #include <geometry_msgs/Pose2D.h>
 #include <nav_msgs/OccupancyGrid.h>
 #include <std_msgs/Bool.h>
@@ -73,5 +74,11 @@ int main(int argc, char **argv){
             destination = destinations.getDestination();
         }
         forward_pub.publish(destination);
+
+        // Print present destination to screen
+        printf("x: %f \n", destination.x);
+        printf("y: %f \n", destination.y);
+        printf("theta: %f \n", destination.theta);
+        printf("----- \n");
     }
 }
