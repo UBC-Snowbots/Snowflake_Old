@@ -6,8 +6,8 @@ namespace ION{
 	namespace decision{
 		namespace move_straight_line{
 			
-			vec direction_vector(double angle){
-				return vec{sin(angle), cos(angle)};
+			vec direction_vector_from_north(double angle){
+				return vec{cos(angle), sin(angle)};
 			}
 			double angle_from_north(const vec& direction){
 				const vec north = {1, 0};

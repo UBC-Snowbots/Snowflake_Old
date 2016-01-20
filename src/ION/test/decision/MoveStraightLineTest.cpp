@@ -105,3 +105,42 @@ TEST_CASE("Mover"){
 		CHECK(!mover.atDestination());
 	}
 }
+
+TEST_CASE("angle_from_north"){
+	CHECK(angle_from_north(arma::vec{1,0}) == 0);
+	CHECK(angle_from_north(arma::vec{0,1}) == arma::datum::pi/2);
+	CHECK(angle_from_north(arma::vec{0,-1}) == arma::datum::pi * 3/2);
+	CHECK(angle_from_north(arma::vec{-1,0}) == arma::datum::pi);
+}
+
+bool vec_close_enough(arma::vec& a, arma::vec& b, double tolerance){
+	return (arma::accu( arma::abs(a-b) ) / a.n_elem) < tolerance;
+}
+
+TEST_CASE("direction_angle"){
+	arma::vec expected, actual;
+	
+	expected = {1,0};
+	actual = direction_vector_from_north(0);
+	CAPTURE(actual);
+	CAPTURE(expected);
+	CHECK(vec_close_enough(actual, expected, 0.001));
+	
+	expected = {-1,0};
+	actual = direction_vector_from_north(arma::datum::pi);
+	CAPTURE(actual);
+	CAPTURE(expected);
+	CHECK(vec_close_enough(actual, expected, 0.001));
+	
+	expected = {0,1};
+	actual = direction_vector_from_north(arma::datum::pi/2);
+	CAPTURE(actual);
+	CAPTURE(expected);
+	CHECK(vec_close_enough(actual, expected, 0.001));
+	
+	expected = {0,-1};
+	actual = direction_vector_from_north(arma::datum::pi * 3/2);
+	CAPTURE(actual);
+	CAPTURE(expected);
+	CHECK(vec_close_enough(actual, expected, 0.001));
+}

@@ -9,7 +9,7 @@ namespace ION{
 			 * Calculate a unit direction vector based on a given compass
 			 * angle.
 			 */
-			arma::vec direction_vector(double angle);
+			arma::vec direction_vector_from_north(double angle);
 			/**
 			 * Calculate the angle between the north direction vector (1, 0)
 			 * and the vector provided.
