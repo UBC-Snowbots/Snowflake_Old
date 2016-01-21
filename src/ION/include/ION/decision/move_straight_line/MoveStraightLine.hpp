@@ -29,9 +29,9 @@ namespace ION{
 			 */
 			struct State{
 				/// 2D unit vector describing where the robot is facing
-				arma::vec direction;
+				arma::vec direction{0,0};
 				/// 2D robot position (units in m.)
-				arma::vec position;
+				arma::vec position{0,0};
 			};
 	
 			/**
@@ -67,17 +67,14 @@ namespace ION{
 			 */
 			class Mover{
 				private:
-				State destination;
-				State current_state;
+				State destination{};
+				State current_state{};
 				
-				double stop_threshold;
-				double forward_move_speed;
+				double stop_threshold = 0.1; // m.
+				double forward_move_speed = 1; // m.
+				double explicit_turn_threshold = arma::datum::pi/8; // rad
 				public:
 				Mover();
-				Mover(const State& current_state,
-					const State& destination,
-					double forward_move_speed,
-					double stop_threshold = 0.1);
 				
 				void setDestination(const State& new_destination);
 				
@@ -86,6 +83,8 @@ namespace ION{
 				void setMoveSpeed(double move_speed);
 				
 				void setStopThreshold(double new_stop_threshold);
+				
+				void setExplicitTurnThreshold(double new_explicit_turn_threshold);
 				
 				double getCorrectionAngleToDestination() const;
 				/**
