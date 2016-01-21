@@ -34,23 +34,7 @@ namespace ION{
 					angle;
 			}
 			
-			Mover::Mover(): Mover(
-					State{},
-					State{},
-					1,
-					0.1
-				)
-				{}
-			
-			Mover::Mover(const State& current_state,
-				const State& destination,
-				double forward_move_speed,
-				double stop_threshold ):
-					current_state(current_state),
-					destination(destination),
-					forward_move_speed(forward_move_speed),
-					stop_threshold(stop_threshold)
-				{}
+			Mover::Mover(){}
 			
 			void Mover::setDestination(const State& new_destination){
 				destination = new_destination;
@@ -66,6 +50,10 @@ namespace ION{
 			
 			void Mover::setStopThreshold(double new_stop_threshold){
 				stop_threshold = new_stop_threshold;
+			}
+			
+			void Mover::setExplicitTurnThreshold(double new_explicit_turn_threshold){
+				explicit_turn_threshold = new_explicit_turn_threshold;
 			}
 			
 			double Mover::getCorrectionAngleToDestination() const{
@@ -89,10 +77,15 @@ namespace ION{
 				// stop if at destination
 				bool move = !atDestination();
 				
-				retCommand.dx = move ? forward_move_speed : 0;
+				double correction_angle_to_destination = getCorrectionAngleToDestination();
+				// should we stop and only turn until we're at least
+				// sort of pointing in the right direction?
+				bool explicit_turn = correction_angle_to_destination > explicit_turn_threshold;
+				
+				retCommand.dx = move && !explicit_turn ? forward_move_speed : 0;
 				retCommand.dy = 0;
 				
-				retCommand.turn = move ? getCorrectionAngleToDestination() : 0;
+				retCommand.turn = move ? correction_angle_to_destination : 0;
 				
 				return retCommand;
 			}

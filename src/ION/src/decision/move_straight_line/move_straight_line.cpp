@@ -26,27 +26,20 @@ int main(int argc, char **argv){
 	ros::Publisher at_destination_pub = private_nh.advertise<std_msgs::Bool>("at_destination", 10, true);
 	ros::Rate loop_rate(20);
 	
-	double stop_threshold;
-	if(!private_nh.getParam("stop_threshold", stop_threshold)){
-		stop_threshold = 0.1;
+	Mover mover;{
+		double stop_threshold;
+		if(private_nh.getParam("stop_threshold", stop_threshold)){
+			mover.setStopThreshold(stop_threshold);
+		}
+		double move_speed;
+		if(private_nh.getParam("move_speed", move_speed)){
+			mover.setMoveSpeed(move_speed);
+		}
+		double explicit_turn_threshold;
+		if(private_nh.getParam("explicit_turn_threshold", explicit_turn_threshold)){
+			mover.setExplicitTurnThreshold(explicit_turn_threshold);
+		}
 	}
-	double move_speed;
-	if(!private_nh.getParam("move_speed", move_speed)){
-		move_speed = 1;
-	}
-	
-	State initState;
-	initState.position = {0,0};
-	initState.direction = {1,0};
-	State initDestination;
-	initDestination.position = {4, 0};
-	initDestination.direction = {1, 0};
-
-	Mover mover(
-		initState,
-		initDestination,
-		move_speed,
-		stop_threshold);
 	
 	bool have_pose = false, have_destination = false; // flag to wait on first pose update
 
