@@ -24,7 +24,7 @@ int main(int argc, char **argv){
 
 	ros::Publisher forward_pub = private_nh.advertise<geometry_msgs::Twist>("command", 10);
 	ros::Publisher at_destination_pub = private_nh.advertise<std_msgs::Bool>("at_destination", 10, true);
-	ros::Rate loop_rate(10);
+	ros::Rate loop_rate(20);
 	
 	double stop_threshold;
 	if(!private_nh.getParam("stop_threshold", stop_threshold)){
