@@ -22,7 +22,7 @@ using namespace ros;
 
 //global constants
 static const string ROS_NODE_NAME = "driver";
-static const int ROS_LOOP_RATE = 20; //hz
+static const int ROS_LOOP_RATE = 200; //hz
 
 static const int BAUD_RATE = 115200;
 //static const string PORT_NAME = "/dev/ttyUSB";
