@@ -36,6 +36,33 @@ static const char IDENTIFIER_BYTE = 'B';
 
 static const int SECOND = 1000000;
 
+static const int TURN_RATE = 25; // 125 is max, 0 is min (will not turn)
+static const int MOVE_RATE = 25; // 125 is max, 0 is min (will not move)
+
+
+// Converts a velocity command (-1 to 1) to an apm command (255 to 000)
+string velocityCommandToAPMCommand(float velocity){
+    // Convert velocity to value between 255 and 0
+    string apm_command = to_string(125 - (velocity * MOVE_RATE));
+    // Add zeros to the front until the lenght is 3
+    while (apm_command.length() < 3){
+        apm_command.insert(0, "0");
+    }
+    return apm_command;
+}
+
+//Converts a rotation command (-2 to 2) to an apm command (000 to 255)
+string rotationCommandToAPMCommand(float rotation){
+    // Convert rotation to value between 0 and 255
+    string apm_command = to_string(125 + (0.5 * rotation * TURN_RATE));
+    // Add zeros to the front until length is 3
+    while (apm_command.length() < 3){
+        apm_command.insert(0, "0");
+    }
+    return apm_command;
+}
+
+
 int main(int argc, char** argv)
 {
     //initialize ros
@@ -72,33 +99,10 @@ int main(int argc, char** argv)
 	//subscribers and publishers
 
 	Subscriber command_sub = n.subscribe<geometry_msgs::Twist>("move_straight_line/command", 10, boost::function<void(geometry_msgs::Twist)>([&](geometry_msgs::Twist twist){
-		if(twist.linear.x > 0){
-		    twist_Y[0] = '0';
-		    twist_Y[1] = '7';
-		    twist_Y[2] = '5';
-		} else if (twist.linear.x == 0) {
-		    twist_Y[0] = '1';
-		    twist_Y[1] = '2';
-		    twist_Y[2] = '5';
-		} else {
-		    twist_Y[0] = '2';
-		    twist_Y[1] = '5';
-		    twist_Y[2] = '5';
-		}
-		if(twist.angular.z > 0){
-		    twist_z[0] = '1';
-		    twist_z[1] = '0';
-                    twist_z[2] = '0';
-		} else if (twist.angular.z < 0){
-		    twist_z[0] = '1';
-		    twist_z[1] = '5';
-                    twist_z[2] = '0';
-		} else {
-		    twist_z[0] = '1';
-		    twist_z[1] = '2';
-                    twist_z[2] = '5';
-		}
-	}));	
+       // Write converted velocity and rotate commands to twist_Y and twist_z 
+       velocityCommandToAPMCommand(twist.linear.x).copy(twist_Y, 3, 0);
+       rotationCommandToAPMCommand(twist.angular.z).copy(twist_z, 3, 0);
+    }));	
 	
 	ROS_INFO("arduino_driver ready");
 
