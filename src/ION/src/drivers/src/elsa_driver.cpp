@@ -40,7 +40,7 @@ static const int MOVE_RATE = 25; // 125 is max, 0 is min (will not move)
 // Converts a velocity command (-1 to 1) to an apm command (255 to 000)
 string velocityCommandToAPMCommand(float velocity){
     // Convert velocity to value between 255 and 0
-    string apm_command = to_string(125 - (velocity * MOVE_RATE));
+    string apm_command = to_string(floor(125 - (velocity * MOVE_RATE)));
     // Add zeros to the front until the lenght is 3
     while (apm_command.length() < 3){
         apm_command.insert(0, "0");
@@ -83,11 +83,10 @@ int main(int argc, char** argv)
 	    {
 	        cout << "connected on port " << UNO_PORT_NAME << i << endl;
 	        break;
-		} else if (link.connect(BAUD_RATE,(BLUETOOTH_PORT_NAME + ss.str()))) {
-			cout << "connected on bluetooth port " << BLUETOOTH_PORT_NAME << i << endl;
-			break;
-	    } else if (i > 15) {
-	        cout << "unable to find a device" << endl;
+	    }  else if (i > 15) {
+	        cout << "unable to find a device," << endl
+		        << "did you remember to set usb permissions?" << endl
+			<< "sudo chmod a+rw /dev/ttyACM0" << endl;
 	        return 0;
 	    }
 	}
