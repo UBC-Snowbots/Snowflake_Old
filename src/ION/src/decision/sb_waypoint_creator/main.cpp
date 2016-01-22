@@ -65,7 +65,7 @@ int main(int argc, char **argv){
     dest2.y = 0;
     dest1.theta = 0;
     geometry_msgs::Pose2D dest3;
-    dest3.x = 2;
+    dest3.x = 0;
     dest3.y = 0;
     dest3.theta = 0;
 
