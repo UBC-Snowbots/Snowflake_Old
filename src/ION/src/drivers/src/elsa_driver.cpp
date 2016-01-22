@@ -27,9 +27,6 @@ static const int ROS_LOOP_RATE = 200; //hz
 static const int BAUD_RATE = 115200;
 //static const string PORT_NAME = "/dev/ttyUSB";
 static const string UNO_PORT_NAME = "/dev/ttyACM";
-static const string BLUETOOTH_PORT_NAME = "/dev/rfcomm";
-
-static const string ESTOP_TOPIC = "eStop";
 
 static const string INIT_STRING = "BG";
 static const char IDENTIFIER_BYTE = 'B';
@@ -71,8 +68,8 @@ int main(int argc, char** argv)
 	Rate loop_rate(ROS_LOOP_RATE);
 
     //Set all values to neutral 
-    char twist_X[3]={'1','2','5'}; //Strafe (normally not used, look up strafe)
-    char twist_Y[3]={'1','2','5'}; //Forward/Backward
+    char twist_Y[3]={'1','2','5'}; //Strafe (normally not used, look up strafe)
+    char twist_X[3]={'1','2','5'}; //Forward/Backward
     char twist_z[3]={'1','2','5'}; //Rotation
     bool eStop = false;
 
@@ -100,7 +97,7 @@ int main(int argc, char** argv)
 
 	Subscriber command_sub = n.subscribe<geometry_msgs::Twist>("move_straight_line/command", 10, boost::function<void(geometry_msgs::Twist)>([&](geometry_msgs::Twist twist){
        // Write converted velocity and rotate commands to twist_Y and twist_z 
-       velocityCommandToAPMCommand(twist.linear.x).copy(twist_Y, 3, 0);
+       velocityCommandToAPMCommand(twist.linear.x).copy(twist_X, 3, 0);
        rotationCommandToAPMCommand(twist.angular.z).copy(twist_z, 3, 0);
     }));	
 	
@@ -115,11 +112,10 @@ int main(int argc, char** argv)
 	    stringstream ss;
 	    if (eStop)
 	    {	
-		cout << "eStop on" << endl;
-		ss << (char)IDENTIFIER_BYTE << "125125125";
+		    cout << "eStop on" << endl;
+		    ss << (char)IDENTIFIER_BYTE << "125125125";
 	    } else {  
-		ss << (char)IDENTIFIER_BYTE<< twist_X[0] << twist_X[1] << twist_X[2] << twist_Y[0] << twist_Y[1] << twist_Y[2] << twist_z[0] << twist_z[1] << twist_z[2];
-
+		    ss << (char)IDENTIFIER_BYTE<< twist_Y[0] << twist_Y[1] << twist_Y[2] << twist_X[0] << twist_X[1] << twist_X[2] << twist_z[0] << twist_z[1] << twist_z[2];
 	    }
 	    cout << ss.str() << endl;
 	    link.writeData(ss.str(), 10); 
