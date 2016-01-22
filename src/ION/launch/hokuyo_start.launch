@@ -9,7 +9,7 @@ name="hokuyo_node" output="screen">
 <node pkg="tf" type="static_transform_publisher" name="base_link_to_laser" args="0 0 0 0 0 0 /base_link /laser 40"/>
 
 #### start the laser scan_matcher ##############################
-<node pkg="laser_scan_matcher" type="laser_scan_matcher_node" 
+<node pkg="laser_scan_matcher" type="laser_scan_matcher_node"
 name="laser_scan_matcher_node" output="screen">
 
     <param name="fixed_frame" value = "odom"/>
@@ -26,7 +26,7 @@ name="laser_scan_matcher_node" output="screen">
 #### start slam_gmapping ######################################
 <node pkg = "gmapping" type="slam_gmapping"
 name="slam_gmapping" output="screen">
-    
+
     <param name="map_update_interval" value="0.5"/>
     <param name="maxUrange" value="4.0"/>
     <param name="linear_update" value="0.2"/>
