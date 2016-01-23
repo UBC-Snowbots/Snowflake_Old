@@ -20,7 +20,7 @@ namespace ION{
 					norm_dot(
 						north, 
 						direction));
-				std::cout << "acute_angle " << acute_angle << std::endl;
+				//std::cout << "acute_angle " << acute_angle << std::endl;
 				// horizontal component is Y in our coordinate space
 				double horizontal_component = direction[1];
 				
