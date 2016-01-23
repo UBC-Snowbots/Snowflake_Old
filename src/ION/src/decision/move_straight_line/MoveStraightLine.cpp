@@ -29,7 +29,7 @@ namespace ION{
 							// angle
 			}
 			double normalise_turning_angle(double angle){
-				double limited_angle = fmod(angle, datum::pi*2);
+				double limited_angle = remainder(angle, datum::pi*2);
 				if(limited_angle > datum::pi){
 					// too far to the right
 					return -2*datum::pi + limited_angle;

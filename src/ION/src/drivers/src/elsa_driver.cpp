@@ -52,8 +52,42 @@ string velocityCommandToAPMCommand(float velocity){
     return apm_command;
 }
 
+unsigned char rotationToAPMValue(double rotation){
+	// ceiling and floor to max/min expected inputs
+	double rotation_in_bounds;{
+		if(rotation > M_PI){
+			rotation_in_bounds = M_PI;
+		}else if(rotation < -M_PI){
+			rotation_in_bounds = -M_PI;
+		}else{
+			rotation_in_bounds = rotation;
+		}
+	}
+	char val_from_float = 125 - round(TURN_RATE * rotation_in_bounds / M_PI);
+	
+	const unsigned char MIN_TURN = 125 - TURN_RATE;
+	const unsigned char MAX_TURN = 125 + TURN_RATE;
+	// ceiling/floor to max/min specified outputs
+	unsigned char apm_value;{
+		if(val_from_float < MIN_TURN){
+			apm_value = MIN_TURN;
+		}else if(val_from_float > MAX_TURN){
+			apm_value = MAX_TURN;
+		}else{
+			apm_value = val_from_float;
+		}
+	}
+	return apm_value;
+}
+
+string rotationValueToAPMCommand(unsigned char value){
+	char output[4] = {0};
+	sprintf(&output, "%u03", value);
+	return string(&output, 3);
+}
+
 //Converts a rotation command (-PI to PI) to an apm command (000 to 255)
-string rotationCommandToAPMCommand(float rotation){
+/*string rotationCommandToAPMCommand(float rotation){
     // If value is outside the bounds (-PI to PI) then take remainder
     // (fmod is just modulus for floats)
     rotation = fmod(rotation, M_PI);
@@ -64,7 +98,7 @@ string rotationCommandToAPMCommand(float rotation){
         apm_command.insert(0, "0");
     }
     return apm_command;
-}
+}*/
 
 
 int main(int argc, char** argv)
@@ -102,9 +136,10 @@ int main(int argc, char** argv)
 	//subscribers and publishers
 
 	Subscriber command_sub = n.subscribe<geometry_msgs::Twist>("move_straight_line/command", 10, boost::function<void(geometry_msgs::Twist)>([&](geometry_msgs::Twist twist){
-       // Write converted velocity and rotate commands to twist_Y and twist_z 
-       velocityCommandToAPMCommand(twist.linear.x).copy(twist_X, 3, 0);
-       rotationCommandToAPMCommand(twist.angular.z).copy(twist_z, 3, 0);
+		// Write converted velocity and rotate commands to twist_Y and twist_z 
+		velocityCommandToAPMCommand(twist.linear.x).copy(twist_X, 3, 0);
+		rotationValueToAPMCommand(
+			rotationToAPM(twist.angular.z)).copy(twist_z, 3, 0);
     }));	
 	
 	ROS_INFO("arduino_driver ready");
