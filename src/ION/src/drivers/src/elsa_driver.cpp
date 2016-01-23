@@ -82,8 +82,8 @@ unsigned char rotationToAPMValue(double rotation){
 
 string rotationValueToAPMCommand(unsigned char value){
 	char output[4] = {0};
-	sprintf(&output, "%u03", value);
-	return string(&output, 3);
+	sprintf(&output[0], "%u03", value);
+	return string(&output[0], 3);
 }
 
 //Converts a rotation command (-PI to PI) to an apm command (000 to 255)
@@ -139,7 +139,7 @@ int main(int argc, char** argv)
 		// Write converted velocity and rotate commands to twist_Y and twist_z 
 		velocityCommandToAPMCommand(twist.linear.x).copy(twist_X, 3, 0);
 		rotationValueToAPMCommand(
-			rotationToAPM(twist.angular.z)).copy(twist_z, 3, 0);
+			rotationToAPMValue(twist.angular.z)).copy(twist_z, 3, 0);
     }));	
 	
 	ROS_INFO("arduino_driver ready");
