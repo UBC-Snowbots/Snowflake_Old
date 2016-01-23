@@ -82,8 +82,8 @@ unsigned char rotationToAPMValue(double rotation){
 
 string rotationValueToAPMCommand(unsigned char value){
 	char output[4] = {0};
-	snprintf(&output[0], 4, "%u03", value);
-	return string(&output[0]);
+	snprintf(&output[0], 4, "%03u", value);
+	return string(&output[0], 3);
 }
 
 //Converts a rotation command (-PI to PI) to an apm command (000 to 255)
