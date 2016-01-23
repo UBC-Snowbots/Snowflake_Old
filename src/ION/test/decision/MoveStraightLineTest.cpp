@@ -164,6 +164,23 @@ TEST_CASE("Mover"){
 			
 			CHECK(mover.getCorrectionAngleToDestination() == Approx(arma::datum::pi/6));
 		}
+		SECTION("Down and to the right"){
+			State state;
+			state.position = {5,-1};
+			state.direction = direction_vector_from_north(5/4 * arma::datum::pi);
+			mover.setCurrentState(state);
+			
+			CHECK(mover.getCorrectionAngleToDestination() == Approx(-arma::datum::pi/4));
+		}
+		SECTION("Down and to the left, no actual correction needed"){
+			State state;
+			state.position = {5,1};
+			state.direction = direction_vector_from_north(arma::datum::pi * 5/4);
+			CAPTURE(state.direction);
+			mover.setCurrentState(state);
+			
+			CHECK(mover.getCorrectionAngleToDestination() == Approx(0));
+		}
 	}
 	// With the possibility of stopping to execute sharp turns
 	SECTION("Direction, avoid sharp turns"){
@@ -280,6 +297,12 @@ TEST_CASE("direction_angle"){
 	
 	expected = {0,-1};
 	actual = direction_vector_from_north(arma::datum::pi * 3/2);
+	CAPTURE(actual);
+	CAPTURE(expected);
+	CHECK(vec_close_enough(actual, expected, 0.001));
+	
+	expected = normalise(arma::vec{-0.5,-0.5});
+	actual = direction_vector_from_north(arma::datum::pi * 5/4);
 	CAPTURE(actual);
 	CAPTURE(expected);
 	CHECK(vec_close_enough(actual, expected, 0.001));

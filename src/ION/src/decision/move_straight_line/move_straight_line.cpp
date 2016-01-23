@@ -23,7 +23,7 @@ int main(int argc, char **argv){
 	ros::NodeHandle private_nh("~");
 
 	ros::Publisher forward_pub = private_nh.advertise<geometry_msgs::Twist>("command", 10);
-	ros::Publisher at_destination_pub = private_nh.advertise<std_msgs::Bool>("at_destination", 10, true);
+	ros::Publisher at_destination_pub = private_nh.advertise<std_msgs::Bool>("at_destination", 1, true);
 	ros::Rate loop_rate(20);
 	
 	Mover mover;{
@@ -39,10 +39,13 @@ int main(int argc, char **argv){
 		}
 		double explicit_turn_threshold;
 		if(private_nh.getParam("explicit_turn_threshold", explicit_turn_threshold)){
-			std::cout << "explicit_turn_threshold: " << explicit_turn_threshold << std::endl;
 			mover.setExplicitTurnThreshold(explicit_turn_threshold);
 		}
 	}
+	ROS_INFO("move_straight_line started\n");
+	ROS_INFO("move_speed: %f\n", mover.getMoveSpeed());
+	ROS_INFO("stop_threshold: %f\n", mover.getStopThreshold());
+	ROS_INFO("explicit_turn_threshold: %f\n", mover.getExplicitTurnThreshold());
 	
 	bool have_pose = false, have_destination = false; // flag to wait on first pose update
 
@@ -50,7 +53,7 @@ int main(int argc, char **argv){
 		have_pose = true;
 		
 		State currentState;
-		currentState.position = arma::vec{pose.x, pose.y};
+		currentState.position = arma::vec{pose.x, -pose.y};
 		currentState.direction = direction_vector_from_north(-pose.theta);
 		mover.setCurrentState(currentState);
 	}));
