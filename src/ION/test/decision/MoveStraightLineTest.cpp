@@ -167,6 +167,8 @@ TEST_CASE("Mover"){
 	}
 	// With the possibility of stopping to execute sharp turns
 	SECTION("Direction, avoid sharp turns"){
+		mover.setExplicitTurnThreshold(0.1);
+		REQUIRE(mover.getExplicitTurnThreshold() == 0.1);
 		SECTION("Turn only"){
 			State state;
 			state.position = {6,0};
@@ -188,14 +190,44 @@ TEST_CASE("Mover"){
 			State state;
 			state.position = {0,0};
 			// threshold defaults to pi/8, so we should still move
-			state.direction = direction_vector_from_north(arma::datum::pi/16);
+			state.direction = direction_vector_from_north(0.05);
 			mover.setCurrentState(state);
 			
 			Command cmd = mover.getCommand();
-			Command expected{-arma::datum::pi/16, MOVE_SPEED, 0};
-			INFO("cmd = " << to_string(cmd));
-			INFO("expected = " << to_string(expected));
-			CHECK(test_command_close_enough(cmd, expected, 0.00001));
+			CHECK(cmd.dx == 1);
+		}
+		SECTION("Stop on > 0.2"){
+			State state;
+			state.position = {0,-4};
+			// heading off by 0.2
+			state.direction = direction_vector_from_north(arma::datum::pi/4 + 0.2);
+			mover.setCurrentState(state);
+			
+			Command cmd = mover.getCommand();
+			CHECK(cmd.dx == 0);
+			CHECK(mover.getCorrectionAngleToDestination() == Approx(-0.2));
+		}
+		SECTION("Stop on > |-0.2|"){
+			State state;
+			state.position = {0,-4};
+			// heading off by -0.2
+			state.direction = direction_vector_from_north(arma::datum::pi/4 - 0.2);
+			mover.setCurrentState(state);
+			
+			Command cmd = mover.getCommand();
+			CHECK(cmd.dx == 0);
+			CHECK(mover.getCorrectionAngleToDestination() == Approx(0.2));
+		}
+
+		SECTION("Go when < 0.2"){
+			State state;
+			state.position = {0,-4};
+			// heading off by 0.2
+			state.direction = direction_vector_from_north(arma::datum::pi/4 - 0.05);
+			mover.setCurrentState(state);
+			
+			Command cmd = mover.getCommand();
+			CHECK(cmd.dx == 1);
 		}
 	}
 }

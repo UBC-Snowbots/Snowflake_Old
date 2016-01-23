@@ -67,6 +67,18 @@ namespace ION{
 				explicit_turn_threshold = new_explicit_turn_threshold;
 			}
 			
+			double Mover::getStopThreshold() const{
+				return stop_threshold;
+			}
+				
+			double Mover::getMoveSpeed() const{
+				return forward_move_speed;
+			}
+				
+			double Mover::getExplicitTurnThreshold() const{
+				return explicit_turn_threshold;
+			}
+			
 			double Mover::getCorrectionAngleToDestination() const{
 				vec dest = destination.position;
 				vec pos = current_state.position;
@@ -93,7 +105,7 @@ namespace ION{
 				double correction_angle_to_destination = getCorrectionAngleToDestination();
 				// should we stop and only turn until we're at least
 				// sort of pointing in the right direction?
-				bool explicit_turn = abs(correction_angle_to_destination) > explicit_turn_threshold;
+				bool explicit_turn = fabs(correction_angle_to_destination) > explicit_turn_threshold;
 				
 				retCommand.dx = move && !explicit_turn ? forward_move_speed : 0;
 				retCommand.dy = 0;

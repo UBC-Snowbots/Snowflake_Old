@@ -86,6 +86,12 @@ namespace ION{
 				
 				void setExplicitTurnThreshold(double new_explicit_turn_threshold);
 				
+				double getStopThreshold() const;
+				
+				double getMoveSpeed() const;
+				
+				double getExplicitTurnThreshold() const;
+				
 				double getCorrectionAngleToDestination() const;
 				/**
 				 * Compute a command to move from the current state
