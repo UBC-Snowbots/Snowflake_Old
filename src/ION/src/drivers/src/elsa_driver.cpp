@@ -37,7 +37,7 @@ static const int SECOND = 1000000;
 // Increasing these values will make the robot more responsive, but also less controllable.
 // The robot may have issue with really high rates, with just one motor working in some cases
 // ADJUST WITH CAUTION
-static const int TURN_RATE = 25; // 125 is max, 0 is min (will not turn)
+static const int TURN_RATE = 75; // 125 is max, 0 is min (will not turn)
 static const int MOVE_RATE = 25; // 125 is max, 0 is min (will not move)
 
 
@@ -58,7 +58,7 @@ string rotationCommandToAPMCommand(float rotation){
     // (fmod is just modulus for floats)
     rotation = fmod(rotation, M_PI);
     // Convert rotation to value between 0 and 255
-    string apm_command = to_string(125 + (0.5 * rotation * TURN_RATE));
+    string apm_command = to_string(125 - (TURN_RATE * (rotation / M_PI)));
     // Add zeros to the front until length is 3
     while (apm_command.length() < 3){
         apm_command.insert(0, "0");
