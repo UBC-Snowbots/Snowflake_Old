@@ -70,9 +70,9 @@ namespace ION{
 				State destination{};
 				State current_state{};
 				
-				double stop_threshold = 0.1; // m.
+				double stop_threshold = 0.2; // m.
 				double forward_move_speed = 1; // m.
-				double explicit_turn_threshold = arma::datum::pi/8; // rad
+				double explicit_turn_threshold = 0.05;//arma::datum::pi/8; // rad
 				public:
 				Mover();
 				
