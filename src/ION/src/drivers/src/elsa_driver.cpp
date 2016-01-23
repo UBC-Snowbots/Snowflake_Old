@@ -62,7 +62,7 @@ double bound_rotation(double rotation){
 	}
 }
 
-int bounded_rotation_to_APMValue(double rotation){
+int bounded_rotation_to_APMValue(double rotation_in_bounds){
 	return 125 - round(TURN_RATE * rotation_in_bounds / M_PI);
 }
 
