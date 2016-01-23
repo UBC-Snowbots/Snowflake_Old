@@ -3,6 +3,7 @@
 #### start the hokoyu_node #####################################
 <node pkg="hokuyo_node" type="hokuyo_node"
 name="hokuyo_node" output="screen">
+	<param name="port" value="/dev/ttyACM1"/>
 </node>
 
 #### publish initial base_link -> laser transform ######################
@@ -35,5 +36,13 @@ name="slam_gmapping" output="screen">
     <param name="occ_thresh" value="0.1"/>
 
 </node>
+
+#### start waypoint_creator ####################################
+<node pkg="ION" type="sb_waypoint_creator"
+name="sb_waypoint_creator" output="screen"/>
+
+#### start move_straight_line ##################################
+<node pkg="ION" type="move_straight_line"
+name="move_straight_line" output="screen"/>
 
 </launch>
