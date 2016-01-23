@@ -20,7 +20,7 @@ namespace ION{
 					norm_dot(
 						north, 
 						direction));
-				//std::cout << "acute_angle " << acute_angle << std::endl;
+
 				// horizontal component is Y in our coordinate space
 				double horizontal_component = direction[1];
 				
@@ -85,8 +85,6 @@ namespace ION{
 				// normalise to angle from north
 				double angle_to_destination = angle_from_north(dest - pos);
 				double current_angle = angle_from_north(current_state.direction);
-				
-				//std::cout << (dest-pos) << " " << current_state.direction << " " << angle_to_destination << " " << current_angle << std::endl;
 				
 				// return normalised angle so drivers don't turn obtuse angles
 				return normalise_turning_angle(

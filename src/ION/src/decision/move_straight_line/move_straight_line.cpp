@@ -3,8 +3,6 @@
 #include <geometry_msgs/Pose2D.h>
 #include <std_msgs/Bool.h>
 
-#include <cstdio>
-
 #include <ION/decision/move_straight_line/MoveStraightLine.hpp>
 
 using namespace ION::decision::move_straight_line;
@@ -29,12 +27,10 @@ int main(int argc, char **argv){
 	Mover mover;{
 		double stop_threshold;
 		if(private_nh.getParam("stop_threshold", stop_threshold)){
-			std::cout << "stop_threshold: " << stop_threshold << std::endl;
 			mover.setStopThreshold(stop_threshold);
 		}
 		double move_speed;
 		if(private_nh.getParam("move_speed", move_speed)){
-			std::cout << "move_speed: " << move_speed << std::endl;
 			mover.setMoveSpeed(move_speed);
 		}
 		double explicit_turn_threshold;
