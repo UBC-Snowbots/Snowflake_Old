@@ -52,23 +52,29 @@ string velocityCommandToAPMCommand(float velocity){
     return apm_command;
 }
 
-unsigned char rotationToAPMValue(double rotation){
-	// ceiling and floor to max/min expected inputs
-	double rotation_in_bounds;{
-		if(rotation > M_PI){
-			rotation_in_bounds = M_PI;
-		}else if(rotation < -M_PI){
-			rotation_in_bounds = -M_PI;
-		}else{
-			rotation_in_bounds = rotation;
-		}
+double bound_rotation(double rotation){
+	if(rotation > M_PI){
+		return M_PI;
+	}else if(rotation < -M_PI){
+		return -M_PI;
+	}else{
+		return rotation;
 	}
-	char val_from_float = 125 - round(TURN_RATE * rotation_in_bounds / M_PI);
+}
+
+int bounded_rotation_to_APMValue(double rotation){
+	return 125 - round(TURN_RATE * rotation_in_bounds / M_PI);
+}
+
+int rotationToAPMValue(double rotation){
+	// ceiling and floor to max/min expected inputs
+	double rotation_in_bounds = bound_rotation(rotation);
+	int val_from_float = bounded_rotation_to_APMValue(rotation_in_bounds);
 	
 	const unsigned char MIN_TURN = 125 - TURN_RATE;
 	const unsigned char MAX_TURN = 125 + TURN_RATE;
 	// ceiling/floor to max/min specified outputs
-	unsigned char apm_value;{
+	int apm_value;{
 		if(val_from_float < MIN_TURN){
 			apm_value = MIN_TURN;
 		}else if(val_from_float > MAX_TURN){
