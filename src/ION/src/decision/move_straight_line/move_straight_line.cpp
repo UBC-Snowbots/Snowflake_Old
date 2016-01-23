@@ -12,7 +12,7 @@ using namespace ION::decision::move_straight_line;
 geometry_msgs::Twist commandToTwist(const Command& command){
 	geometry_msgs::Twist twist;
 	twist.linear.x = command.dx;
-	twist.angular.z = command.turn;
+	twist.angular.z = -command.turn;
 	return twist;
 }
 
@@ -48,7 +48,7 @@ int main(int argc, char **argv){
 		
 		State currentState;
 		currentState.position = arma::vec{pose.x, pose.y};
-		currentState.direction = direction_vector_from_north(pose.theta);
+		currentState.direction = direction_vector_from_north(-pose.theta);
 		mover.setCurrentState(currentState);
 	}));
 	
@@ -56,7 +56,7 @@ int main(int argc, char **argv){
 		have_destination = true;
 		State dest;
 		dest.position = arma::vec{pose.x, pose.y};
-		dest.direction = direction_vector_from_north(pose.theta);
+		dest.direction = direction_vector_from_north(-pose.theta);
 		mover.setDestination(dest);
 	}));
 	

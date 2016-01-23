@@ -39,9 +39,6 @@ namespace ION{
 				}else{
 					return limited_angle;
 				}
-				/*return angle > datum::pi ?
-					-(datum::pi*2 - angle) :
-					angle;*/
 			}
 			
 			Mover::Mover(){}

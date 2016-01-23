@@ -115,8 +115,26 @@ TEST_CASE("Mover"){
 			CHECK(!mover.atDestination());
 		}
 	}
+	SECTION("Direction, check correctness"){
+		SECTION("Correct left"){
+			State state;
+			state.position = {0,0};
+			state.direction = direction_vector_from_north(arma::datum::pi/6);
+			mover.setCurrentState(state);
+			
+			CHECK(mover.getCorrectionAngleToDestination() == Approx(-arma::datum::pi/6));
+		}
+		SECTION("Correct right"){
+			State state;
+			state.position = {0,0};
+			state.direction = direction_vector_from_north(-arma::datum::pi/6);
+			mover.setCurrentState(state);
+			
+			CHECK(mover.getCorrectionAngleToDestination() == Approx(arma::datum::pi/6));
+		}
+	}
 	// With the possibility of stopping to execute sharp turns
-	SECTION("Direction"){
+	SECTION("Direction, avoid sharp turns"){
 		SECTION("Turn only"){
 			State state;
 			state.position = {6,0};
