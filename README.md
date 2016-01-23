@@ -15,7 +15,7 @@ Building the repository AFTER you've cloned it
 
 ### Without Vagrant ###
 
-This is a more involved process, so unless you need it using Vagrant is recommended. As of writing, this requires Ubuntu or something close. Try other systems at your own risk.
+This is a more involved process so unless you need it, we recommend just using Vagrant instead. As of writing, this requires Ubuntu or something close. Try other systems at your own risk.
 
 First, install [Chef](https://www.chef.io/chef/), usually by typing `sudo apt-get install chef`. Then, make sure you have ruby (type `ruby --version` - it should say 1.9.3 or something similar). If not, `sudo apt-get install ruby` should do it.
 
