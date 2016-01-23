@@ -3,6 +3,7 @@
 #### start the hokoyu_node #####################################
 <node pkg="hokuyo_node" type="hokuyo_node"
 name="hokuyo_node" output="screen">
+    <param name="port" value="/dev/ttyACM1"/>
 </node>
 
 #### publish initial base_link -> laser transform ######################
