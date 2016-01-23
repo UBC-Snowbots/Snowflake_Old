@@ -14,7 +14,7 @@ namespace ION{
 			 * Calculate the angle between the north direction vector (1, 0)
 			 * and the vector provided.
 			 */
-			double angle_from_north(const arma::vec& direction);
+			double angle_from_north(arma::vec direction);
 			
 			/**
 			 * Normalises and angle in the range [0, 2pi] to an angle in

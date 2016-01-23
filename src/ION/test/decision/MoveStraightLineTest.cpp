@@ -124,6 +124,38 @@ TEST_CASE("Mover"){
 			
 			CHECK(mover.getCorrectionAngleToDestination() == Approx(-arma::datum::pi/6));
 		}
+		SECTION("Simultaneous heading + direction right"){
+			State state;
+			state.position = {0,-4};
+			state.direction = direction_vector_from_north(arma::datum::pi/6);
+			mover.setCurrentState(state);
+			
+			CHECK(mover.getCorrectionAngleToDestination() == Approx(arma::datum::pi/4 - arma::datum::pi/6));
+		}
+		SECTION("Simultaneous heading + direction left"){
+			State state;
+			state.position = {0,4};
+			state.direction = direction_vector_from_north(-arma::datum::pi/6);
+			mover.setCurrentState(state);
+			
+			CHECK(mover.getCorrectionAngleToDestination() == Approx(-arma::datum::pi/4 + arma::datum::pi/6));
+		}
+		SECTION("Simultaneous heading + direction left (opposite)"){
+			State state;
+			state.position = {0,4};
+			state.direction = direction_vector_from_north(arma::datum::pi/6);
+			mover.setCurrentState(state);
+			
+			CHECK(mover.getCorrectionAngleToDestination() == Approx(-arma::datum::pi/4 - arma::datum::pi/6));
+		}
+		SECTION("Simultaneous heading + direction right (opposite)"){
+			State state;
+			state.position = {0,-4};
+			state.direction = direction_vector_from_north(-arma::datum::pi/6);
+			mover.setCurrentState(state);
+			
+			CHECK(mover.getCorrectionAngleToDestination() == Approx(arma::datum::pi/4 + arma::datum::pi/6));
+		}
 		SECTION("Correct right"){
 			State state;
 			state.position = {0,0};
@@ -173,6 +205,8 @@ TEST_CASE("angle_from_north"){
 	CHECK(angle_from_north(arma::vec{0,1}) == arma::datum::pi/2);
 	CHECK(angle_from_north(arma::vec{0,-1}) == arma::datum::pi * 3/2);
 	CHECK(angle_from_north(arma::vec{-1,0}) == arma::datum::pi);
+	CHECK(angle_from_north(arma::vec{4,-4}) == Approx(arma::datum::pi * 7/4));
+	CHECK(angle_from_north(arma::vec{1,1}) == Approx(arma::datum::pi/4));
 }
 
 TEST_CASE("normalise_turning_angle"){

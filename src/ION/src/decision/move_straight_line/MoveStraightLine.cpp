@@ -9,14 +9,18 @@ namespace ION{
 			vec direction_vector_from_north(double angle){
 				return vec{cos(angle), sin(angle)};
 			}
-			double angle_from_north(const vec& direction){
+			double angle_from_north(vec direction){
 				const vec north = {1, 0};
+				if(all(direction == vec{0,0})){
+					direction = {0.0000001, 0};
+				}
 				// calculate acute angle between north and direction
 				// using dot product
 				double acute_angle = acos(
 					norm_dot(
 						north, 
 						direction));
+				std::cout << "acute_angle " << acute_angle << std::endl;
 				// horizontal component is Y in our coordinate space
 				double horizontal_component = direction[1];
 				
@@ -69,6 +73,8 @@ namespace ION{
 				// normalise to angle from north
 				double angle_to_destination = angle_from_north(dest - pos);
 				double current_angle = angle_from_north(current_state.direction);
+				
+				//std::cout << (dest-pos) << " " << current_state.direction << " " << angle_to_destination << " " << current_angle << std::endl;
 				
 				// return normalised angle so drivers don't turn obtuse angles
 				return normalise_turning_angle(

@@ -29,14 +29,17 @@ int main(int argc, char **argv){
 	Mover mover;{
 		double stop_threshold;
 		if(private_nh.getParam("stop_threshold", stop_threshold)){
+			std::cout << "stop_threshold: " << stop_threshold << std::endl;
 			mover.setStopThreshold(stop_threshold);
 		}
 		double move_speed;
 		if(private_nh.getParam("move_speed", move_speed)){
+			std::cout << "move_speed: " << move_speed << std::endl;
 			mover.setMoveSpeed(move_speed);
 		}
 		double explicit_turn_threshold;
 		if(private_nh.getParam("explicit_turn_threshold", explicit_turn_threshold)){
+			std::cout << "explicit_turn_threshold: " << explicit_turn_threshold << std::endl;
 			mover.setExplicitTurnThreshold(explicit_turn_threshold);
 		}
 	}
