@@ -157,6 +157,18 @@ TEST_CASE("angle_from_north"){
 	CHECK(angle_from_north(arma::vec{-1,0}) == arma::datum::pi);
 }
 
+TEST_CASE("normalise_turning_angle"){
+	CHECK(normalise_turning_angle(arma::datum::pi*2) == Approx(0));
+	CHECK(normalise_turning_angle(0) == Approx(0));
+	CHECK(normalise_turning_angle(arma::datum::pi) == Approx(arma::datum::pi));
+	CHECK(normalise_turning_angle(-2*arma::datum::pi) == Approx(0));
+	CHECK(normalise_turning_angle(-arma::datum::pi) == Approx(-arma::datum::pi));
+	CHECK(normalise_turning_angle(-arma::datum::pi*3/2) == Approx(arma::datum::pi/2));
+	
+	CHECK(normalise_turning_angle(arma::datum::pi + arma::datum::pi/6) == Approx(-arma::datum::pi*5/6));
+	CHECK(normalise_turning_angle(-arma::datum::pi - arma::datum::pi/6) == Approx(arma::datum::pi*5/6));
+}
+
 bool vec_close_enough(arma::vec& a, arma::vec& b, double tolerance){
 	return (arma::accu( arma::abs(a-b) ) / a.n_elem) < tolerance;
 }

@@ -29,9 +29,19 @@ namespace ION{
 							// angle
 			}
 			double normalise_turning_angle(double angle){
-				return angle > datum::pi ?
+				double limited_angle = fmod(angle, datum::pi*2);
+				if(limited_angle > datum::pi){
+					// too far to the right
+					return -2*datum::pi + limited_angle;
+				}else if(limited_angle < -datum::pi){
+					// too far to the left
+					return 2*datum::pi + limited_angle;
+				}else{
+					return limited_angle;
+				}
+				/*return angle > datum::pi ?
 					-(datum::pi*2 - angle) :
-					angle;
+					angle;*/
 			}
 			
 			Mover::Mover(){}
@@ -80,7 +90,7 @@ namespace ION{
 				double correction_angle_to_destination = getCorrectionAngleToDestination();
 				// should we stop and only turn until we're at least
 				// sort of pointing in the right direction?
-				bool explicit_turn = correction_angle_to_destination > explicit_turn_threshold;
+				bool explicit_turn = abs(correction_angle_to_destination) > explicit_turn_threshold;
 				
 				retCommand.dx = move && !explicit_turn ? forward_move_speed : 0;
 				retCommand.dy = 0;
