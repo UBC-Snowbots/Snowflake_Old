@@ -1,6 +1,6 @@
 include_directories(
     ${catkin_INCLUDE_DIRS}
-    )
+)
 
 
 add_library(sb_serial_communication SerialCommunication.cpp)
