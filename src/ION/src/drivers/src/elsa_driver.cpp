@@ -16,6 +16,7 @@
 #include "SerialCommunication.h"
 #include "elsa_driver.h"
 
+#define _USE_MATH_DEFINES
 
 using namespace std;
 using namespace ros;
@@ -48,8 +49,10 @@ string velocityCommandToAPMCommand(float velocity){
     return apm_command;
 }
 
-//Converts a rotation command (-2 to 2) to an apm command (000 to 255)
+//Converts a rotation command (-PI to PI) to an apm command (000 to 255)
 string rotationCommandToAPMCommand(float rotation){
+    // If value is outside the bounds (-PI to PI) then take remainder
+    rotation = rotation % M_PI;
     // Convert rotation to value between 0 and 255
     string apm_command = to_string(125 + (0.5 * rotation * TURN_RATE));
     // Add zeros to the front until length is 3
