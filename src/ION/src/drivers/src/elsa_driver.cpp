@@ -82,7 +82,7 @@ unsigned char rotationToAPMValue(double rotation){
 
 string rotationValueToAPMCommand(unsigned char value){
 	char output[4] = {0};
-	sprintf(&output[0], "%u03", value);
+	snprintf(&output[0], 3, "%u03", value);
 	return string(&output[0], 3);
 }
 
