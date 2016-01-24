@@ -1,3 +1,4 @@
 add_subdirectory(decision_tree)
 add_subdirectory(move_straight_line)
+add_subdirectory(pathfinder)
 add_subdirectory(sb_waypoint_creator)
