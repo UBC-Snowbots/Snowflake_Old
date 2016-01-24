@@ -1,0 +1,2 @@
+add_executable(sb_basic_robot_control sb_basic_robot_control.cpp)
+target_link_libraries(sb_basic_robot_control ${catkin_LIBRARIES})
