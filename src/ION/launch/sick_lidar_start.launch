@@ -51,5 +51,7 @@ name="sb_waypoint_creator" output="screen"/>
 #### start move_straight_line ##################################
 <node pkg="ION" type="move_straight_line"
 name="move_straight_line" output="screen"/>
-
+    <param name="explicit_turn_threshold" value="0.05"/>
+    <param name="stop_threshold" value="0.2"/>
+    <param name="move_speed" value="1"/>
 </launch>
