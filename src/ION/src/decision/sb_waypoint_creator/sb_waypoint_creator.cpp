@@ -80,13 +80,13 @@ int main(int argc, char **argv){
         geometry_msgs::Pose2D destination;
         // If you've arrived at a destination, start broadcasting the next one
         if (at_destination){
-	    printf("AT DESTINATION \n");
+	    //printf("AT DESTINATION \n");
             destination = destinations.getNextDestination();
             loop_rate.sleep();
 	} else {
-	    printf("NOT AT DESTINATION \n");
+	    //printf("NOT AT DESTINATION \n");
             destination = destinations.getDestination();
- 	    printf("%f", destination.x);		
+ 	    //printf("%f", destination.x);		
         }
         forward_pub.publish(destination);
 	ros::spinOnce();
