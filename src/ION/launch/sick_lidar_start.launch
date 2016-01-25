@@ -14,7 +14,7 @@ name="sicklms" output="screen">
 -->
 
 #### publish initial base_link -> laser transform ##############
-<node pkg="tf" type="static_transform_publisher" name="base_link_to_laser" args="0 0 0 0 0 0 /base_link /laser 40"/>
+<node pkg="tf" type="static_transform_publisher" name="base_link_to_laser" args=".254 0 0 0 0 0 /base_link /laser 40"/>
 
 #### start the laser scan_matcher ##############################
 <node pkg="laser_scan_matcher" type="laser_scan_matcher_node"
@@ -39,7 +39,7 @@ name="slam_gmapping" output="screen">
     <param name="maxUrange" value="4.0"/>
     <param name="linear_update" value="0.2"/>
     <param name="angularUpdate" value="0.2"/>
-    <param name="delta" value="0.04"/>
+    <param name="delta" value="0.05"/>
     <param name="occ_thresh" value="0.1"/>
 
 </node>
@@ -50,8 +50,8 @@ name="sb_waypoint_creator" output="screen"/>
 
 #### start move_straight_line ##################################
 <node pkg="ION" type="move_straight_line"
-name="move_straight_line" output="screen"/>
-    <param name="explicit_turn_threshold" value="5.0"/>
+name="move_straight_line" output="screen">
+    <param name="explicit_turn_threshold" value="0.1"/>
     <param name="stop_threshold" value="0.2"/>
-    <param name="move_speed" value="1.5"/>
+    <param name="move_speed" value="2.0"/>
 </launch>

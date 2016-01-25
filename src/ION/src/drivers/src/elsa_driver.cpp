@@ -37,8 +37,8 @@ static const int SECOND = 1000000;
 // Increasing these values will make the robot more responsive, but also less controllable.
 // The robot may have issue with really high rates, with just one motor working in some cases
 // ADJUST WITH CAUTION
-static const int MAX_APM_TURN_RATE = 50;
-static const int TURN_RATE = 200; // 125 is max, 0 is min (will not turn)
+static const int MAX_APM_TURN_RATE = 30;
+static const int TURN_RATE = 160; // 125 is max, 0 is min (will not turn)
 static const int MOVE_RATE = 25; // 125 is max, 0 is min (will not move)
 
 
