@@ -37,7 +37,8 @@ static const int SECOND = 1000000;
 // Increasing these values will make the robot more responsive, but also less controllable.
 // The robot may have issue with really high rates, with just one motor working in some cases
 // ADJUST WITH CAUTION
-static const int TURN_RATE = 75; // 125 is max, 0 is min (will not turn)
+static const int MAX_APM_TURN_RATE = 50;
+static const int TURN_RATE = 200; // 125 is max, 0 is min (will not turn)
 static const int MOVE_RATE = 25; // 125 is max, 0 is min (will not move)
 
 
@@ -63,7 +64,8 @@ double bound_rotation(double rotation){
 }
 
 int bounded_rotation_to_APMValue(double rotation_in_bounds){
-	return 125 - round(TURN_RATE * rotation_in_bounds / M_PI);
+	// This scales rotation to whatever value is passed to iti
+	return 125 - round(TURN_RATE * rotation_in_bounds);
 }
 
 int rotationToAPMValue(double rotation){
@@ -71,8 +73,8 @@ int rotationToAPMValue(double rotation){
 	double rotation_in_bounds = bound_rotation(rotation);
 	int val_from_float = bounded_rotation_to_APMValue(rotation_in_bounds);
 	
-	const unsigned char MIN_TURN = 125 - TURN_RATE;
-	const unsigned char MAX_TURN = 125 + TURN_RATE;
+	const unsigned char MIN_TURN = 125 - MAX_APM_TURN_RATE;
+	const unsigned char MAX_TURN = 125 + MAX_APM_TURN_RATE;
 	// ceiling/floor to max/min specified outputs
 	int apm_value;{
 		if(val_from_float < MIN_TURN){
@@ -167,7 +169,7 @@ int main(int argc, char** argv)
 	    cout << ss.str() << endl;
 	    link.writeData(ss.str(), 10); 
 	    //delay for sync
-	    usleep(2000000);
+	    //usleep(2000000);
 	    
 	    //publish data
 	    char test[24];
