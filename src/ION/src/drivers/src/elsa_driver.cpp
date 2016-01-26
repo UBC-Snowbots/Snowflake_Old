@@ -37,20 +37,18 @@ static const int SECOND = 1000000;
 // Increasing these values will make the robot more responsive, but also less controllable.
 // The robot may have issue with really high rates, with just one motor working in some cases
 // ADJUST WITH CAUTION
-static const int MAX_APM_TURN_RATE = 30;
-static const int TURN_RATE = 160; // 125 is max, 0 is min (will not turn)
-static const int MOVE_RATE = 25; // 125 is max, 0 is min (will not move)
+static const int MAX_APM_TURN_RATE = 40; // the max the turn speed will increase or decrease by (ie. 25 is a max of 150 and a min of 100)
+static const int TURN_RATE = 160; // how fast the turn speed will increase dependent on the input value
+static const int MOVE_RATE = 25; // how fast the move speed will increase dependent on the input value
 
 
 // Converts a velocity command (-1 to 1) to an apm command (255 to 000)
-string velocityCommandToAPMCommand(float velocity){
+string velocityCommandToAPMCommand(double velocity){
     // Convert velocity to value between 255 and 0
-    string apm_command = to_string(floor(125 - (velocity * MOVE_RATE)));
-    // Add zeros to the front until the lenght is 3
-    while (apm_command.length() < 3){
-        apm_command.insert(0, "0");
-    }
-    return apm_command;
+    unsigned char apm_command = round((125 - (velocity * MOVE_RATE)));
+    char output[4] = {0};
+	snprintf(&output[0], 4, "%03u", apm_command);
+	return string(&output[0], 3);
 }
 
 double bound_rotation(double rotation){
@@ -166,7 +164,7 @@ int main(int argc, char** argv)
 	    } else {  
 		    ss << (char)IDENTIFIER_BYTE<< twist_Y[0] << twist_Y[1] << twist_Y[2] << twist_X[0] << twist_X[1] << twist_X[2] << twist_z[0] << twist_z[1] << twist_z[2];
 	    }
-	    cout << ss.str() << endl;
+	    //cout << ss.str() << endl;
 	    link.writeData(ss.str(), 10); 
 	    //delay for sync
 	    //usleep(2000000);
@@ -174,7 +172,7 @@ int main(int argc, char** argv)
 	    //publish data
 	    char test[24];
 	    link.readData(24, test);
-  	    cout << test;
+  	    //cout << test;
 	   
 	    spinOnce();
 	    loop_rate.sleep();

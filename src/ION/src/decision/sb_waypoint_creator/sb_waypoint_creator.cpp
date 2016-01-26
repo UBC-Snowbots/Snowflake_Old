@@ -57,15 +57,15 @@ int main(int argc, char **argv){
    
     // Create waypoints and add to list
     geometry_msgs::Pose2D dest1;
-    dest1.x = 4;
+    dest1.x = 3;
     dest1.y = 0;
     dest1.theta = 0;
     geometry_msgs::Pose2D dest2;
-    dest2.x = 2;
+    dest2.x = 0;
     dest2.y = 0;
     dest1.theta = 0;
     geometry_msgs::Pose2D dest3;
-    dest3.x = 0;
+    dest3.x = 5;
     dest3.y = 0;
     dest3.theta = 0;
 
@@ -75,18 +75,21 @@ int main(int argc, char **argv){
     destinations.add(dest2);
     destinations.add(dest3);
     
+    int at_destination_counter = 0; // A ghetto solution to allow at_destination to publish twice, but only go the next destination 
     // Main Loop to run while node is running
     while (ros::ok()){
         geometry_msgs::Pose2D destination;
         // If you've arrived at a destination, start broadcasting the next one
-        if (at_destination){
-	    //printf("AT DESTINATION \n");
+        if (at_destination_counter == 2){
+            at_destination_counter = 0;
             destination = destinations.getNextDestination();
             loop_rate.sleep();
-	} else {
-	    //printf("NOT AT DESTINATION \n");
+	    } else if (at_destination){
+            at_destination_counter++;
             destination = destinations.getDestination();
- 	    //printf("%f", destination.x);		
+        } else {
+            at_destination_counter = 0;
+            destination = destinations.getDestination();
         }
         forward_pub.publish(destination);
 	ros::spinOnce();
