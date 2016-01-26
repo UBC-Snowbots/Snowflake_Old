@@ -54,7 +54,8 @@ int main(int argc, char **argv){
     ros::Subscriber at_destination_sub = nh.subscribe<std_msgs::Bool>("move_straight_line/at_destination", 10, boost::function<void(std_msgs::Bool)>([&](std_msgs::Bool at_dest){
         at_destination = at_dest.data;
     }));      
-   
+
+///*  //TEST PATH   
     // Create waypoints and add to list
     geometry_msgs::Pose2D dest1;
     dest1.x = 3;
@@ -62,6 +63,7 @@ int main(int argc, char **argv){
     dest1.theta = 0;
     geometry_msgs::Pose2D dest2;
     dest2.x = 0;
+    
     dest2.y = 0;
     dest1.theta = 0;
     geometry_msgs::Pose2D dest3;
@@ -74,6 +76,59 @@ int main(int argc, char **argv){
     destinations.add(dest1);
     destinations.add(dest2);
     destinations.add(dest3);
+//*/
+
+/*  //PART 1 PATH
+    // Create waypoints and add to list
+    geometry_msgs::Pose2D dest1;
+    dest1.x = 10.8;
+    dest1.y = 0;
+    dest1.theta = 0;
+    geometry_msgs::Pose2D dest2;
+    dest2.x = -0.5;
+    dest2.y = 0;
+    dest1.theta = 0;
+    
+    Destinations destinations;
+    destinations.add(dest1);
+    destinations.add(dest2);
+*/
+
+/*  //PART 2 PATH
+    // Create waypoints and add to list
+    geometry_msgs::Pose2D dest1;
+    dest1.x = 10.8;
+    dest1.y = 0;
+    dest1.theta = 0;
+    geometry_msgs::Pose2D dest2;
+    dest2.x = 0.25;
+    dest2.y = -0.25;
+    dest1.theta = 0;
+    geometry_msgs::Pose2D dest3;
+    dest3.x = 0.25;
+    dest3.y = 0.5;
+    dest3.theta = 0;
+    geometry_msgs::Pose2D dest4;
+    dest4.x = 10.8;
+    dest4.y = 0.5;
+    dest4.theta = 0;
+    geometry_msgs::Pose2D dest5;
+    dest5.x = 10.8;
+    dest5.y = -0.5;
+    dest5.theta = 0;
+    geometry_msgs::Pose2D dest6;
+    dest6.x = -0.5;
+    dest6.y = -0.5;
+    dest5.theta = 0;
+
+    Destinations destinations;
+    destinations.add(dest1);
+    destinations.add(dest2);
+    destinations.add(dest3);
+    destinations.add(dest4);
+    destinations.add(dest5);
+    destinations.add(dest6);
+*/
     
     int at_destination_counter = 0; // A ghetto solution to allow at_destination to publish twice, but only go the next destination 
     // Main Loop to run while node is running
