@@ -2,12 +2,12 @@
 
 require "json"
 
-USERNAME = ENV['USERNAME']
+USERNAME = `whoami`.strip
 WORKSPACE = Dir.pwd
 LOCAL_CONFIG_FILE_NAME = 'local_config.json'
 
 if /^\s*$/ =~ USERNAME then
-  abort "error: $USERNAME='#{USERNAME}' environment variable is empty. aborting.\n"
+  abort "error: USERNAME='#{USERNAME}' is empty. aborting.\n"
 end
 
 print "user: #{USERNAME}\n"
