@@ -27,13 +27,6 @@ link File.join(snowbots_workspace, 'src') do
   only_if { should_make_source_link }
 end
 
-catkin 'snowbots' do
-  user user_name
-  release 'indigo'
-  workspace snowbots_workspace
-end
-
-
 apt_package 'gdb'
 apt_package "python-pip"
 
@@ -50,6 +43,12 @@ apt_package 'ros-indigo-gmapping'
 apt_package 'ros-indigo-sicktoolbox-wrapper'
 
 python_pip 'docopt'
+
+catkin 'snowbots' do
+  user user_name
+  release 'indigo'
+  workspace snowbots_workspace
+end
 
 
 catkin_package 'laser_geometry' do
