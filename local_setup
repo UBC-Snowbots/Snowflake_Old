@@ -6,7 +6,7 @@ USERNAME = ENV['USERNAME']
 WORKSPACE = Dir.pwd
 LOCAL_CONFIG_FILE_NAME = 'local_config.json'
 
-if USERNAME == '' then
+if /^\s*$/ =~ USERNAME then
   abort "error: $USERNAME='#{USERNAME}' environment variable is empty. aborting.\n"
 end
 
