@@ -2,16 +2,31 @@
 
 require "json"
 
+USERNAME = ENV['USERNAME']
+WORKSPACE = Dir.pwd
+LOCAL_CONFIG_FILE_NAME = 'local_config.json'
+
+print "writing config file: #{LOCAL_CONFIG_FILE_NAME}..."
+
 # evil hack to make Chef use the current directory
-File.open('local_config.json', 'w') do |file|
+File.open(LOCAL_CONFIG_FILE_NAME, 'w') do |file|
   JSON.dump({
     'run_list' => ['role[local]'],
     'snowbots' => {
-      'workspace' => Dir.pwd,
-      'user' => ENV['USERNAME']
+      'workspace' => WORKSPACE,
+      'user' => USERNAME
     }
   }, file)
 end
 
-system 'sudo chef-solo -c local_config.rb'
+print "done.\n"
+
+print "user: #{USERNAME}\n"
+print "workspace: #{WORKSPACE}\n\n"
+
+CHEF_COMMAND = "sudo chef-solo -c local_config.rb"
+
+print "running: '#{CHEF_COMMAND}'...\n"
+system CHEF_COMMAND
+print "done.\n"
 
