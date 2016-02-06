@@ -6,6 +6,13 @@ USERNAME = ENV['USERNAME']
 WORKSPACE = Dir.pwd
 LOCAL_CONFIG_FILE_NAME = 'local_config.json'
 
+if USERNAME == '' then
+  abort "error: $USERNAME='#{USERNAME}' environment variable is empty. aborting.\n"
+end
+
+print "user: #{USERNAME}\n"
+print "workspace: #{WORKSPACE}\n\n"
+
 print "writing config file: #{LOCAL_CONFIG_FILE_NAME}..."
 
 # evil hack to make Chef use the current directory
@@ -20,9 +27,6 @@ File.open(LOCAL_CONFIG_FILE_NAME, 'w') do |file|
 end
 
 print "done.\n"
-
-print "user: #{USERNAME}\n"
-print "workspace: #{WORKSPACE}\n\n"
 
 CHEF_COMMAND = "sudo chef-solo -c local_config.rb"
 
