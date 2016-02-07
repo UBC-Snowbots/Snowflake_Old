@@ -1,6 +1,6 @@
 /*
 *  driver node to communicate and control arduino
-*  sorts incoming sensor information and outputs correct ros messages 
+*  sorts incoming sensor information and outputs correct ros messages
 */
 
 #include <stdlib.h>
@@ -19,10 +19,9 @@
 #define _USE_MATH_DEFINES
 
 using namespace std;
-using namespace ros;
 
 //global constants
-static const string ROS_NODE_NAME = "driver";
+static const string ROS_NODE_NAME = "elsa_driver";
 static const int ROS_LOOP_RATE = 200; //hz
 
 static const int BAUD_RATE = 115200;
@@ -33,13 +32,6 @@ static const string INIT_STRING = "BG";
 static const char IDENTIFIER_BYTE = 'B';
 
 static const int SECOND = 1000000;
-
-// Increasing these values will make the robot more responsive, but also less controllable.
-// The robot may have issue with really high rates, with just one motor working in some cases
-// ADJUST WITH CAUTION
-static const int MAX_APM_TURN_RATE = 40; // the max the turn speed will increase or decrease by (ie. 25 is a max of 150 and a min of 100)
-static const int TURN_RATE = 160; // how fast the turn speed will increase dependent on the input value
-static const int MOVE_RATE = 25; // how fast the move speed will increase dependent on the input value
 
 
 // Converts a velocity command (-1 to 1) to an apm command (255 to 000)
@@ -70,7 +62,7 @@ int rotationToAPMValue(double rotation){
 	// ceiling and floor to max/min expected inputs
 	double rotation_in_bounds = bound_rotation(rotation);
 	int val_from_float = bounded_rotation_to_APMValue(rotation_in_bounds);
-	
+
 	const unsigned char MIN_TURN = 125 - MAX_APM_TURN_RATE;
 	const unsigned char MAX_TURN = 125 + MAX_APM_TURN_RATE;
 	// ceiling/floor to max/min specified outputs
@@ -92,29 +84,35 @@ string rotationValueToAPMCommand(unsigned char value){
 	return string(&output[0], 3);
 }
 
-//Converts a rotation command (-PI to PI) to an apm command (000 to 255)
-/*string rotationCommandToAPMCommand(float rotation){
-    // If value is outside the bounds (-PI to PI) then take remainder
-    // (fmod is just modulus for floats)
-    rotation = fmod(rotation, M_PI);
-    // Convert rotation to value between 0 and 255
-    string apm_command = to_string(125 - (TURN_RATE * (rotation / M_PI)));
-    // Add zeros to the front until length is 3
-    while (apm_command.length() < 3){
-        apm_command.insert(0, "0");
-    }
-    return apm_command;
-}*/
-
-
 int main(int argc, char** argv)
 {
     //initialize ros
-    init(argc, argv, ROS_NODE_NAME);
-	NodeHandle n;
-	Rate loop_rate(ROS_LOOP_RATE);
+  ros::init(argc, argv, ROS_NODE_NAME);
+	ros::NodeHandle public_nh;
+  ros::NodeHandle private_nh("~");
+	ros::Rate loop_rate(ROS_LOOP_RATE);
 
-    //Set all values to neutral 
+    // Get any parameters
+        // The maximum that the turn rate will go to
+        // (ie. if max_turn_rate = 40, the max command sent to the apm would be 125 +/- 40 )
+    double max_turn_rate = 40;
+    if (private_nh.getParam("max_turn_rate", max_turn_rate_param)){
+      max_turn_rate = max_turn_rate_param;
+    }
+        // How sensitive the robot is to a given turn command
+        // A higher value means that smaller commands will have a greater effect
+    double turn_rate_sensitivity = 160;
+    if (private_nh.getParam("turn_rate_sensitivity", turn_rate_sensitivity_param)){
+      turn_rate_sensitivity = turn_rate_sensitivity_param;
+    }
+        // How sensitive the robot is to a given turn command
+        // A higher value means that smaller commands will have a greater effect
+    double move_speed_sensitivity = 25;
+    if (private_nh.getParam("move_speed_sensitivity", move_speed_sensitivity_param)){
+      move_speed_sensitivity = move_speed_sensitivity_param;
+    }
+
+    //Set all values to neutral
     char twist_Y[3]={'1','2','5'}; //Strafe (normally not used, look up strafe)
     char twist_X[3]={'1','2','5'}; //Forward/Backward
     char twist_z[3]={'1','2','5'}; //Rotation
@@ -125,7 +123,7 @@ int main(int argc, char** argv)
 	for (int i = 0; ; i++)
 	{
 	    stringstream ss;
-	    ss << i;	    
+	    ss << i;
 	    if (link.connect(BAUD_RATE,(UNO_PORT_NAME + ss.str())))
 	    {
 	        cout << "connected on port " << UNO_PORT_NAME << i << endl;
@@ -138,50 +136,45 @@ int main(int argc, char** argv)
 	    }
 	}
 	usleep(10*SECOND);
-		
-	//subscribers and publishers
+  ROS_INFO("elsa_driver ready");
 
+	//subscribers and publishers
 	Subscriber command_sub = n.subscribe<geometry_msgs::Twist>("move_straight_line/command", 10, boost::function<void(geometry_msgs::Twist)>([&](geometry_msgs::Twist twist){
-		// Write converted velocity and rotate commands to twist_Y and twist_z 
+		// Write converted velocity and rotate commands to twist_Y and twist_z
 		velocityCommandToAPMCommand(twist.linear.x).copy(twist_X, 3, 0);
 		rotationValueToAPMCommand(
 			rotationToAPMValue(twist.angular.z)).copy(twist_z, 3, 0);
-    }));	
-	
-	ROS_INFO("arduino_driver ready");
+    }));
 
-	//while ros is good
+	//While ROS is running
 	link.clearBuffer();
 	while(ok())
 	{
-	    
-	    //write to arduino	 
+
+	    //write to apm
 	    stringstream ss;
 	    if (eStop)
-	    {	
+	    {
 		    cout << "eStop on" << endl;
 		    ss << (char)IDENTIFIER_BYTE << "125125125";
-	    } else {  
+	    } else {
 		    ss << (char)IDENTIFIER_BYTE<< twist_Y[0] << twist_Y[1] << twist_Y[2] << twist_X[0] << twist_X[1] << twist_X[2] << twist_z[0] << twist_z[1] << twist_z[2];
 	    }
-	    //cout << ss.str() << endl;
-	    link.writeData(ss.str(), 10); 
-	    //delay for sync
-	    //usleep(2000000);
-	    
+	    link.writeData(ss.str(), 10);
+
 	    //publish data
 	    char test[24];
 	    link.readData(24, test);
   	    //cout << test;
-	   
+
 	    spinOnce();
 	    loop_rate.sleep();
 	}
-	
+
 	//killing driver
 	ROS_INFO("shutting down arduino_driver");
 	string s = "ED" ;
     link.writeData(s, 2);
-	
+
 	return 0;
 }
