@@ -1,4 +1,0 @@
-add_executable(MoveStraightLineTest MoveStraightLineTest.cpp main.cpp)
-target_link_libraries(MoveStraightLineTest libmove_straight_line)
-
-add_catch_test(MoveStraightLineTest)
