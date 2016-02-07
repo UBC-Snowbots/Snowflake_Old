@@ -25,8 +25,6 @@ static const string ROS_NODE_NAME = "elsa_driver";
 static const int ROS_LOOP_RATE = 200; //hz
 
 static const int BAUD_RATE = 115200;
-//static const string PORT_NAME = "/dev/ttyUSB";
-static const string UNO_PORT_NAME = "/dev/ttyACM";
 
 static const string INIT_STRING = "BG";
 static const char IDENTIFIER_BYTE = 'B';
@@ -93,10 +91,10 @@ int main(int argc, char** argv)
         // A higher value means that smaller commands will have a greater effect
         // (ie. if move_rate_sensitivity = 10, the apm command will be 125 + (move_rate_sensitivity * given command))
     double move_rate_sensitivity = 25;
-    private_nh.param("move_speed_sensitivity", move_rate_sensitivity);
-        // The USB port the apm is connected to
-    string usb_port_name = "/dev/ttyACM";
-    private_nh.param("usb_port_name", usb_port_name);
+    private_nh.param("move_rate_sensitivity", move_rate_sensitivity);
+        // The USB port where the driver will look for the APM
+    string usb_port = "/dev/ttyACM";
+    private_nh.param("usb_port", usb_port);
 
     //Set Subscribers and Publishers
   	ros::Subscriber command_sub = public_nh.subscribe<geometry_msgs::Twist>
@@ -114,7 +112,7 @@ int main(int argc, char** argv)
 	{
 	    stringstream ss;
 	    ss << i;
-	    if (link.connect(BAUD_RATE,(UNO_PORT_NAME + ss.str())))
+	    if (link.connect(BAUD_RATE,(usb_port + ss.str())))
 	    {
 	        cout << "connected on port " << UNO_PORT_NAME << i << endl;
 	        break;
