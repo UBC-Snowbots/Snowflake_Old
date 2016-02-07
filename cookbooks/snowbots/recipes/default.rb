@@ -49,10 +49,3 @@ catkin 'snowbots' do
   release 'indigo'
   workspace snowbots_workspace
 end
-
-
-catkin_package 'laser_geometry' do
-  source_uri 'https://github.com/ros-perception/laser_geometry.git'
-end
-
-
