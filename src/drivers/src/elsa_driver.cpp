@@ -96,8 +96,8 @@ int main(int argc, char** argv)
     private_nh.param("move_rate_sensitivity", move_rate_sensitivity);
     
     // The USB port where the driver will look for the APM
-    string usb_port = "/dev/ttyACM";
-    private_nh.param("usb_port", usb_port);
+    string port = "/dev/ttyACM";
+    private_nh.param("port", port);
 
     //Set Subscribers and Publishers
   	ros::Subscriber command_sub = public_nh.subscribe<geometry_msgs::Twist>
@@ -115,7 +115,7 @@ int main(int argc, char** argv)
 	{
 	    stringstream ss;
 	    ss << i;
-	    if (link.connect(BAUD_RATE,(usb_port + ss.str())))
+	    if (link.connect(BAUD_RATE,(port + ss.str())))
 	    {
 	        cout << "connected on port " << usb_port << i << endl;
 	        break;

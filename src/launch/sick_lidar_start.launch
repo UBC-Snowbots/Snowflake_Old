@@ -1,0 +1,14 @@
+<launch>
+
+	#### start the sick node #######################################
+	<node pkg="sicktoolbox_wrapper" type="sicklms"
+	name="sicklms" output="screen">
+
+		<param name="port" value="/dev/ttyUSB0" />
+		
+	</node>
+
+	<!-- Run the common launch file-->
+	<include file="common.launch"/>
+
+</launch>

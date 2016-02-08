@@ -13,4 +13,4 @@ Nodes Created by This Package
     - *move_rate_sensitivity* - (default = 25) How sensitive the robot is to a given movement (forward/backward) command, 
     a higher value means that smaller commands will have a greater effect 
     (ie. if move_rate_sensitivity = 10, the apm command will be 125 + (move_rate_sensitivity * given command))
-    - *usb_port_name* - (default = "/dev/ttyACM") The USB port where the driver will look for the APM
+    - *port* - (default = "/dev/ttyACM") The USB port where the driver will look for the APM
