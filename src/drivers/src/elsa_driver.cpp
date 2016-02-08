@@ -77,22 +77,25 @@ int main(int argc, char** argv)
   char twist_X[3]={'1','2','5'}; //Forward/Backward
   char twist_z[3]={'1','2','5'}; //Rotation
 
-    // Get any parameters
-        // The maximum that the turn rate will go to
-        // (ie. if max_turn_rate = 40, the max command sent to the apm would be 125 +/- 40 )
+// Get any parameters
+    // The maximum that the turn rate will go to
+    // (ie. if max_turn_rate = 40, the max command sent to the apm would be 125 +/- 40 )
     double max_turn_rate = 40;
     private_nh.param("max_turn_rate", max_turn_rate);
-        // How sensitive the robot is to a given turn command
-        // A higher value means that smaller commands will have a greater effect
-        // (ie. if turn_rate_sensitivity = 10, the apm command will be 125 + (turn_rate_sensitivity * given command))
+    
+    // How sensitive the robot is to a given turn command
+    // A higher value means that smaller commands will have a greater effect
+    // (ie. if turn_rate_sensitivity = 10, the apm command will be 125 + (turn_rate_sensitivity * given command))
     double turn_rate_sensitivity = 160;
     private_nh.param("turn_rate_sensitivity", turn_rate_sensitivity);
-        // How sensitive the robot is to a given movement (forward/backward) command
-        // A higher value means that smaller commands will have a greater effect
-        // (ie. if move_rate_sensitivity = 10, the apm command will be 125 + (move_rate_sensitivity * given command))
+    
+    // How sensitive the robot is to a given movement (forward/backward) command
+    // A higher value means that smaller commands will have a greater effect
+    // (ie. if move_rate_sensitivity = 10, the apm command will be 125 + (move_rate_sensitivity * given command))
     double move_rate_sensitivity = 25;
     private_nh.param("move_rate_sensitivity", move_rate_sensitivity);
-        // The USB port where the driver will look for the APM
+    
+    // The USB port where the driver will look for the APM
     string usb_port = "/dev/ttyACM";
     private_nh.param("usb_port", usb_port);
 
@@ -114,7 +117,7 @@ int main(int argc, char** argv)
 	    ss << i;
 	    if (link.connect(BAUD_RATE,(usb_port + ss.str())))
 	    {
-	        cout << "connected on port " << UNO_PORT_NAME << i << endl;
+	        cout << "connected on port " << usb_port << i << endl;
 	        break;
 	    }  else if (i > 15) {
 	        cout << "unable to find a device," << endl

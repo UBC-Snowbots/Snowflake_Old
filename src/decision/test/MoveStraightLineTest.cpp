@@ -4,7 +4,7 @@
 #include <cmath>
 #include <MoveStraightLine.hpp>
 
-using namespace ION::decision::move_straight_line;
+using namespace decision::move_straight_line;
 
 bool operator==(const Command& a, const Command& b){
 	return a.dx == b.dx

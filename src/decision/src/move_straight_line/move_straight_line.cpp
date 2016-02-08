@@ -5,7 +5,7 @@
 
 #include <MoveStraightLine.hpp>
 
-using namespace ION::decision::move_straight_line;
+using namespace decision::move_straight_line;
 
 geometry_msgs::Twist commandToTwist(const Command& command){
 	geometry_msgs::Twist twist;
