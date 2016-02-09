@@ -46,36 +46,36 @@ double bound_rotation(double rotation){
 // Converts a given integer command to one the apm can understand
 string commandToAPMCommand (int command){
     // Convert the integer command to a 3 long string, adding zero's if needed
-  char output[4] = {0};
-  snprintf(&output[0], 4, "%03u", command);
-  return string(&output[0], 3);
+    char output[4] = {0};
+    snprintf(&output[0], 4, "%03u", command);
+    return string(&output[0], 3);
 }
 
 // Converts a rotation command to an apm command (255 to 000)
 string rotationCommandToAPMCommand(double rotation, double turn_rate_sensitivity){
-  int command = 125 - round(turn_rate_sensitivity * bound_rotation(rotation));
-  return commandToAPMCommand(command);
+    int command = 125 - round(turn_rate_sensitivity * bound_rotation(rotation));
+    return commandToAPMCommand(command);
 }
 
 // Converts a velocity command (-1 to 1) to an apm command (255 to 000)
 string velocityCommandToAPMCommand(double velocity, double move_rate_sensitivity){
     // Convert velocity to value between 255 and 0
-  unsigned char command = round((125 - (velocity * move_rate_sensitivity)));
-  return commandToAPMCommand(command);
+    unsigned char command = round((125 - (velocity * move_rate_sensitivity)));
+    return commandToAPMCommand(command);
 }
 
 int main(int argc, char** argv)
 {
     //initialize ros
-  ros::init(argc, argv, ROS_NODE_NAME);
-	ros::NodeHandle public_nh;
-  ros::NodeHandle private_nh("~");
-	ros::Rate loop_rate(ROS_LOOP_RATE);
+    ros::init(argc, argv, ROS_NODE_NAME);
+	    ros::NodeHandle public_nh;
+    ros::NodeHandle private_nh("~");
+	    ros::Rate loop_rate(ROS_LOOP_RATE);
 
-  //Set all values to neutral
-  char twist_Y[3]={'1','2','5'}; //Strafe (normally not used, robot has no lateral movement)
-  char twist_X[3]={'1','2','5'}; //Forward/Backward
-  char twist_z[3]={'1','2','5'}; //Rotation
+    //Set all values to neutral
+    char twist_Y[3]={'1','2','5'}; //Strafe (normally not used, robot has no lateral movement)
+    char twist_X[3]={'1','2','5'}; //Forward/Backward
+    char twist_z[3]={'1','2','5'}; //Rotation
 
 // Get any parameters
     // The maximum that the turn rate will go to
@@ -109,15 +109,14 @@ int main(int argc, char** argv)
       }));
 
 	//initialize serial communication
-  stringstream ss;
 	SerialCommunication link;
-	for (int i = 0; ; i++)
+    for (int i = 0; ; i++)
 	{
 	    stringstream ss;
 	    ss << i;
 	    if (link.connect(BAUD_RATE,(port + ss.str())))
 	    {
-	        cout << "connected on port " << usb_port << i << endl;
+	        cout << "connected on port " << port << i << endl;
 	        break;
 	    }  else if (i > 15) {
 	        cout << "unable to find a device," << endl
@@ -126,8 +125,10 @@ int main(int argc, char** argv)
 	        return 0;
 	    }
 	}
+    
 	usleep(10*SECOND);
-  ROS_INFO("elsa_driver ready");
+
+    ROS_INFO("elsa_driver ready");
 
 	//While ROS is running
 	link.clearBuffer();
@@ -135,7 +136,8 @@ int main(int argc, char** argv)
 	{
 
 	    //write to apm
-		  ss << (char)IDENTIFIER_BYTE<< twist_Y[0]
+		stringstream ss;
+        ss << (char)IDENTIFIER_BYTE<< twist_Y[0]
                                   << twist_Y[1]
                                   << twist_Y[2]
                                   << twist_X[0]
@@ -145,6 +147,8 @@ int main(int argc, char** argv)
                                   << twist_z[1]
                                   << twist_z[2];
 	    link.writeData(ss.str(), 10);
+        
+        //cout << ss.str() << endl;
 
 	    //publish data
 	    char test[24];
