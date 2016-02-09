@@ -61,6 +61,8 @@ Troubleshooting
 
 Any observations/problems people encounter when trying to build/run go here.
 
+- If you have issues running `./local_setup`, then your chef version may be out of date. To update (at least on ubuntu), you'll have to manually download and install the latest version of chef from [here](https://downloads.chef.io/chef-client/ubuntu/)
+
 Modifications to the set-up files
 ---------------------------------
 
