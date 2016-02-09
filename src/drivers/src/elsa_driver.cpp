@@ -117,7 +117,7 @@ int main(int argc, char** argv)
 	    ss << i;
 	    if (link.connect(BAUD_RATE,(port + ss.str())))
 	    {
-	        cout << "connected on port " << usb_port << i << endl;
+	        cout << "connected on port " << port << i << endl;
 	        break;
 	    }  else if (i > 15) {
 	        cout << "unable to find a device," << endl
