@@ -43,5 +43,9 @@
     #### start move_straight_line ##################################
     <node pkg="decision" type="move_straight_line"
     name="move_straight_line" output="screen"/>
-
+	
+	#### start driver_node ########################################
+	<node pkg="drivers" type="sb_driver_elsa"
+	name="sb_driver_elsa" output="screen"/>
+	
 </launch>

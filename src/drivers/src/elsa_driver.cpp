@@ -147,7 +147,7 @@ int main(int argc, char** argv)
                                   << twist_z[1]
                                   << twist_z[2];
 	    link.writeData(ss.str(), 10);
-        
+
         //cout << ss.str() << endl;
 
 	    //publish data

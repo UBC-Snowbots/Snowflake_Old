@@ -58,16 +58,15 @@ int main(int argc, char **argv){
 ///*  //TEST PATH   
     // Create waypoints and add to list
     geometry_msgs::Pose2D dest1;
-    dest1.x = 3;
+    dest1.x = 2;
     dest1.y = 0;
     dest1.theta = 0;
     geometry_msgs::Pose2D dest2;
     dest2.x = 0;
-    
     dest2.y = 0;
     dest1.theta = 0;
     geometry_msgs::Pose2D dest3;
-    dest3.x = 5;
+    dest3.x = 0;
     dest3.y = 0;
     dest3.theta = 0;
 
