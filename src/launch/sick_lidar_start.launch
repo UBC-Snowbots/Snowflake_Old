@@ -9,6 +9,6 @@
 	</node>
 
 	<!-- Run the common launch file-->
-	<include file="common.launch"/>
+	<include file="$(find drivers)/../launch/common.launch"/>
 
 </launch>
