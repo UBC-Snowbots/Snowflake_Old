@@ -1,3 +1,13 @@
+/*
+ * Inverse Perspective Mapping Functions
+ * Removes the perspective from an image and remaps
+ * it into a 2D domain.
+ * i.e. Turning a video of the environement into
+ * a bird's eye view of the scene.
+ * 
+ */
+
+
 #include "IPM.h"
 
 using namespace cv;

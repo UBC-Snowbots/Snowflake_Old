@@ -1,3 +1,8 @@
+/*
+ * Inverse Perspective Mapping header file
+ */
+
+
 #ifndef __IPM_H__
 #define __IPM_H__
 
