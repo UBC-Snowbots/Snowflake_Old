@@ -1,6 +1,7 @@
-#   Nodes
-A list of all possible nodes in all packagesthe repo, with all possible paramaters for each (for use in rosLaunch files)
----------------------------
+# Nodes
+
+A list of all possible nodes in all packages the repo, with all possible paramaters for each (for use in rosLaunch files)
+
 ##  Drivers
 ---------------------------
 - elsa_driver
