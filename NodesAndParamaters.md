@@ -3,7 +3,6 @@
 A list of all possible nodes in all packages the repo, with all possible paramaters for each (for use in rosLaunch files)
 
 ##  Drivers
----------------------------
 - elsa_driver
   - **Parameters**
     - *max_turn_rate* -  (default = 40) The maximum that the turn rate will go to
@@ -17,7 +16,6 @@ A list of all possible nodes in all packages the repo, with all possible paramat
     - *port* - (default = "/dev/ttyACM") The USB port where the driver will look for the APM
 
 ##  Decision
----------------------------
 - sb_waypoint_creator
   - **Parameters**
     - *path* - A list of x,y coordinates that the robot should go to, in the form [x, y, x, y, ...]
