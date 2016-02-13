@@ -64,8 +64,8 @@ string velocityCommandToAPMCommand(double velocity, double move_rate_sensitivity
     return commandToAPMCommand(command);
 }
 
-int main(int argc, char** argv)
-{
+
+int main(int argc, char** argv) {
     //initialize ros
     ros::init(argc, argv, ROS_NODE_NAME);
 	    ros::NodeHandle public_nh;
