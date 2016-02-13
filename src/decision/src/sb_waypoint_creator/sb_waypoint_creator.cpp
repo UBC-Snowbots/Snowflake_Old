@@ -1,6 +1,5 @@
 #include <ros/ros.h>
 #include <geometry_msgs/Pose2D.h>
-#include <nav_msgs/OccupancyGrid.h>
 #include <std_msgs/Bool.h>
 #include <vector>
 
@@ -33,29 +32,45 @@ class Destinations{
 
 int main(int argc, char **argv){
     ros::init(argc, argv, "sb_waypoint_creator");
-    ros::NodeHandle nh;
+    ros::NodeHandle public_nh;
+    ros::NodeHandle private_nh("~");
     ros::Rate loop_rate(5);
-    
+
+    Destinations destinations; // The destinations for the robot to go to
+   
+
+// Get parameters
+    // "path" is a vector of alternating x,y coordinates, that make up a 
+    // series of waypoints for the robot to move to. 
+    // If it does not exist, autonomous_mode should be set true
+    bool autonomous_mode = false;
+    if (private_nh.hasParam("path")){
+        std::vector<double> path; // Path for the robot to follow {x,y,x,y, ...}
+        private_nh.getParam("path", path);
+        // Add all waypoints in "path"  as pose2D's in destinations
+        for (int i = 0; i < path.size()/2; i++){
+            geometry_msgs::Pose2D dest;
+            dest.x = path[i * 2];
+            dest.y = path[i * 2 + 1];
+            dest.theta = 0;
+            destinations.add(dest);
+            ROS_INFO("X: %f\n", path[i]);
+        }
+    } else {
+        autonomous_mode = true;
+    }
+
     // Initialize destination publisher
-    ros::Publisher forward_pub = nh.advertise<geometry_msgs::Pose2D>("destination", 10);
+    ros::Publisher forward_pub = public_nh.advertise<geometry_msgs::Pose2D>("destination", 10);
     
-    // Get map data
-    ros::Subscriber map = nh.subscribe<nav_msgs::OccupancyGrid>("map", 10, boost::function<void(nav_msgs::OccupancyGrid)>([&](nav_msgs::OccupancyGrid map){
-    
-    }));
-
-    // Get pose data
-    ros::Subscriber pose2d = nh.subscribe<geometry_msgs::Pose2D>("pose2D", 10, boost::function<void(geometry_msgs::Pose2D)>([&](geometry_msgs::Pose2D pose){
-        
-    }));
-
     bool at_destination = false;
     // Get at_destination (published by move_straight_line)
-    ros::Subscriber at_destination_sub = nh.subscribe<std_msgs::Bool>("move_straight_line/at_destination", 10, boost::function<void(std_msgs::Bool)>([&](std_msgs::Bool at_dest){
+    ros::Subscriber at_destination_sub = public_nh.subscribe<std_msgs::Bool>("move_straight_line/at_destination", 10, boost::function<void(std_msgs::Bool)>([&](std_msgs::Bool at_dest){
         at_destination = at_dest.data;
     }));      
 
-///*  //TEST PATH   
+/*
+//TEST PATH   
     // Create waypoints and add to list
     geometry_msgs::Pose2D dest1;
     dest1.x = 2;
@@ -71,65 +86,13 @@ int main(int argc, char **argv){
     dest3.theta = 0;
 
     
-    Destinations destinations;
     destinations.add(dest1);
     destinations.add(dest2);
     destinations.add(dest3);
-//*/
-
-/*  //PART 1 PATH
-    // Create waypoints and add to list
-    geometry_msgs::Pose2D dest1;
-    dest1.x = 10.8;
-    dest1.y = 0;
-    dest1.theta = 0;
-    geometry_msgs::Pose2D dest2;
-    dest2.x = -0.5;
-    dest2.y = 0;
-    dest1.theta = 0;
-    
-    Destinations destinations;
-    destinations.add(dest1);
-    destinations.add(dest2);
-*/
-
-/*  //PART 2 PATH
-    // Create waypoints and add to list
-    geometry_msgs::Pose2D dest1;
-    dest1.x = 10.8;
-    dest1.y = 0;
-    dest1.theta = 0;
-    geometry_msgs::Pose2D dest2;
-    dest2.x = 0.25;
-    dest2.y = -0.25;
-    dest1.theta = 0;
-    geometry_msgs::Pose2D dest3;
-    dest3.x = 0.25;
-    dest3.y = 0.5;
-    dest3.theta = 0;
-    geometry_msgs::Pose2D dest4;
-    dest4.x = 10.8;
-    dest4.y = 0.5;
-    dest4.theta = 0;
-    geometry_msgs::Pose2D dest5;
-    dest5.x = 10.8;
-    dest5.y = -0.5;
-    dest5.theta = 0;
-    geometry_msgs::Pose2D dest6;
-    dest6.x = -0.5;
-    dest6.y = -0.5;
-    dest5.theta = 0;
-
-    Destinations destinations;
-    destinations.add(dest1);
-    destinations.add(dest2);
-    destinations.add(dest3);
-    destinations.add(dest4);
-    destinations.add(dest5);
-    destinations.add(dest6);
 */
     
     int at_destination_counter = 0; // A ghetto solution to allow at_destination to publish twice, but only go the next destination 
+
     // Main Loop to run while node is running
     while (ros::ok()){
         geometry_msgs::Pose2D destination;

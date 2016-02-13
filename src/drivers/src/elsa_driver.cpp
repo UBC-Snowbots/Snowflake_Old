@@ -68,14 +68,15 @@ string velocityCommandToAPMCommand(double velocity, double move_rate_sensitivity
 int main(int argc, char** argv) {
     //initialize ros
     ros::init(argc, argv, ROS_NODE_NAME);
-	    ros::NodeHandle public_nh;
+    ros::NodeHandle public_nh;
     ros::NodeHandle private_nh("~");
-	    ros::Rate loop_rate(ROS_LOOP_RATE);
+	ros::Rate loop_rate(ROS_LOOP_RATE);
 
     //Set all values to neutral
     char twist_Y[3]={'1','2','5'}; //Strafe (normally not used, robot has no lateral movement)
     char twist_X[3]={'1','2','5'}; //Forward/Backward
     char twist_z[3]={'1','2','5'}; //Rotation
+
 
 // Get any parameters
     // The maximum that the turn rate will go to
@@ -99,6 +100,7 @@ int main(int argc, char** argv) {
     string port = "/dev/ttyACM";
     private_nh.param("port", port);
 
+
     //Set Subscribers and Publishers
   	ros::Subscriber command_sub = public_nh.subscribe<geometry_msgs::Twist>
       ("move_straight_line/command", 10, boost::function<void(geometry_msgs::Twist)>
@@ -107,6 +109,7 @@ int main(int argc, char** argv) {
   		velocityCommandToAPMCommand(twist.linear.x, move_rate_sensitivity).copy(twist_X, 3, 0);
   		rotationCommandToAPMCommand(twist.angular.z, turn_rate_sensitivity).copy(twist_z, 3, 0);
       }));
+
 
 	//initialize serial communication
 	SerialCommunication link;
@@ -129,6 +132,7 @@ int main(int argc, char** argv) {
 	usleep(10*SECOND);
 
     ROS_INFO("elsa_driver ready");
+
 
 	//While ROS is running
 	link.clearBuffer();
