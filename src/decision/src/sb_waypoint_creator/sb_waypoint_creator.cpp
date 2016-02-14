@@ -1,5 +1,6 @@
 #include <ros/ros.h>
 #include <geometry_msgs/Pose2D.h>
+#include <geometry_msgs/Point.h>
 #include <std_msgs/Bool.h>
 #include <vector>
 
@@ -30,6 +31,15 @@ class Destinations{
 };
 
 
+// Converts a given longitude and latitude to a position relative to the current longitude and latitude
+std::vector<double> longLatToRelativePosition(double dest_longitude, double dest_latitude, double present_longitude, double present_latitude, double present_rotation){
+    std::vector<double> nullvector;
+    nullvector.push_back(0);
+    nullvector.push_back(0);
+    return nullvector;
+}
+
+
 int main(int argc, char **argv){
     ros::init(argc, argv, "sb_waypoint_creator");
     ros::NodeHandle public_nh;
@@ -37,37 +47,64 @@ int main(int argc, char **argv){
     ros::Rate loop_rate(5);
 
     Destinations destinations; // The destinations for the robot to go to
-   
+
+
+    // Initialize destination publisher
+    ros::Publisher forward_pub = public_nh.advertise<geometry_msgs::Pose2D>("destination", 10);
+    
+    // Get at_destination (published by move_straight_line)
+    bool at_destination = false;
+    ros::Subscriber at_destination_sub = public_nh.subscribe<std_msgs::Bool>("move_straight_line/at_destination", 10, boost::function<void(std_msgs::Bool)>([&](std_msgs::Bool at_dest){
+        at_destination = at_dest.data;
+    }));      
+    
+    // Get present longitude and latitude from gps topic
+    double present_longitude = 0;
+    double present_latitude = 0;
+    ros::Subscriber present_long_and_lat_sub = public_nh.subscribe<geometry_msgs::Point>("gps", 10, boost::function<void(geometry_msgs::Point)>([&](geometry_msgs::Point present_long_lat){
+        present_longitude = present_long_lat.y;
+        present_latitude = present_long_lat.x;
+    }));
+
+    // Get present rotation from pose2D
+    double present_rotation;
+    ros::Subscriber pose2D_sub = public_nh.subscribe<geometry_msgs::Pose2D>("pose2D", 10, boost::function<void(geometry_msgs::Pose2D)>([&](geometry_msgs::Pose2D pose2D){
+        present_rotation = pose2D.theta;            
+    }));
 
 // Get parameters
+    // Whether or not the waypoints created will use some algorithm
+    // to avoid obstacles; if false just go straight to all nodes on given path
+    bool obstacle_avoidance = false;
+    private_nh.getParam("avoid_obstacles", obstacle_avoidance);
+    
+    // Whether the coordinates given to the robot are in longitude/latitude (long/lat)
+    // or position relative to where the robot started (relative_pos)
+    std::string coordinate_type = "relative_pos";
+    private_nh.getParam("coordinate_type", coordinate_type);
+    
     // "path" is a vector of alternating x,y coordinates, that make up a 
     // series of waypoints for the robot to move to. 
-    // If it does not exist, autonomous_mode should be set true
-    bool autonomous_mode = false;
-    if (private_nh.hasParam("path")){
         std::vector<double> path; // Path for the robot to follow {x,y,x,y, ...}
         private_nh.getParam("path", path);
         // Add all waypoints in "path"  as pose2D's in destinations
         for (int i = 0; i < path.size()/2; i++){
             geometry_msgs::Pose2D dest;
-            dest.x = path[i * 2];
-            dest.y = path[i * 2 + 1];
+            // If coordinates are longitudes and latitudes, convert them to
+            // relative positions before adding them to the list of destinations
+            if (coordinate_type == "long/lat"){
+                std::vector<double> rel_pos_coor = longLatToRelativePosition(path[i * 2], path[i * 2 + 1], present_longitude, present_latitude, present_rotation);
+                dest.x = rel_pos_coor[0];
+                dest.y = rel_pos_coor[1];
+            } else { // if coordinate_type="relative_pos"
+                dest.x = path[i * 2];
+                dest.y = path[i * 2 + 1];
+            }
             dest.theta = 0;
             destinations.add(dest);
-            ROS_INFO("X: %f\n", path[i]);
         }
-    } else {
-        autonomous_mode = true;
-    }
 
-    // Initialize destination publisher
-    ros::Publisher forward_pub = public_nh.advertise<geometry_msgs::Pose2D>("destination", 10);
-    
-    bool at_destination = false;
-    // Get at_destination (published by move_straight_line)
-    ros::Subscriber at_destination_sub = public_nh.subscribe<std_msgs::Bool>("move_straight_line/at_destination", 10, boost::function<void(std_msgs::Bool)>([&](std_msgs::Bool at_dest){
-        at_destination = at_dest.data;
-    }));      
+
 
 /*
 //TEST PATH   

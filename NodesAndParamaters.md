@@ -18,4 +18,9 @@ A list of all possible nodes in all packages the repo, with all possible paramat
 ##  Decision
 - sb_waypoint_creator
   - **Parameters**
+    - *coordinate_type* - (default = "relative_pos")
+        - Set to either:
+        - *relative_pos* - coordinates given in path are in positions relative to robots starting position
+        - *long/lat* - coordinates given in path are longitudes and latitudes
+    - *obstacle_avoidance* - (default = false) if true, the robot will try to avoid obstacles (*NOT YET IMPLEMENTED*)
     - *path* - A list of x,y coordinates that the robot should go to, in the form [x, y, x, y, ...]
