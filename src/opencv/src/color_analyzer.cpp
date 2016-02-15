@@ -16,37 +16,68 @@
 using namespace cv;
 using namespace std;
 
+//Disgusting global variables for testing purposes
+int iLowH = 0;
+int iHighH = 179;
+
+int iLowS = 0;
+int iHighS = 255;
+
+int iLowV = 0;
+int iHighV = 255;
+
+
 void convertToBinary(const Mat &input, Mat &output);
 
 int main(int argc, char** argv){
     
     //Takes ownership of camera
-    VideoCapture cap(0);
+    
+    VideoCapture cap("/home/valerian/Documents/src/opencv/test2.mov");
     if (!cap.isOpened()){
         cout << "Error opening camera" << endl;
         return -1;
     }
-
-    Mat inputImage;
-    Mat outputImage;
     
+    Mat inputImage;
+    Mat outputImage; 
+   
     //Camera information for user
+    
     int width = cap.get(CV_CAP_PROP_FRAME_WIDTH);
     int height = cap.get(CV_CAP_PROP_FRAME_HEIGHT);
     cout << "Frame size: " << width << " x " << height << endl;
     
+    
     namedWindow("input", CV_WINDOW_AUTOSIZE);
     namedWindow("output", CV_WINDOW_AUTOSIZE);
+    
+    //Testing Window
+    namedWindow("Control", CV_WINDOW_AUTOSIZE);    
+    //Good Values: lowh = 98, highh = 130, lows = 30, highs = 165, lowv = 129, highv = 255
+    cvCreateTrackbar("LowH", "Control", &iLowH, 179); //Hue (0 - 179)
+    cvCreateTrackbar("HighH", "Control", &iHighH, 179);
+
+    cvCreateTrackbar("LowS", "Control", &iLowS, 255); //Saturation (0 - 255)
+    cvCreateTrackbar("HighS", "Control", &iHighS, 255);
+
+    cvCreateTrackbar("LowV", "Control", &iLowV, 255); //Value (0 - 255)
+    cvCreateTrackbar("HighV", "Control", &iHighV, 255);
+
 
     while(1){
-    
+        
         //Reads image from camera
+        
         bool isRead = cap.read(inputImage);
         if (!isRead){
             cout << "Failed to read image from camera" << endl;
-            break;
+            cap.set(CV_CAP_PROP_POS_AVI_RATIO, 0);
+            continue; 
+            //break;
         }
         
+       
         convertToBinary(inputImage, outputImage);
         
         imshow("input", inputImage);
@@ -61,5 +92,16 @@ int main(int argc, char** argv){
 }
 
 void convertToBinary(const Mat &input, Mat &output){
-    cvtColor(input, output, CV_BGR2GRAY);
+    cvtColor(input, output, COLOR_BGR2HSV);
+    
+    inRange(output, Scalar(iLowH, iLowS, iLowV), Scalar(iHighH, iHighS, iHighV), output);
+    //Morphological Opening (removes small objects from foreground)
+    erode(output, output, getStructuringElement(MORPH_ELLIPSE, Size(5,5)));
+    dilate(output, output, getStructuringElement(MORPH_ELLIPSE, Size(5,5)));
+
+    //Morphological Closing (fill small holes in the foreground)
+    dilate(output, output, getStructuringElement(MORPH_ELLIPSE, Size(5, 5)) ); 
+    erode(output, output, getStructuringElement(MORPH_ELLIPSE, Size(5, 5)) );   
+    
+    
 } 
