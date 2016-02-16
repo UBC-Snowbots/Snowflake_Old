@@ -3,6 +3,7 @@
 #include <geometry_msgs/Point.h>
 #include <std_msgs/Bool.h>
 #include <vector>
+#include <boost/math/constants/constants.hpp>
 
 // A list of destinations, where each destination is a desired state (Pose2D msg)
 class Destinations{
@@ -33,6 +34,15 @@ class Destinations{
 
 // Converts a given longitude and latitude to a position relative to the current longitude and latitude
 std::vector<double> longLatToRelativePosition(double dest_longitude, double dest_latitude, double present_longitude, double present_latitude, double present_rotation){
+	/*
+	dest_longitude *= boost::math::double_constants::pi/180;
+	dest_latitude *= boost::math::double_constants::pi/180;
+	present_longitude *= boost::math::double_constants::pi/180;
+	present_latitude *= boost::math::double_constants::pi/180;
+	double distance = std::pow(std::sin((present_latitude-dest_latitude)/2),2)+std::cos(dest_latitude)*std::cos(present_latitude)*std::pow(std::sin((present_longitude-dest_longitude)),2);
+	distance = 2.0*std::atan2(std::sqrt(distance),std::sqrt(1-distance));
+	distance *= 637100.0;*/
+	
     std::vector<double> nullvector;
     nullvector.push_back(0);
     nullvector.push_back(0);
@@ -48,8 +58,8 @@ int main(int argc, char **argv){
 
     Destinations destinations; // The destinations for the robot to go to
 
-
     // Initialize destination publisher
+
     ros::Publisher forward_pub = public_nh.advertise<geometry_msgs::Pose2D>("destination", 10);
     
     // Get at_destination (published by move_straight_line)
