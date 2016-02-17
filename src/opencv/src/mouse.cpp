@@ -1,3 +1,5 @@
+//Code grabbed from internet testing OpenCV mouse functionality
+
 #include "opencv2/highgui/highgui.hpp"
 #include <iostream>
 

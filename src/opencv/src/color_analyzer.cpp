@@ -10,7 +10,7 @@
  *          - Just the HSV value finding rectangle part, not the object tracking part.
  * 			- Sketchy, works better if you make a rectangle on the ground
  * Usage: Point to a video file, press C to start calibrating. Then click and drag a rectangle on the calibration window
- * 			You should see H S V values being set afterwards
+ * 			You should see H S V values being set afterwards.
  */   
 
 #include <opencv2/core/core.hpp>
@@ -55,7 +55,7 @@ void recordHSV_Values(cv::Mat frame, cv::Mat hsv_frame);
 int main(int argc, char** argv){
     
     //Takes ownership of camera
-    VideoCapture cap("/home/valerian/Documents/src/opencv/course.mov");
+    VideoCapture cap(0);//"/home/valerian/Documents/src/opencv/course.mov");
     if (!cap.isOpened()){
         cout << "Error opening camera" << endl;
         return -1;
@@ -65,6 +65,7 @@ int main(int argc, char** argv){
     Mat outputImage; 
     Mat hsvImage;
     Mat calibrationImage;
+    Mat hsvCalibration;
    
     //Camera information for user
     
@@ -94,7 +95,7 @@ int main(int argc, char** argv){
     mouseMove = false;
     rectangleSelected = false;
     while(1){
-        
+
         //Reads image from camera
         
         bool isRead = cap.read(inputImage);
@@ -107,15 +108,21 @@ int main(int argc, char** argv){
         
         if (calibrationMode && !calibrationImgSet){
         	namedWindow(calibrationWindow, CV_WINDOW_AUTOSIZE);
-        	setMouseCallback(calibrationWindow, clickAndDrag_Rectangle, &hsvImage);
+        	setMouseCallback(calibrationWindow, clickAndDrag_Rectangle, &hsvCalibration);
         	calibrationImage = inputImage.clone();
-        	calibrationImgSet = true;
-        	cvtColor(calibrationImage, hsvImage, COLOR_BGR2HSV);
-        	imshow(calibrationWindow, calibrationImage);
+        	cvtColor(calibrationImage, hsvCalibration, COLOR_BGR2HSV);
+            calibrationImgSet = true;
+        }
+        else if (calibrationMode){
+            imshow(calibrationWindow, calibrationImage);
+
+        } 
+        else {
+            destroyWindow(calibrationWindow);
         }
         
+        recordHSV_Values(inputImage, hsvCalibration);
         convertToBinary(inputImage, outputImage, hsvImage);
-        recordHSV_Values(inputImage, hsvImage);
         imshow(inputWindow, inputImage);
         imshow(outputWindow, outputImage);
 
@@ -124,8 +131,7 @@ int main(int argc, char** argv){
         if (a == 27){
             cout << "Escaped by user" << endl;
             break;
-        }
-        if (a == 99){
+        } else if (a == 99){
         	calibrationMode = true;
         }
     }
@@ -171,6 +177,7 @@ void clickAndDrag_Rectangle(int event, int x, int y, int flags, void* param){
         {
             //set rectangle ROI to the rectangle that the user has selected
             rectangleROI = Rect(initialClickPoint, currentMousePoint);
+            calibrationMode = false;
             calibrationImgSet = false;
             //reset boolean variables
             mouseIsDragging = false;
