@@ -28,9 +28,10 @@ int main(int argc, char** argv){
     
     string inputWindow = "Input Image";
     string outputWindow = "Output Image";
-
+    bool isCalibratingManually = false;
     //Takes ownership of camera
     VideoCapture cap("/home/valerian/Documents/src/opencv/course.mov");
+ 
     if (!cap.isOpened()){
         cout << "Error opening camera" << endl;
         return -1;
@@ -47,11 +48,6 @@ int main(int argc, char** argv){
     
     namedWindow(inputWindow, CV_WINDOW_AUTOSIZE);
     namedWindow(outputWindow, CV_WINDOW_AUTOSIZE);
-    cout << "Making it" << endl;
-    cap.read(inputImage);
-    cout << "Just read image" << endl;
-    imshow(inputWindow, inputImage);
-    cout << "After this function" << endl;
     snowbotsFilter filter(98, 130, 30, 165, 129, 255);
 
     while(1){
@@ -65,17 +61,33 @@ int main(int argc, char** argv){
             continue; 
             //break;
         }
-        imshow(inputWindow, inputImage);
 
-        //filter.filterImage(inputImage, outputImage);
+        if (isCalibratingManually){
+            filter.manualCalibration();
+        } else {
+            filter.stopManualCalibration();
+        }
+
+        imshow(inputWindow, inputImage);
+        filter.filterImage(inputImage, outputImage);
 
         imshow(outputWindow, outputImage);
 
         //Escape key to finish program
-        int a = waitKey(30); 
+        int a = waitKey(20);
         if (a == 27){
             cout << "Escaped by user" << endl;
             break;
+        }
+        else if (a == 109){
+            if (!isCalibratingManually){
+                cout << "Beginning manual calibration" << endl;     
+            } else {
+                cout << "Ending manual calibration" << endl;
+            }
+            isCalibratingManually = !isCalibratingManually;
+            filter.printValues();
+
         }
     }
     return 0;

@@ -60,14 +60,14 @@ class snowbotsFilter
 		 * can be drawn
 		 * @param input - the frame we want to calibrate from
 		 */
-		void calibrateWindow(cv::Mat input);
+		void calibrateWindow(const cv::Mat &input);
 
 		/**
 		 * Filters an image according to threshold values
 		 * @param input - the frame being filtered
 		 * @param output - the output image
 		 */
-		void filterImage(cv::Mat input, cv::Mat output);
+		void filterImage(const cv::Mat &input, cv::Mat &output);
 
 		/**
 		 * Enables manual calibration of HSV values

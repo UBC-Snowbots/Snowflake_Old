@@ -11,6 +11,7 @@
 #include "filter.h"
 
 //Public
+ 
 //Two different constructors
 snowbotsFilter::snowbotsFilter(){
 	createFilter(0, 179, 0, 255, 0, 255);
@@ -21,7 +22,7 @@ snowbotsFilter::snowbotsFilter(int iLowH, int iHighH, int iLowS, int iHighS, int
 }
 
 
-void snowbotsFilter::calibrateWindow(cv::Mat input){
+void snowbotsFilter::calibrateWindow(const cv::Mat &input){
 	if (calibrationMode && !calibrationImgSet){
 		calibrationImage = input.clone();
 		cv::cvtColor(calibrationImage, hsv_calibrationImage, CV_BGR2HSV);
@@ -54,23 +55,22 @@ void snowbotsFilter::createFilter(int iLowH, int iHighH, int iLowS, int iHighS, 
 
 void snowbotsFilter::manualCalibration(){
 	cv::namedWindow(manualCalibrationWindow, CV_WINDOW_AUTOSIZE);
-    cvCreateTrackbar("LowH", "Control", &_iLowH, 179); //Hue (0 - 179)
-    cvCreateTrackbar("HighH", "Control", &_iHighH, 179);
+    cv::createTrackbar("LowH", manualCalibrationWindow, &_iLowH, 179); //Hue (0 - 179)
+    cv::createTrackbar("HighH", manualCalibrationWindow, &_iHighH, 179);
 
-    cvCreateTrackbar("LowS", "Control", &_iLowS, 255); //Saturation (0 - 255)
-    cvCreateTrackbar("HighS", "Control", &_iHighS, 255);
+    cv::createTrackbar("LowS", manualCalibrationWindow, &_iLowS, 255); //Saturation (0 - 255)
+    cv::createTrackbar("HighS", manualCalibrationWindow, &_iHighS, 255);
 
-    cvCreateTrackbar("LowV", "Control", &_iLowV, 255); //Value (0 - 255)
-    cvCreateTrackbar("HighV", "Control", &_iHighV, 255);
+    cv::createTrackbar("LowV", manualCalibrationWindow, &_iLowV, 255); //Value (0 - 255)
+    cv::createTrackbar("HighV", manualCalibrationWindow, &_iHighV, 255);
 }
 
 void snowbotsFilter::stopManualCalibration(){
 	cv::destroyWindow(manualCalibrationWindow);
 }
 
-void snowbotsFilter::filterImage(cv::Mat input, cv::Mat output){
+void snowbotsFilter::filterImage(const cv::Mat &input, cv::Mat &output){
 	cv::cvtColor(input, output, CV_BGR2HSV);
-	
 	cv::inRange(output, cv::Scalar(_iLowH, _iLowS, _iLowV), cv::Scalar(_iHighH, _iHighS, _iHighV), output);
 
 	//Morphological Opening (removes small objects from foreground)
@@ -84,5 +84,11 @@ void snowbotsFilter::filterImage(cv::Mat input, cv::Mat output){
 
 void snowbotsFilter::printValues(void){
 	std::cout << "iLowH: " << _iLowH << std::endl;
+	std::cout << "iHighH: " << _iHighH << std::endl;
+	std::cout << "iLowS: " << _iLowS << std::endl;
+	std::cout << "iHighS: " << _iHighS << std::endl;
+	std::cout << "iLowV: " << _iLowV << std::endl;
+	std::cout << "iHighV: " << _iHighV << std::endl;
+
 }
 
