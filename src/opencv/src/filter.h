@@ -26,10 +26,6 @@ class snowbotsFilter
 
 	//Calibration
 	bool calibrationMode;
-	bool calibrationImgSet;
-	bool mouseIsDragging;
-	bool mouseMove;
-	bool rectangleSelected;
 	cv::Point initialClickPoint, currentMousePoint;
 	cv::Rect rectangleROI;
 	std::vector<int> H_ROI, S_ROI, V_ROI;
@@ -60,7 +56,7 @@ class snowbotsFilter
 		 * can be drawn
 		 * @param input - the frame we want to calibrate from
 		 */
-		void calibrateWindow(const cv::Mat &input);
+		//void calibrateWindow(const cv::Mat &input);
 
 		/**
 		 * Filters an image according to threshold values
@@ -84,6 +80,12 @@ class snowbotsFilter
 		 */
 		void printValues(void);
 
+
+		/**
+		 * A mouse event handler for the automatic calibration
+		 */
+		//static void clickAndDrag_Rectangle(int event, int x, int y, int flags, void* param);
+
 	private:
 
 		/**
@@ -94,4 +96,9 @@ class snowbotsFilter
 						int iLowS, int iHighS, 
 						int iLowV, int iHighV);
 
+
+		/**
+		 * Takes records the HSV values from a given frame
+		 */
+		//void recordHSV_Values();
 };

@@ -41,7 +41,7 @@ add_executable(ipm src/main.cpp src/IPM.h src/IPM.cpp)
 
 add_executable(mouse src/mouse.cpp)
 
-add_executable(vision src/vision.cpp src/filter.h src/filter.cpp)
+add_executable(vision src/vision.cpp src/filter.h src/filter.cpp src/IPM.h src/IPM.cpp)
 
 target_link_libraries(color_analyzer ${catkin_LIBRARIES} ${OpenCV_LIBS})
 

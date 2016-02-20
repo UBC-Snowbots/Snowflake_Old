@@ -10,7 +10,6 @@
 
 #include "filter.h"
 
-//Public
  
 //Two different constructors
 snowbotsFilter::snowbotsFilter(){
@@ -22,23 +21,6 @@ snowbotsFilter::snowbotsFilter(int iLowH, int iHighH, int iLowS, int iHighS, int
 }
 
 
-void snowbotsFilter::calibrateWindow(const cv::Mat &input){
-	if (calibrationMode && !calibrationImgSet){
-		calibrationImage = input.clone();
-		cv::cvtColor(calibrationImage, hsv_calibrationImage, CV_BGR2HSV);
-		cv::namedWindow(calibrationWindow, CV_WINDOW_AUTOSIZE);
-		//setMouseCallback(calibrationWindow, clickAndDrag_Rectangle, &hsv_calibrationImage);
-		calibrationImgSet = true;
-	}
-	else if (calibrationMode){
-		cv::imshow(calibrationWindow, calibrationImage);
-	}
-	else {
-		cv::destroyWindow(calibrationWindow);
-	}
-}
-
-//Private
 //Initializer
 void snowbotsFilter::createFilter(int iLowH, int iHighH, int iLowS, int iHighS, int iLowV, int iHighV){
 	_iLowH = iLowH;
@@ -52,7 +34,7 @@ void snowbotsFilter::createFilter(int iLowH, int iHighH, int iLowS, int iHighS, 
 
 }
 
-
+//Functions
 void snowbotsFilter::manualCalibration(){
 	cv::namedWindow(manualCalibrationWindow, CV_WINDOW_AUTOSIZE);
     cv::createTrackbar("LowH", manualCalibrationWindow, &_iLowH, 179); //Hue (0 - 179)
@@ -91,4 +73,61 @@ void snowbotsFilter::printValues(void){
 	std::cout << "iHighV: " << _iHighV << std::endl;
 
 }
+/* Put on backlog
+static void snowbotsFilter::clickAndDrag_Rectangle(int event, int x, int y, int flags, void* param){
+        if (event == cv::EVENT_LBUTTONDOWN)
+        {
+            //keep track of initial point clicked
+            initialClickPoint = cv::Point(x, y);
+        }
+        if (event == cv::EVENT_LBUTTONUP)
+        {
+        	currentMousePoint = cv::Point(x,y);
+            //set rectangle ROI to the rectangle that the user has selected
+            rectangleROI = cv::Rect(initialClickPoint, currentMousePoint);
+            recordHSV_Values();
+        }
+}
 
+void snowbotsFilter::recordHSV_Values(){
+        if (H_ROI.size()>0) H_ROI.clear();
+        if (S_ROI.size()>0) S_ROI.clear();
+        if (V_ROI.size()>0 )V_ROI.clear();
+        //if the rectangle has no width or height (user has only dragged a line) then we don't try to iterate over the width or height
+        if (rectangleROI.width<1 || rectangleROI.height<1){
+        	std::cout << "Please drag a rectangle, not a line" << std::endl;
+        }
+        else{
+            for (int i = rectangleROI.x; i<rectangleROI.x + rectangleROI.width; i++){
+                //iterate through both x and y direction and save HSV values at each and every point
+                for (int j = rectangleROI.y; j<rectangleROI.y + rectangleROI.height; j++){
+                    //save HSV value at this point
+                    H_ROI.push_back((int)hsv_calibrationImage.at<cv::Vec3b>(j, i)[0]);
+                    S_ROI.push_back((int)hsv_calibrationImage.at<cv::Vec3b>(j, i)[1]);
+                    V_ROI.push_back((int)hsv_calibrationImage.at<cv::Vec3b>(j, i)[2]);
+                }
+            }
+        }
+        if (H_ROI.size()>0){
+            //NOTE: min_element and max_element return iterators so we must dereference them with "*"
+            _iLowH = *std::min_element(H_ROI.begin(), H_ROI.end());
+            _iHighH = *std::max_element(H_ROI.begin(), H_ROI.end());
+        }
+        if (S_ROI.size()>0){
+            _iLowS = *std::min_element(S_ROI.begin(), S_ROI.end());
+            _iHighS = *std::max_element(S_ROI.begin(), S_ROI.end());
+        }
+        if (V_ROI.size()>0){
+            _iLowV = *std::min_element(V_ROI.begin(), V_ROI.end());
+            _iHighV = *std::max_element(V_ROI.begin(), V_ROI.end());
+        }
+
+}
+
+void snowbotsFilter::calibrateWindow(const cv::Mat &input){
+	calibrationImage = input.clone();
+	cv::cvtColor(calibrationImage, hsv_calibrationImage, CV_BGR2HSV);
+	cv::namedWindow(calibrationWindow, CV_WINDOW_AUTOSIZE);
+	//cv::setMouseCallback(calibrationWindow, clickAndDrag_Rectangle);
+}
+*/
