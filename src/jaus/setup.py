@@ -7,7 +7,8 @@ setup(
 	install_requires=["twisted", "pytest"],
 	entry_points={
 		"console_scripts": [
-			"test_twisted = jaus.run:test_twisted"
+			"test_twisted = jaus.run:test_twisted",
+			"test_jaus = jaus.run:test_jaus"
 		]
 	}
 )
