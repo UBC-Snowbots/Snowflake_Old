@@ -10,14 +10,8 @@ project(opencv)
 
 ## is used, also find other catkin packages
 
-find_package(catkin REQUIRED COMPONENTS
-
-  roscpp
-
-  rospy
-
+find_package(catkin REQUIRED COMPONENTS roscpp rospy cv_bridge genmsg image_transport sensor_msgs
 )
-
 
 
 find_package(OpenCV REQUIRED)
@@ -33,6 +27,7 @@ include_directories(
 )
 
 
+catkin_package()
 
 
 add_executable(color_analyzer src/color_analyzer.cpp)
@@ -43,6 +38,10 @@ add_executable(mouse src/mouse.cpp)
 
 add_executable(vision src/vision.cpp src/filter.h src/filter.cpp src/IPM.h src/IPM.cpp)
 
+add_executable(camera_publisher src/camera.cpp)
+
+add_executable(camera_subscriber src/camera_subscriber.cpp)
+
 target_link_libraries(color_analyzer ${catkin_LIBRARIES} ${OpenCV_LIBS})
 
 target_link_libraries(ipm ${catkin_LIBRARIES} ${OpenCV_LIBS})
@@ -51,6 +50,12 @@ target_link_libraries(mouse ${catkin_LIBRARIES} ${OpenCV_LIBS})
 
 target_link_libraries(vision ${catkin_LIBRARIES} ${OpenCV_LIBS})
 
+target_link_libraries(camera_publisher ${catkin_LIBRARIES} ${OpenCV_LIBS})
+
+target_link_libraries(camera_subscriber ${catkin_LIBRARIES} ${OpenCV_LIBS})
+
+
+
 add_dependencies(color_analyzer opencv)
 
 add_dependencies(ipm opencv)
@@ -58,3 +63,7 @@ add_dependencies(ipm opencv)
 add_dependencies(mouse opencv)
 
 add_dependencies(vision opencv)
+
+add_dependencies(camera_publisher opencv)
+
+add_dependencies(camera_subscriber opencv)
