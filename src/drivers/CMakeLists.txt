@@ -36,3 +36,7 @@ add_executable(sb_driver_elsa src/elsa_driver.cpp)
 add_dependencies(sb_driver_elsa sb_msgs_generate_messages_cpp)
 
 target_link_libraries(sb_driver_elsa sb_serial_communication ${catkin_LIBRARIES})
+
+add_executable(sb_sensor_driver src/elsa_driver.cpp)
+add_dependencies(sb_sensor_driver sb_msgs_generate_messages_cpp)
+target_link_libraries(sb_sensor_driver sb_serial_communication ${catkin_LIBRARIES})
