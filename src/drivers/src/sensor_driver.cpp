@@ -22,43 +22,60 @@ static const string SENSOR_OUTPUT_TOPIC = "IMU";
 static const string ARDUINO_PORT_NAME = "/dev/ttyACM";
 
 sensor_msgs::Imu IMU; 
-char buffer[64];
+//char buffer[64];
 std::string to_string(int i){
   ostringstream out;
   out << i;
   return out.str();
 }
-void Serial_Store(void){
-  //stores input buffer into int
-  char temp[64];
-  int i,j = 0;
-  for ( i = 0; i < 64 && temp[i] != '\0' ; i++){
-    if (buffer[i] != ','){
-      temp[j] = buffer[i];
-      j++;
+void IMU_write(int c, int val){
+  switch (c){
+  case 1: 
+    IMU.linear_acceleration.x = val;
+    cout << "linear_accel_x: " << IMU.linear_acceleration.x;
+    break;
+  case 2: 
+    IMU.linear_acceleration.y = val;
+    cout << "linear_accel_y: " << IMU.linear_acceleration.y;
+    break; 
+  case 3: 
+    IMU.linear_acceleration.z = val;
+    cout << "linear_accel_z: " << IMU.linear_acceleration.z << endl;
+  break;
+  }
+}
+
+int pow (int base, int power){
+  int val = 0; 
+  for (int z = 0; z < power+1; z++){
+    val*=base;
+  }
+}
+
+void Serial_Store(char *buffer){
+    //stores input buffer into int
+    cout << "buffer :" << buffer << endl;
+    int reading = 0; 
+    int temp_count = 0;
+    int axis_count = 0;
+    char c[2] = "0"; 
+     if(buffer[0] == 'x'){ 
+      for (int i = 1; i < 16; i++){
+        //cout << "test of Serial_Store" << x << endl; 
+        //cout << "i? :" << i << endl;
+        if(buffer[i] == 'x'){i++;} 
+        if(buffer[i] != ',' && buffer[i] != '\n' && buffer[i] != '\0'){
+          c[0] = buffer[i];
+          reading = (int)atoi(c)*pow(10,temp_count); 
+          temp_count++;
+        }
+        else{
+          axis_count++; 
+          IMU_write(axis_count, reading);
+          temp_count = 0; 
+        }
+      } 
     }
-    //else { cout << atoi(temp) << endl;j = 0;} 
-  }
-  cout << atoi(temp) << endl; 
-  /*
-  while (buffer[i] != ',' && buffer[i] != '\0'){
-  temp[j] = buffer[i];
-  i++; j++;
-  }
-  IMU.linear_acceleration.x = atoi(temp);
-  j = 0;
-  while (buffer[i] != ','){
-  temp[j] = buffer[i];
-  i++; j++;
-  }
-  IMU.linear_acceleration.y = atoi(temp);
-  j = 0;
-  while (buffer[i] != '\n'){
-  temp[j] = buffer[i];
-  i++; j++;
-  }
-  IMU.linear_acceleration.z = atoi(temp);
-  */
 }
 
 int main (int argc, char** argv){
@@ -89,9 +106,13 @@ int main (int argc, char** argv){
   IMU.orientation_covariance[i]=0;
   }
   usleep(10000);//wait  
+  int x = 0;
   while(ros::ok()){ //to check received message
+  char buffer[16];
   link.readData(16,buffer);
-  Serial_Store();
+  //cout << buffer << endl; 
+  Serial_Store(buffer);
+ // usleep(1000);
  // cout << buffer;
   }
 
