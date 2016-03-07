@@ -17,9 +17,11 @@ using namespace std;
 
 static const string ROS_NODE_NAME = "sensor_driver";
 static const int ROS_LOOP_RATE = 10; //units of Hz should be 200
-static const int BAUD_RATE = 15200; 
+static const int BAUD_RATE = 9600; 
 static const string SENSOR_OUTPUT_TOPIC = "IMU"; 
 static const string ARDUINO_PORT_NAME = "/dev/ttyACM";
+
+SerialCommunication link_port;
 
 sensor_msgs::Imu IMU; 
 //char buffer[64];
@@ -32,15 +34,15 @@ void IMU_write(int c, int val){
   switch (c){
   case 1: 
     IMU.linear_acceleration.x = val;
-    cout << "linear_accel_x: " << IMU.linear_acceleration.x;
+    //cout << "linear_accel_x: " << IMU.linear_acceleration.x;
     break;
   case 2: 
     IMU.linear_acceleration.y = val;
-    cout << "linear_accel_y: " << IMU.linear_acceleration.y;
+    //cout << "linear_accel_y: " << IMU.linear_acceleration.y;
     break; 
   case 3: 
     IMU.linear_acceleration.z = val;
-    cout << "linear_accel_z: " << IMU.linear_acceleration.z;
+    //cout << "linear_accel_z: " << IMU.linear_acceleration.z;
     break;
   }
 }
@@ -69,11 +71,7 @@ bool Serial_Store(char *buffer){
       IMU_write(3,atoi(c));
       return true;
     }
-    else{
-      c = strtok(NULL,",:");
-      cout << "Error in truncation: " << c << endl; 
-      return false;
-    }
+   
       c = strtok(NULL,",:");
   }
   return true;
@@ -84,17 +82,15 @@ int main (int argc, char** argv){
 	ros::NodeHandle nh; 
 	ros::Rate loop_rate(ROS_LOOP_RATE);
   ros::Publisher sensor_imu_publisher = nh.advertise<sensor_msgs::Imu>(SENSOR_OUTPUT_TOPIC,20);
-  
-  SerialCommunication link;
 
   unsigned int count = 0;
   while(
-      !link.connect(BAUD_RATE,(ARDUINO_PORT_NAME + to_string(count)))
+      !link_port.connect(BAUD_RATE,(ARDUINO_PORT_NAME + to_string(count)))
       && count < 9){
     count++;
   }
   cout << endl;
-  if (link.connect(BAUD_RATE,(ARDUINO_PORT_NAME + to_string(count)))){
+  if (link_port.connect(BAUD_RATE,(ARDUINO_PORT_NAME + to_string(count)))){
     cout << "Connected on port" << ARDUINO_PORT_NAME << count << endl;
     }
   else{ 
@@ -110,11 +106,15 @@ int main (int argc, char** argv){
   int x = 0;
   while(ros::ok()){ //to check received message
   char buffer[64];
-  link.readData(16,buffer);
+  link_port.clearBuffer();
+  stringstream ss; 
+  ss << 'B'; 
+  link_port.writeData(ss.str(),1); 
   loop_rate.sleep();
-  cout << "buffer:" << buffer << endl;
-  Serial_Store(buffer);
-  cout << endl;
-  link.clearBuffer();
+  link_port.readData(16,buffer);
+  //cout << "buffer:" << buffer << endl;
+  if(Serial_Store(buffer))
+  //cout << endl;
+  sensor_imu_publisher.publish(IMU);
   }
 }
