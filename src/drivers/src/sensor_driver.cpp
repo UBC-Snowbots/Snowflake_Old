@@ -1,6 +1,8 @@
 /*
 * Driver Node for arduino sensors: (Accelerometer, Gyroscope, Compass, GPS)
 * Author: Vincent Yuan
+* Hardware: Arduino Uno, ADXL335 
+* Specs(ADXL335): www.sparkfun.com/datasheets/Components/SMD/adxl335.pdf
 */
 
 #include <stdlib.h>
@@ -20,7 +22,9 @@ static const int ROS_LOOP_RATE = 10; //units of Hz should be 200
 static const int BAUD_RATE = 9600; 
 static const string SENSOR_OUTPUT_TOPIC = "IMU"; 
 static const string ARDUINO_PORT_NAME = "/dev/ttyACM";
-
+static const double ARDUINO_ANALOG_PU = 0.0049; //v/pu Arduino analog to voltage conversion 
+static const double ADXL_V_G_PU = 0.3; //Volts/g 
+static const double G_TO_ACCEL = 9.80665; //9.8m/s^2 / g 
 SerialCommunication link_port;
 
 sensor_msgs::Imu IMU; 
@@ -32,19 +36,19 @@ std::string to_string(int i){
 }
 
 void IMU_write(int c, int val){
-  //Takes in value val and writes to IMU.msg depending on situation 
+  //Takes in value val and writes to IMU.msg depending on situation
+  val *= ARDUINO_ANALOG_PU; //conversion from PU (1 to 1024 int) to voltage 
+  val /= ADXL_V_G_PU; //conversion from voltage to gs 
+  val *= G_TO_ACCEL;//conversion from g to m/s^2 as specified in std_msgs/IMU.h 
   switch (c){
   case 1: 
     IMU.linear_acceleration.x = val;
-    //cout << "linear_accel_x: " << IMU.linear_acceleration.x;
     break;
   case 2: 
     IMU.linear_acceleration.y = val;
-    //cout << "linear_accel_y: " << IMU.linear_acceleration.y;
     break; 
   case 3: 
     IMU.linear_acceleration.z = val;
-    //cout << "linear_accel_z: " << IMU.linear_acceleration.z;
     break;
   }
 }
