@@ -2,7 +2,7 @@
  File: Serial_Communication.cpp
  
  Author: Nick Adams and Jarek Ignasmenzies
- Last Edited: September 11, 2010
+ Last Edited: March 6, 2016 (By Vincent Yuan)
  Version 1.0
  License: GNU
  
