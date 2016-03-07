@@ -89,9 +89,7 @@ int main (int argc, char** argv){
   ros::Publisher sensor_imu_publisher = nh.advertise<sensor_msgs::Imu>(SENSOR_OUTPUT_TOPIC,20);
   //Attempts at opening the Serial Port
   unsigned int count = 0;
-  while(
-      !link_port.connect(BAUD_RATE,(ARDUINO_PORT_NAME + to_string(count)))
-      && count < 9){
+  while( !link_port.connect(BAUD_RATE,(ARDUINO_PORT_NAME + to_string(count)))&& count < 9){
     count++;
   }
   cout << endl;
@@ -120,4 +118,5 @@ int main (int argc, char** argv){
     if(Serial_Store(buffer))//if the messages read are good, publish them, else do nothing
     sensor_imu_publisher.publish(IMU);
   }
+  ROS_ERROR("Sensor Input Node Terminated"); 
 }
