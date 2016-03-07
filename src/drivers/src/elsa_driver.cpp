@@ -154,7 +154,7 @@ int main(int argc, char** argv) {
 
         //cout << ss.str() << endl;
 
-	    //publish data
+	    //publish data	
 	    char test[24];
 	    link.readData(24, test);
   	    //cout << test;

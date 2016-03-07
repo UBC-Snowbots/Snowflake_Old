@@ -24,13 +24,15 @@ static const string ARDUINO_PORT_NAME = "/dev/ttyACM";
 SerialCommunication link_port;
 
 sensor_msgs::Imu IMU; 
-//char buffer[64];
+
 std::string to_string(int i){
   ostringstream out;
   out << i;
   return out.str();
 }
+
 void IMU_write(int c, int val){
+  //Takes in value val and writes to IMU.msg depending on situation 
   switch (c){
   case 1: 
     IMU.linear_acceleration.x = val;
@@ -47,26 +49,21 @@ void IMU_write(int c, int val){
   }
 }
 
-int pow (int base, int power){
-  int val = 0; 
-  for (int z = 0; z < power+1; z++){
-    val*=base;
-  }
-}
-
 bool Serial_Store(char *buffer){
-  char *c;  
+  //Parses the buffer characters and stores them into the respective IMU position 
+  //When strtok is passed a NULL pointer, it checks the previous succeful truncation location
+  char *c;  //temp char that stores the char to convert to integer
   c = strtok(buffer,",:");
   while (c != NULL){
-    if (c[0] == 'X'){
+    if (c[0] == 'X'){ //Looks for linear_accel_x 
       c = strtok(NULL,",:");
       IMU_write(1,atoi(c));     
     }
-    else if (c[0] == 'Y'){
+    else if (c[0] == 'Y'){ //Looks for linear_accel_y
       c = strtok(NULL,",:");
       IMU_write(2,atoi(c));
     }
-    else if (c[0] == 'Z'){
+    else if (c[0] == 'Z'){ //Looks for linear_accel_y
       c = strtok(NULL,",:");
       IMU_write(3,atoi(c));
       return true;
@@ -77,12 +74,20 @@ bool Serial_Store(char *buffer){
   return true;
 }
 
+void data_request(void){
+  //clears input buffer and sends confirmation byte to prepare acceptance of message in serial
+  link_port.clearBuffer();
+  stringstream ss; 
+  ss << 'B'; 
+  link_port.writeData(ss.str(),1); 
+}
+
 int main (int argc, char** argv){
 	ros::init(argc,argv, ROS_NODE_NAME);
 	ros::NodeHandle nh; 
 	ros::Rate loop_rate(ROS_LOOP_RATE);
   ros::Publisher sensor_imu_publisher = nh.advertise<sensor_msgs::Imu>(SENSOR_OUTPUT_TOPIC,20);
-
+  //Attempts at opening the Serial Port
   unsigned int count = 0;
   while(
       !link_port.connect(BAUD_RATE,(ARDUINO_PORT_NAME + to_string(count)))
@@ -97,24 +102,22 @@ int main (int argc, char** argv){
     cout << "[1]Check Permissions" << endl << "[2]Check USB" << endl;
     return 1;
       }
+  
+  //Temporary Function for Setting covariance values 
   for (int i = 0; i < 9; i++){
   IMU.linear_acceleration_covariance[i] = 0; 
   IMU.angular_velocity_covariance[i]=0;
   IMU.orientation_covariance[i]=0;
   }
-  usleep(10000);//wait  
+  
   int x = 0;
-  while(ros::ok()){ //to check received message
-  char buffer[64];
-  link_port.clearBuffer();
-  stringstream ss; 
-  ss << 'B'; 
-  link_port.writeData(ss.str(),1); 
-  loop_rate.sleep();
-  link_port.readData(16,buffer);
-  //cout << "buffer:" << buffer << endl;
-  if(Serial_Store(buffer))
-  //cout << endl;
-  sensor_imu_publisher.publish(IMU);
+  while(ros::ok()){
+    //ROS Loop - All procedures repeated are done here
+    char buffer[32];
+    data_request();//request dat
+    loop_rate.sleep(); // Wait for messages to arrive 
+    link_port.readData(16,buffer); // Read messsages 
+    if(Serial_Store(buffer))//if the messages read are good, publish them, else do nothing
+    sensor_imu_publisher.publish(IMU);
   }
 }
