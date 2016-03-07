@@ -36,3 +36,6 @@ add_subdirectory(src)
 add_executable(MoveStraightLineTest test/MoveStraightLineTest.cpp test/main.cpp)
 target_link_libraries(MoveStraightLineTest libmove_straight_line)
 add_catch_test(MoveStraightLineTest)
+
+
+
