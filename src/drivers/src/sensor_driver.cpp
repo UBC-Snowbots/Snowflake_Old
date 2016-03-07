@@ -17,7 +17,7 @@ using namespace std;
 
 static const string ROS_NODE_NAME = "sensor_driver";
 static const int ROS_LOOP_RATE = 10; //units of Hz should be 200
-static const int BAUD_RATE = 9600; 
+static const int BAUD_RATE = 15200; 
 static const string SENSOR_OUTPUT_TOPIC = "IMU"; 
 static const string ARDUINO_PORT_NAME = "/dev/ttyACM";
 
@@ -40,8 +40,8 @@ void IMU_write(int c, int val){
     break; 
   case 3: 
     IMU.linear_acceleration.z = val;
-    cout << "linear_accel_z: " << IMU.linear_acceleration.z << endl;
-  break;
+    cout << "linear_accel_z: " << IMU.linear_acceleration.z;
+    break;
   }
 }
 
@@ -52,30 +52,31 @@ int pow (int base, int power){
   }
 }
 
-void Serial_Store(char *buffer){
-    //stores input buffer into int
-    cout << "buffer :" << buffer << endl;
-    int reading = 0; 
-    int temp_count = 0;
-    int axis_count = 0;
-    char c[2] = "0"; 
-     if(buffer[0] == 'x'){ 
-      for (int i = 1; i < 16; i++){
-        //cout << "test of Serial_Store" << x << endl; 
-        //cout << "i? :" << i << endl;
-        if(buffer[i] == 'x'){i++;} 
-        if(buffer[i] != ',' && buffer[i] != '\n' && buffer[i] != '\0'){
-          c[0] = buffer[i];
-          reading = (int)atoi(c)*pow(10,temp_count); 
-          temp_count++;
-        }
-        else{
-          axis_count++; 
-          IMU_write(axis_count, reading);
-          temp_count = 0; 
-        }
-      } 
+bool Serial_Store(char *buffer){
+  char *c;  
+  c = strtok(buffer,",:");
+  while (c != NULL){
+    if (c[0] == 'X'){
+      c = strtok(NULL,",:");
+      IMU_write(1,atoi(c));     
     }
+    else if (c[0] == 'Y'){
+      c = strtok(NULL,",:");
+      IMU_write(2,atoi(c));
+    }
+    else if (c[0] == 'Z'){
+      c = strtok(NULL,",:");
+      IMU_write(3,atoi(c));
+      return true;
+    }
+    else{
+      c = strtok(NULL,",:");
+      cout << "Error in truncation: " << c << endl; 
+      return false;
+    }
+      c = strtok(NULL,",:");
+  }
+  return true;
 }
 
 int main (int argc, char** argv){
@@ -108,13 +109,12 @@ int main (int argc, char** argv){
   usleep(10000);//wait  
   int x = 0;
   while(ros::ok()){ //to check received message
-  char buffer[16];
+  char buffer[64];
   link.readData(16,buffer);
-  //cout << buffer << endl; 
+  loop_rate.sleep();
+  cout << "buffer:" << buffer << endl;
   Serial_Store(buffer);
- // usleep(1000);
- // cout << buffer;
+  cout << endl;
+  link.clearBuffer();
   }
-
-  
 }

@@ -69,7 +69,7 @@ SerialCommunication::~SerialCommunication()
 
  void SerialCommunication::readData(int n, char *buf)
 {
-	int i = read(fd, buf, 64);
+	int i = read(fd, buf, n);
 	buf[i] = 0;
 	return;
 }
