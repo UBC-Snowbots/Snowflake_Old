@@ -19,7 +19,7 @@ using namespace std;
 
 static const string ROS_NODE_NAME = "sensor_driver";
 static const int ROS_LOOP_RATE = 10; //units of Hz should be 200
-static const int BAUD_RATE = 9600; 
+static const int BAUD_RATE = 115200; 
 static const string SENSOR_OUTPUT_TOPIC = "IMU"; 
 static const string ARDUINO_PORT_NAME = "/dev/ttyACM";
 static const double ARDUINO_ANALOG_PU = 0.0049; //v/pu Arduino analog to voltage conversion 
@@ -35,41 +35,60 @@ std::string to_string(int i){
   return out.str();
 }
 
-void IMU_write(int c, int val){
-  //Takes in value val and writes to IMU.msg depending on situation
-  val *= ARDUINO_ANALOG_PU; //conversion from PU (1 to 1024 int) to voltage 
-  val /= ADXL_V_G_PU; //conversion from voltage to gs 
-  val *= G_TO_ACCEL;//conversion from g to m/s^2 as specified in std_msgs/IMU.h 
-  switch (c){
+void IMU_write(int c, double val){
+  //Takes in value val and writes to IMU.msg depending on situation 
+   switch (c){
   case 1: 
+    val *= ARDUINO_ANALOG_PU; 
+    //conversion from PU (1 to 1024 int) to voltage 
+    val /= ADXL_V_G_PU; //conversion from voltage to gs 
+    val *= G_TO_ACCEL;
+    //conversion from g to m/s^2 as specified in std_msgs/IMU.h 
     IMU.linear_acceleration.x = val;
     break;
-  case 2: 
+  case 2:
+    val *= ARDUINO_ANALOG_PU;
+    val /= ADXL_V_G_PU; 
+    val *= G_TO_ACCEL; 
     IMU.linear_acceleration.y = val;
     break; 
   case 3: 
+    val *= ARDUINO_ANALOG_PU;
+    val /= ADXL_V_G_PU; 
+    val *= G_TO_ACCEL;
     IMU.linear_acceleration.z = val;
     break;
+  case 4: 
+    IMU.angular_velocity.x = val; 
+    break;
+  case 5:  
+    IMU.angular_velocity.y = val;
+    break; 
+  case 6:  
+    IMU.angular_velocity.z = val; 
+    break; 
   }
 }
 
-bool Serial_Store(char *buffer){
+bool Serial_Store(char *buffer,int sensor){
   //Parses the buffer characters and stores them into the respective IMU position 
   //When strtok is passed a NULL pointer, it checks the previous succeful truncation location
+  //sensor = 0 for accelerometer, sensor = 3 for gyro, sensor = 3 undetermined
+//  if (sensor > 1) return false;
   char *c;  //temp char that stores the char to convert to integer
   c = strtok(buffer,",:");
   while (c != NULL){
     if (c[0] == 'X'){ //Looks for linear_accel_x 
       c = strtok(NULL,",:");
-      IMU_write(1,atoi(c));     
+      IMU_write((1+sensor),atoi(c));     
     }
     else if (c[0] == 'Y'){ //Looks for linear_accel_y
       c = strtok(NULL,",:");
-      IMU_write(2,atoi(c));
+      IMU_write((2+sensor),atoi(c));
     }
     else if (c[0] == 'Z'){ //Looks for linear_accel_y
       c = strtok(NULL,",:");
-      IMU_write(3,atoi(c));
+      IMU_write((3+sensor),atoi(c));
       return true;
     }
    
@@ -78,11 +97,11 @@ bool Serial_Store(char *buffer){
   return true;
 }
 
-void data_request(void){
+void data_request(char c){
   //clears input buffer and sends confirmation byte to prepare acceptance of message in serial
   link_port.clearBuffer();
   stringstream ss; 
-  ss << 'B'; 
+  ss << c; 
   link_port.writeData(ss.str(),1); 
 }
 
@@ -115,12 +134,18 @@ int main (int argc, char** argv){
   int x = 0;
   while(ros::ok()){
     //ROS Loop - All procedures repeated are done here
-    char buffer[32];
-    data_request();//request dat
+    char buff1[32];
+    char buff2[32];
+    data_request('A');//request dat
     loop_rate.sleep(); // Wait for messages to arrive 
-    link_port.readData(16,buffer); // Read messsages 
-    if(Serial_Store(buffer))//if the messages read are good, publish them, else do nothing
-    sensor_imu_publisher.publish(IMU);
+    link_port.readData(32,buff1); // Read messsages
+    data_request('G');
+    loop_rate.sleep();
+    link_port.readData(32,buff2);
+    if(Serial_Store(buff2,3) && Serial_Store(buff1,0))
+        sensor_imu_publisher.publish(IMU);
+          //if the messages read are good, publish them, else do nothing 
   }
+  
   ROS_ERROR("Sensor Input Node Terminated"); 
 }
