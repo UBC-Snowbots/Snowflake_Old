@@ -8,22 +8,22 @@
 #include <sstream> 
 #include <string> 
 #include <ros/ros.h> 
-#include "drivers/GPS.msg"
-#include "SerialCommunication.h"
-
-using namespace std; 
+#include <std_msgs/String.h>
+#include <std_msgs/Bool.h> 
+#include "messages/gps.h"
+#include "SerialCommunication.h" 
 
 //constant declerations
 static const string ROS_NODE_NAME = "gps_driver"; 
 static const int ROS_LOOP_RATE = 10; 
 static const int BAUD_RATE = 115200; 
-static const string SENSOR_OUTPUT_TOPIC = "GPS" 
+static const string SENSOR_OUTPUT_TOPIC = "GPS"; 
 static const string ARDUINO_PORT_NAME = "/dev/ttyACM"; 
 
 //Objects 
 SerialCommunication link_port; 
-sensor_msgs::Imu IMU; 
-
-string to_string(int i); 
+//messages::gps GPS; 
+std::string msg; 
+std::string to_string(int i); 
 void Serial_Store(char *buffer); 
 void data_request(char c); 

@@ -50,6 +50,7 @@ int main (int argc, char** argv){
   }
   
   ROS_ERROR("Sensor Input Node Terminated"); 
+  return 0; 
 }
 
 std::string to_string(int i){
