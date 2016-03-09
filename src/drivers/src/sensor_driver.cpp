@@ -5,29 +5,52 @@
 * Specs(ADXL335): www.sparkfun.com/datasheets/Components/SMD/adxl335.pdf
 */
 
-#include <stdlib.h>
-#include <iostream>
-#include <sstream>
-#include <string>
-#include <ros/ros.h>
-#include <std_msgs/Bool.h>
-#include <std_msgs/String.h>
-#include "SerialCommunication.h"
-#include <sensor_msgs/Imu.h>
+#include "sensor_driver.hpp"
 
-using namespace std;
-
-static const string ROS_NODE_NAME = "sensor_driver";
-static const int ROS_LOOP_RATE = 10; //units of Hz should be 200
-static const int BAUD_RATE = 115200; 
-static const string SENSOR_OUTPUT_TOPIC = "IMU"; 
-static const string ARDUINO_PORT_NAME = "/dev/ttyACM";
-static const double ARDUINO_ANALOG_PU = 0.0049; //v/pu Arduino analog to voltage conversion 
-static const double ADXL_V_G_PU = 0.3; //Volts/g 
-static const double G_TO_ACCEL = 9.80665; //9.8m/s^2 / g 
-SerialCommunication link_port;
-
-sensor_msgs::Imu IMU; 
+int main (int argc, char** argv){
+	ros::init(argc,argv, ROS_NODE_NAME);
+	ros::NodeHandle nh; 
+	ros::Rate loop_rate(ROS_LOOP_RATE);
+  ros::Publisher sensor_imu_publisher = nh.advertise<sensor_msgs::Imu>(SENSOR_OUTPUT_TOPIC,20);
+  //Attempts at opening the Serial Port
+  unsigned int count = 0;
+  while( !link_port.connect(BAUD_RATE,(ARDUINO_PORT_NAME + to_string(count)))&& count < 9){
+    count++;
+  }
+  cout << endl;
+  if (link_port.connect(BAUD_RATE,(ARDUINO_PORT_NAME + to_string(count)))){
+    cout << "Connected on port" << ARDUINO_PORT_NAME << count << endl;
+    }
+  else{ 
+    cout << "[1]Check Permissions" << endl << "[2]Check USB" << endl;
+    return 1;
+      }
+  
+  //Temporary Function for Setting covariance values 
+  for (int i = 0; i < 9; i++){
+  IMU.linear_acceleration_covariance[i] = 0; 
+  IMU.angular_velocity_covariance[i]=0;
+  IMU.orientation_covariance[i]=0;
+  }
+  
+  int x = 0;
+  while(ros::ok()){
+    //ROS Loop - All procedures repeated are done here
+    char buff1[32];
+    char buff2[32];
+    data_request('A');//request dat
+    loop_rate.sleep(); // Wait for messages to arrive 
+    link_port.readData(32,buff1); // Read messsages
+    data_request('G');
+    loop_rate.sleep();
+    link_port.readData(32,buff2);
+    if(Serial_Store(buff2,3) && Serial_Store(buff1,0))
+        sensor_imu_publisher.publish(IMU);
+          //if the messages read are good, publish them, else do nothing 
+  }
+  
+  ROS_ERROR("Sensor Input Node Terminated"); 
+}
 
 std::string to_string(int i){
   ostringstream out;
@@ -105,47 +128,4 @@ void data_request(char c){
   link_port.writeData(ss.str(),1); 
 }
 
-int main (int argc, char** argv){
-	ros::init(argc,argv, ROS_NODE_NAME);
-	ros::NodeHandle nh; 
-	ros::Rate loop_rate(ROS_LOOP_RATE);
-  ros::Publisher sensor_imu_publisher = nh.advertise<sensor_msgs::Imu>(SENSOR_OUTPUT_TOPIC,20);
-  //Attempts at opening the Serial Port
-  unsigned int count = 0;
-  while( !link_port.connect(BAUD_RATE,(ARDUINO_PORT_NAME + to_string(count)))&& count < 9){
-    count++;
-  }
-  cout << endl;
-  if (link_port.connect(BAUD_RATE,(ARDUINO_PORT_NAME + to_string(count)))){
-    cout << "Connected on port" << ARDUINO_PORT_NAME << count << endl;
-    }
-  else{ 
-    cout << "[1]Check Permissions" << endl << "[2]Check USB" << endl;
-    return 1;
-      }
-  
-  //Temporary Function for Setting covariance values 
-  for (int i = 0; i < 9; i++){
-  IMU.linear_acceleration_covariance[i] = 0; 
-  IMU.angular_velocity_covariance[i]=0;
-  IMU.orientation_covariance[i]=0;
-  }
-  
-  int x = 0;
-  while(ros::ok()){
-    //ROS Loop - All procedures repeated are done here
-    char buff1[32];
-    char buff2[32];
-    data_request('A');//request dat
-    loop_rate.sleep(); // Wait for messages to arrive 
-    link_port.readData(32,buff1); // Read messsages
-    data_request('G');
-    loop_rate.sleep();
-    link_port.readData(32,buff2);
-    if(Serial_Store(buff2,3) && Serial_Store(buff1,0))
-        sensor_imu_publisher.publish(IMU);
-          //if the messages read are good, publish them, else do nothing 
-  }
-  
-  ROS_ERROR("Sensor Input Node Terminated"); 
-}
+

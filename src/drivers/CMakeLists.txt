@@ -27,8 +27,6 @@ include_directories(
     ./include
 )
 
-
-
 add_library(sb_serial_communication src/SerialCommunication.cpp)
 
 add_executable(sb_driver_elsa src/elsa_driver.cpp)
