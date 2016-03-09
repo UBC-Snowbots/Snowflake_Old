@@ -11,7 +11,10 @@ find_package(catkin REQUIRED COMPONENTS
     std_msgs
     tf
     tf2)
-
+add_message_files(
+  FILES
+  gps.msg
+)
 set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} ${CMAKE_CURRENT_SOURCE_DIR}/cmake-modules)
 
 include(Catch)
