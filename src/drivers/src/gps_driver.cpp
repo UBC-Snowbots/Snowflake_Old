@@ -12,7 +12,14 @@ int main (int argc, char **argv){
   ros::NodeHandle nh; 
   ros::Rate loop_rate(ROS_LOOP_RATE); 
   ros::Publisher gps_publisher = nh.advertise<std_msgs::String>(SENSOR_OUTPUT_TOPIC,20); 
-  //Attempts to open Serial Port
+  connect_device("GPS");   
+  while(ros::ok() && link_port.isActive()){} 
+  ROS_ERROR("GPS Node Terminated"); 
+  return 0;
+}
+
+bool connect_device(std::string device_name){
+ //Attempts to open Serial Port
   unsigned int count = 0; 
   while( !link_port.connect(BAUD_RATE,(ARDUINO_PORT_NAME + to_string(count)))&& count < 9){
   count++;
@@ -25,11 +32,7 @@ int main (int argc, char **argv){
     cout << "[1]Check Permissions" << endl << "[2]Check USB" << endl; 
     return 1; 
   } 
-  while(ros::ok() && link_port.isActive()){} 
-  ROS_ERROR("GPS Node Terminated"); 
-  return 0;
 }
-
 std::string to_string(int i){
   ostringstream out;
   out << i; 

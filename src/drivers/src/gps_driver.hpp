@@ -26,4 +26,6 @@ SerialCommunication link_port;
 std::string msg; 
 std::string to_string(int i); 
 void Serial_Store(char *buffer); 
-void data_request(char c); 
+void data_request(char c);
+bool connect_device(std::string device_name); 
+ 

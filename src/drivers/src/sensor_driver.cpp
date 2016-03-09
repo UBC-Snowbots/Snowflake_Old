@@ -34,7 +34,7 @@ int main (int argc, char** argv){
   }
   
   int x = 0;
-  while(ros::ok() && link.port.isActive()){
+  while(ros::ok() && link_port.isActive()){
     //ROS Loop - All procedures repeated are done here
     char buff1[32];
     char buff2[32];
