@@ -28,4 +28,4 @@ std::string to_string(int i);
 void Serial_Store(char *buffer); 
 void data_request(char c);
 bool connect_device(std::string device_name); 
- 
+bool open_port(unsigned int count); 
