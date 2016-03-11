@@ -14,9 +14,6 @@ find_package(catkin REQUIRED COMPONENTS
     sensor_msgs
     std_msgs
     tf
-    messages
-    decision
-    drivers
     tf2)
 generate_messages(DEPENDENCIES 
 std_msgs
