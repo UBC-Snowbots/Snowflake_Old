@@ -16,6 +16,11 @@ add_message_files(
   FILES
   gps.msg
 )
+
+generate_messages(
+  DEPENDENCIES
+  std_msgs
+)
 set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} ${CMAKE_CURRENT_SOURCE_DIR}/cmake-modules)
 
 include(Catch)

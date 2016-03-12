@@ -13,6 +13,7 @@ add_message_files(
 
 generate_messages(
   DEPENDENCIES
+  messages
 )
 
 catkin_package(
