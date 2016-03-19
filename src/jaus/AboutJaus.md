@@ -1,7 +1,7 @@
 Written by Maxim Tsai
 Part 1/3: https://slack-files.com/files-pri-safe/T04M11YQ1-F0NAAEX18/as5669a.pdf?c=1457203892-9225a8d9baa28f13a1a8c1eebca064b4acb5c831
-Part 2/3: N/A
-Part 3/3: N/A
+Part 2/3: https://slack-files.com/files-pri-safe/T04M11YQ1-F0TV883MJ/as5710a.pdf?c=1458413840-4427803db8972f68be9e8f99e6c7b3ad716b6613
+Part 3/3: https://slack-files.com/files-pri-safe/T04M11YQ1-F0U03C8H3/as6009.pdf?c=1458413760-684a4fe2fcf244bdd055ddc7f1261ecd6d1ed56f
 
 ## Tasks remaining
 - Implement parsing of JUDP packets (info on page 30, 32, 34...). Look at how GeneralTransportHeaderStructure is implemented for an idea of what to do. 
@@ -32,3 +32,4 @@ Important stuff:
 	12. (N bits) payload - content of the message.
 	13. (16 bit) sequence number - Increments for every message from a given source ID.
 - Finn already finished parsing message format. They are now in a class called GeneralTransportHeaderStructure inside jaus/jaus/general_transport_header.py.
+- Header compression, not too useful.
