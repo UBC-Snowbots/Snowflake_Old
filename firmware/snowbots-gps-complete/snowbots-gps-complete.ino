@@ -1,3 +1,6 @@
+// create a new folder named "Adafruit_GPS" in Arduino/Library then clone the library
+// Library at: https://github.com/adafruit/Adafruit_GPS
+// Full guide: https://learn.adafruit.com/adafruit-ultimate-gps/arduino-wiring
 #include <Adafruit_GPS.h>
 #include <SoftwareSerial.h>
 
