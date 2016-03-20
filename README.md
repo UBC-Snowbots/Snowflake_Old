@@ -28,7 +28,7 @@ You will need to install the following before continuing on:
 
 [VirtualBox 4.3](http://www.virtualbox.org/wiki/Download_Old_Builds_4_3) *VirtualBox 5.0 is unfortunity not supported by vagrant at the moment.
 
-[Vagrant](http://www.vagrantup.com/downloads) *Installing this will require you to restart afterwards
+[Vagrant](http://www.vagrantup.com/downloads.html) *Installing this will require you to restart afterwards
 
 1) Change directory using the command `cd` and goto the Snowflake repository 
 
@@ -36,7 +36,9 @@ Ex: If you've cloned your repository onto your desktop you can type `cd Desktop/
 
 2) Once in the repository type `vagrant up` this will start downloading a vagrant box.
 
-`The download can take several minutes depending on your internet connection. Be aware that the download can automatically disconnect (you can tell this if the rate is 0/s). If this happens stop the current download by pressing CTRL C, then resume the download again by pressing the UP and ENTER or retyping the whole command again.`
+`The download can take several minutes depending on your internet connection. Be aware that the download can disconnect on bad internet connections (your download rate will goto 0/s), if this happens stop the current download by pressing CTRL C, then resume the download again by pressing the UP and ENTER or retyping the whole command again.`
+
+Note: If you get an error regarding Chef failing to install something, make note of the failed installation package. Type in `vagrant ssh` and `sudo apt-get install <failed-package-name>`. For example if the package `ros-indigo-desktop` failed to install via Chef: ssh into your machine and execute `sudo apt-get install ros-indigo-desktop` 
 
 Once the download is complete it will automatically install itself; this procress and take around 10+ minutes. You'll know that the installation is done once your `$` prompt comes back on the terminal screen.
 
