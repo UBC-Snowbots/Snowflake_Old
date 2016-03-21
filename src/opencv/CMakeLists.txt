@@ -42,6 +42,11 @@ add_executable(camera_publisher src/camera.cpp)
 
 add_executable(camera_subscriber src/camera_subscriber.cpp)
 
+add_executable(ros_vision src/ros_vision.cpp src/filter.h src/filter.cpp src/IPM.h src/IPM.cpp)
+
+add_executable(unit_test src/unit_test.cpp src/filter.h src/filter.cpp src/IPM.h src/IPM.cpp)
+
+
 target_link_libraries(color_analyzer ${catkin_LIBRARIES} ${OpenCV_LIBS})
 
 target_link_libraries(ipm ${catkin_LIBRARIES} ${OpenCV_LIBS})
@@ -54,7 +59,9 @@ target_link_libraries(camera_publisher ${catkin_LIBRARIES} ${OpenCV_LIBS})
 
 target_link_libraries(camera_subscriber ${catkin_LIBRARIES} ${OpenCV_LIBS})
 
+target_link_libraries(ros_vision ${catkin_LIBRARIES} ${OpenCV_LIBS})
 
+target_link_libraries(unit_test ${catkin_LIBRARIES} ${OpenCV_LIBS})
 
 add_dependencies(color_analyzer opencv)
 
@@ -67,3 +74,7 @@ add_dependencies(vision opencv)
 add_dependencies(camera_publisher opencv)
 
 add_dependencies(camera_subscriber opencv)
+
+add_dependencies(ros_vision opencv)
+
+add_dependencies(unit_test opencv)

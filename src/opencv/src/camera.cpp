@@ -26,6 +26,7 @@ int main(int argc, char** argv)
   Mat inputImage;
 
   ros::Rate loop_rate(5);
+  
   while (nh.ok()) {
     bool isRead = cap.read(inputImage);
     if (!isRead){

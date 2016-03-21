@@ -32,6 +32,8 @@ class snowbotsFilter
 
 	cv::Mat calibrationImage;
 	cv::Mat hsv_calibrationImage;
+	cv::Mat rangeOutput;
+	cv::Mat hsvOutput;
 
 	//Window Names
 	std::string manualCalibrationWindow;

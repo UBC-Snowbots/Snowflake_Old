@@ -8,8 +8,11 @@
  * automated properly.
  * Ref: https://raw.githubusercontent.com/kylehounslow/opencv-tuts/master/auto-colour-filter/AutoColourFilter.cpp
  *          - Just the HSV value finding rectangle part, not the object tracking part.
- * 			- Sketchy, works better if you make a rectangle on the ground
- * Usage: Point to a video file/camera, press m to start/stop calibrating. 
+ *          - Sketchy, works better if you make a rectangle on the ground
+ * Usage: Point to a video file/camera, press m to start/stop calibrating.
+ *
+ * Subscribes to: camera/midcam/image_raw
+ * Publishes to: vision/binary_image
  */   
 
 #include <ros/ros.h>
@@ -24,13 +27,26 @@
 #include <cv_bridge/cv_bridge.h>
 
 
-
 using namespace cv;
 using namespace std;
 
 
+Mat inputImage;
+
+void imageCallback(const sensor_msgs::ImageConstPtr& msg)
+{
+  try
+  {
+    inputImage = cv_bridge::toCvShare(msg, "bgr8")->image;
+  }
+  catch (cv_bridge::Exception& e)
+  {
+    ROS_ERROR("Could not convert from '%s' to 'bgr8'.", msg->encoding.c_str());
+  }
+}
+
 int main(int argc, char** argv){
-	
+    
     //Window Names
     string inputWindow = "Input Image";
     string ipmOutputWindow = "IPM Output";
@@ -42,24 +58,26 @@ int main(int argc, char** argv){
     //Calibration Variables
     bool isCalibratingManually = false;
 
-    //Camera Initialization
-    VideoCapture cap("/home/valerian/Documents/src/opencv/course.mov");
- 
-    if (!cap.isOpened()){
-        cout << "Error opening camera" << endl;
-        return -1;
-    }
-
-    //Camera information for user
-    int width = cap.get(CV_CAP_PROP_FRAME_WIDTH);
-    int height = cap.get(CV_CAP_PROP_FRAME_HEIGHT);
-    cout << "Frame size: " << width << " x " << height << endl;
-
     //Working Variables
-    Mat inputImage;
     Mat ipmOutput;
     Mat filterOutput;
+    Mat workingInput;
+    inputImage = Mat::zeros(480, 640, CV_32FC4);
+    cout << inputImage.depth() << endl;
 
+    //ROS
+    ros::init(argc, argv, "vision_node");
+    ros::NodeHandle nh;
+    image_transport::ImageTransport it(nh);
+    image_transport::Subscriber sub = it.subscribe("camera/midcam/image_raw", 1, imageCallback);
+    image_transport::Publisher pub = it.advertise("vision/binary_image", 1);
+    ros::Rate loop_rate(5); 
+    //Manual initialization, maybe automate through parameter server
+    int width = 640;
+    int height = 480;
+    cout << "Frame size: " << width << " x " << height << endl;
+
+    //Creating Mutex Lock to test things out
 
     //Manually Setting up the IPM points
     vector<Point2f> origPoints;
@@ -80,26 +98,23 @@ int main(int argc, char** argv){
     //Creating the IPM transformer
     IPM ipm(Size(width, height), Size(width,height), origPoints, dstPoints);
 
-    while(1){ //rosOK
+    while(nh.ok()){ //rosOK
 
-        //Reads image from camera
-        bool isRead = cap.read(inputImage);
-        if (!isRead){
-            cout << "Failed to read image from camera" << endl;
-            cap.set(CV_CAP_PROP_POS_AVI_RATIO, 0); //when reading from a file
-            continue; 
-            //break;
-        }
-
+        //Image is empty so quit
+        if (inputImage.empty()) break;
+        inputImage.copyTo(workingInput);
         //Applies the IPM to the image
-        ipm.applyHomography(inputImage, ipmOutput);
-        ipm.drawPoints(origPoints, inputImage);
-        imshow(inputWindow, inputImage);
+                
+        ipm.applyHomography(workingInput, ipmOutput);
+        ipm.drawPoints(origPoints, workingInput);
+        imshow(inputWindow, workingInput);
         imshow(ipmOutputWindow, ipmOutput);
 
         //Applies the filter to the image
         filter.filterImage(ipmOutput, filterOutput);
         imshow(filterOutputWindow, filterOutput);
+        sensor_msgs::ImagePtr msg = cv_bridge::CvImage(std_msgs::Header(), "bgr8", filterOutput).toImageMsg();
+        pub.publish(msg);        
 
         //Calibration
         if (isCalibratingManually){
@@ -124,7 +139,8 @@ int main(int argc, char** argv){
             isCalibratingManually = !isCalibratingManually;
             filter.printValues();
         }
+        ros::spinOnce();
     }
     return 0;
 }
-	
+    
