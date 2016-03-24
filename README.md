@@ -17,7 +17,7 @@ Building the repository AFTER you've cloned it
 
 This is a more involved process so unless you need it, we recommend just using Vagrant instead. As of writing, this requires Ubuntu or something close. Try other systems at your own risk.
 
-First, install [Chef](https://www.chef.io/chef/), usually by typing `sudo apt-get install chef`. Then, make sure you have ruby (type `ruby --version` - it should say 1.9.3 or something similar). If not, `sudo apt-get install ruby` should do it.
+First, install [Chef](https://www.chef.io/chef/), usually by typing `sudo apt-get install chef` (or `sudo gem install chef`). Then, make sure you have ruby (type `ruby --version` - it should say 1.9.3 or something similar). If not, `sudo apt-get install ruby-full` should do it.
 
 The next step should set everything else up: `./local_setup`. Enter your password when prompted, and once it completes everything should be in the right places. When we release updates to the build (like adding new libraries such as OpenCV, or fixing bugs), you can safely re-run this script in order to painlessly install those updates.
 
