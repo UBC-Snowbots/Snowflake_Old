@@ -12,7 +12,7 @@ class Destinations{
         Destinations(std::vector<geometry_msgs::Pose2D> dest){
             destinations = dest;
         };
-        
+
         // Adds a given Pose2D to the end of the list
         void add(geometry_msgs::Pose2D dest){
             destinations.push_back(dest);
@@ -22,11 +22,11 @@ class Destinations{
         geometry_msgs::Pose2D getDestination(){
             return destinations.front();
         }
-        
+
         // Removes the first destination and returns new first destination
         geometry_msgs::Pose2D getNextDestination(){
             destinations.erase(destinations.begin());
-            return destinations.front();            
+            return destinations.front();
         }
 };
 
@@ -51,13 +51,16 @@ int main(int argc, char **argv){
 
     // Initialize destination publisher
     ros::Publisher forward_pub = public_nh.advertise<geometry_msgs::Pose2D>("destination", 10);
-    
+
     // Get at_destination (published by move_straight_line)
     bool at_destination = false;
-    ros::Subscriber at_destination_sub = public_nh.subscribe<std_msgs::Bool>("move_straight_line/at_destination", 10, boost::function<void(std_msgs::Bool)>([&](std_msgs::Bool at_dest){
-        at_destination = at_dest.data;
-    }));      
-    
+    ros::Subscriber at_destination_sub =
+        public_nh.subscribe<std_msgs::Bool>("move_straight_line/at_destination", 10,
+                                            boost::function<void(std_msgs::Bool)>
+                                            ([&](std_msgs::Bool at_dest){
+                                                at_destination = at_dest.data;
+                                            }));
+
     // Get present longitude and latitude from gps topic
     double present_longitude = 0;
     double present_latitude = 0;
@@ -69,7 +72,7 @@ int main(int argc, char **argv){
     // Get present rotation from pose2D
     double present_rotation;
     ros::Subscriber pose2D_sub = public_nh.subscribe<geometry_msgs::Pose2D>("pose2D", 10, boost::function<void(geometry_msgs::Pose2D)>([&](geometry_msgs::Pose2D pose2D){
-        present_rotation = pose2D.theta;            
+        present_rotation = pose2D.theta;
     }));
 
 // Get parameters
@@ -77,14 +80,14 @@ int main(int argc, char **argv){
     // to avoid obstacles; if false just go straight to all nodes on given path
     bool obstacle_avoidance = false;
     private_nh.getParam("avoid_obstacles", obstacle_avoidance);
-    
+
     // Whether the coordinates given to the robot are in longitude/latitude (long/lat)
     // or position relative to where the robot started (relative_pos)
     std::string coordinate_type = "relative_pos";
     private_nh.getParam("coordinate_type", coordinate_type);
-    
-    // "path" is a vector of alternating x,y coordinates, that make up a 
-    // series of waypoints for the robot to move to. 
+
+    // "path" is a vector of alternating x,y coordinates, that make up a
+    // series of waypoints for the robot to move to.
         std::vector<double> path; // Path for the robot to follow {x,y,x,y, ...}
         private_nh.getParam("path", path);
         // Add all waypoints in "path"  as pose2D's in destinations
@@ -104,31 +107,8 @@ int main(int argc, char **argv){
             destinations.add(dest);
         }
 
-
-
-/*
-//TEST PATH   
-    // Create waypoints and add to list
-    geometry_msgs::Pose2D dest1;
-    dest1.x = 2;
-    dest1.y = 0;
-    dest1.theta = 0;
-    geometry_msgs::Pose2D dest2;
-    dest2.x = 0;
-    dest2.y = 0;
-    dest1.theta = 0;
-    geometry_msgs::Pose2D dest3;
-    dest3.x = 0;
-    dest3.y = 0;
-    dest3.theta = 0;
-
-    
-    destinations.add(dest1);
-    destinations.add(dest2);
-    destinations.add(dest3);
-*/
-    
-    int at_destination_counter = 0; // A ghetto solution to allow at_destination to publish twice, but only go the next destination 
+    int at_destination_counter = 0; // A ghetto solution to allow at_destination to publish twice,
+                                    // but only go the next destination
 
     // Main Loop to run while node is running
     while (ros::ok()){
