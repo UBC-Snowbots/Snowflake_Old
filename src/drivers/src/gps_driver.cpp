@@ -21,7 +21,7 @@ int main (int argc, char **argv){
   return 0;
 }
 bool connect_device(std::string device_name){
-  char buff[32]; 
+  char buff[32] = "\0"; 
   int i = 0; 
   while (i < 9){
     /*if(open_port(i){
@@ -31,12 +31,14 @@ bool connect_device(std::string device_name){
       ROS_ERROR("PORT ERROR"); 
       return false; 
     }
-    data_request('I',buff);
+    for (int x = 0; x < 10; x++){data_request('I',buff);}
   //  link_port.readData(32,buff);
- 
+     
 //Repeat until read gives value?
-    cout << "buff:" << buff << endl;  
-    if(device_name.compare(buff) < 0)
+   // cout << "buff:" << buff << endl;  
+    std::string s_input = to_string2(buff);
+ //   cout << "s_input: " << s_input << endl;
+    if(s_input.find(device_name)!=std::string::npos)
       return true; 
     else 
       i++; 
@@ -49,7 +51,7 @@ void data_request(char c, char *buffer){
   //clear input buffer and sends confirmation byte to prepare acceptance of message in seriali
   
   while(buffer[0] == '\0'){
-  link_port.clearBuffer(); 
+  //link_port.clearBuffer(); 
   stringstream ss; 
   ss << c; 
   link_port.writeData(ss.str(),1);
@@ -78,5 +80,10 @@ bool open_port(unsigned int count){
 std::string to_string(int i){
   ostringstream out;
   out << i; 
+  return out.str();
+}
+std::string to_string2(char* c){
+  ostringstream out;    
+  out << c;
   return out.str();
 }

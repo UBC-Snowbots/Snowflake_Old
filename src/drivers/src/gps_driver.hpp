@@ -26,6 +26,7 @@ SerialCommunication link_port;
 //messages::gps GPS; 
 std::string msg; 
 std::string to_string(int i); 
+std::string to_string2(char* c);
 void Serial_Store(char *buffer); 
 void data_request(char c, char *buffer);
 bool connect_device(std::string device_name); 
