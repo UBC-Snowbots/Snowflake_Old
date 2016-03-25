@@ -1,0 +1,28 @@
+<launch>
+
+    <!-- Start laser_scan_multi_merger -->
+    <node pkg="ira_laser_tools" name="laserscan_multi_merger"
+        type="laserscan_multi_merger" output="screen">
+        
+        <param name="laserscan_topics" value="hokuyo_scan sick_scan"/>
+        <param name="scan_destination_topic" value="/merged_scan"/>
+    </node>
+
+    <!-- Start the hokoyu driver-->
+    <node pkg="hokuyo_node" type="hokuyo_node"
+    name="hokuyo_node" output="screen">
+        <param name="port" value="/dev/ttyACM0"/>
+        <remap from="scan" to="hokuyo_scan"/>
+    </node>
+    
+    <!-- Start the sick driver -->
+    <node pkg="sicktoolbox_wrapper" type="sicklms"
+    name="sicklms" output="screen">
+        <param name="port" value="/dev/ttyUSB0" />
+        <remap from="scan" to="sick_scan"/>
+    </node>
+
+    <!-- Run the common launch file -->
+    <include file="$(find drivers)/../launch/common.launch"/>
+
+</launch>

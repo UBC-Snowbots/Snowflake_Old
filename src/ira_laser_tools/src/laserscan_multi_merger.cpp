@@ -110,7 +110,8 @@ void LaserscanMerger::laserscan_topic_parser()
             scan_subscribers.resize(input_topics.size());
 			clouds_modified.resize(input_topics.size());
 			clouds.resize(input_topics.size());
-            ROS_INFO("Subscribing to topics\t%ld", scan_subscribers.size());
+            ROS_INFO("Subscribing to %d topics", scan_subscribers.size());
+            //ROS_INFO("Subscribing to topics\t%ld", scan_subscribers.size());
 			for(int i=0; i<input_topics.size(); ++i)
 			{
                 scan_subscribers[i] = node_.subscribe<sensor_msgs::LaserScan> (input_topics[i].c_str(), 1, boost::bind(&LaserscanMerger::scanCallback,this, _1, input_topics[i]));
