@@ -37,6 +37,6 @@ This message comes from the file src/jaus/jaus/__init__.py
 
 ## How to run the unit tests
 
-1. Go to src/jaus
+1. Go to src/jaus in new window
 2. Type `py.test`
 3. Watch them pass (or fail)
