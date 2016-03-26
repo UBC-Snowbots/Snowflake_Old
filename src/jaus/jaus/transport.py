@@ -12,21 +12,48 @@ class JUDPPacketDataFlags(_enum.Enum):
 	NORMAL_PACKET = 0b10
 	LAST_PACKET = 0b11
 
+class JUDPPacketHCFlags(_enum.Enum):
+	NONE = 0
+	REQUESTED = 1
+	HC_LENGTH = 2
+	COMPRESSED = 3
+
+class JUDPPacketPriority(_enum.Enum):
+	LOW = 0
+	STANDARD = 1
+	HIGH = 2
+	SAFETY = 3
+
+class JUDPPacketBroadcastFlags(_enum.Enum):
+	# single destination
+	NONE = 0
+	# local destinations only
+	LOCAL = 1
+	# all destinations
+	GLOBAL = 2
+
+class JUDPPacketACKNACKFlags(_enum.Enum):
+	NO_RESPONSE_REQUIRED = 0
+	RESPONSE_REQUIRED = 1
+	# Responses
+	NAK = 2
+	ACK = 3
+
 JUDPPacketSpecification = Specification('JUDPPacket', specs=[
 	Int('message_type', bits=6),
 	# if message type is not 0, bail now
 	# as this is not a protocol we know
 	Optional(lambda attrs: attrs['message_type']==0, [
-		Int('HC_flags', bits=2),
+		Enum('HC_flags', enum=JUDPPacketHCFlags, bits=2),
 		Int('data_size', bytes=2, endianness='le'),
 		# these fields only exist if header compression is used
-		Optional(lambda attrs: attrs['HC_flags'] != 0, [
+		Optional(lambda attrs: attrs['HC_flags'] != JUDPPacketHCFlags.NONE, [
 			Int('HC_number', bytes=1),
 			Int('HC_length', bytes=1),
 		]),
-		Int('priority', bits=2),
-		Int('broadcast', bits=2),
-		Int('ack_nack', bits=2),
+		Enum('priority', enum=JUDPPacketPriority, bits=2),
+		Enum('broadcast', enum=JUDPPacketBroadcastFlags, bits=2),
+		Enum('ack_nack', enum=JUDPPacketACKNACKFlags, bits=2),
 		Enum('data_flags', enum=JUDPPacketDataFlags, bits=2),
 		Int('destination_id', bytes=4, endianness='le'),
 		Int('source_id', bytes=4, endianness='le'),
