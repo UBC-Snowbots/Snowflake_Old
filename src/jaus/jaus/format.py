@@ -1,7 +1,6 @@
 import abc as _abc
 import bitstring as _bitstring
 import collections as _collections
-import math as _math
 
 from chainmap import ChainMap as _ChainMap
 

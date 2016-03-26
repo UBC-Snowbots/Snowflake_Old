@@ -1,5 +1,3 @@
-import array as _array
-import ctypes as _ctypes
 import collections as _collections
 import enum as _enum
 
@@ -8,13 +6,13 @@ from . import messages as _messages
 from .format import Specification, Int, Bytes, Optional, Enum, Consume
 
 
-class JAUSPacketDataFlags(_enum.Enum):
+class JUDPPacketDataFlags(_enum.Enum):
 	SINGLE_PACKET = 0b00
 	FIRST_PACKET = 0b01
 	NORMAL_PACKET = 0b10
 	LAST_PACKET = 0b11
 
-JAUSPacketSpecification = Specification('JAUSPacket', specs=[
+JUDPPacketSpecification = Specification('JUDPPacket', specs=[
 	Int('message_type', bits=6),
 	# if message type is not 0, bail now
 	# as this is not a protocol we know
@@ -29,21 +27,23 @@ JAUSPacketSpecification = Specification('JAUSPacket', specs=[
 		Int('priority', bits=2),
 		Int('broadcast', bits=2),
 		Int('ack_nack', bits=2),
-		Enum('data_flags', enum=JAUSPacketDataFlags, bits=2),
+		Enum('data_flags', enum=JUDPPacketDataFlags, bits=2),
+		Int('destination_id', bytes=4, endianness='le'),
+		Int('source_id', bytes=4, endianness='le'),
 		Bytes('contents', length=lambda attrs: attrs['data_size']),
 		Int('sequence_number', bytes=2, endianness='le'),
 	]),
 ])
-JAUSPacket = JAUSPacketSpecification.type
+JUDPPacket = JUDPPacketSpecification.type
 
-JUDPTransportPacketSpecification = Specification('JUDPTransportPacket', specs=[
-	Int('transport_version', bytes=2, endianness='le'),
+JUDPPayloadSpecification = Specification('JUDPPayload', specs=[
+	Int('transport_version', bytes=1),
 	# We only support transport version 2 right now...
 	Optional(lambda attrs: attrs['transport_version'] == 2, [
-		Consume('packets', JAUSPacketSpecification),
+		Consume('packets', JUDPPacketSpecification),
 	]),
 ])
-JUDPTransportPacket = JUDPTransportPacketSpecification.type
+JUDPPayload = JUDPPayloadSpecification.type
 
 class DuplicatePacket(Exception):
 	"""A second packet with the same sequence number was added."""
@@ -60,9 +60,9 @@ class MessageReassembler(object):
 				"Duplicate packet {}.".format(packet.sequence_number))
 		
 		self.packets_received[packet.sequence_number] = packet
-		if packet.data_flags == JAUSPacketDataFlags.SINGLE_PACKET:
+		if packet.data_flags == JUDPPacketDataFlags.SINGLE_PACKET:
 			self.complete_packets.add(packet.sequence_number)
-		elif packet.data_flags == JAUSPacketDataFlags.FIRST_PACKET:
+		elif packet.data_flags == JUDPPacketDataFlags.FIRST_PACKET:
 			self.start_packets.add(packet.sequence_number)
 	
 	def _get_complete_message_sequence(self, start):
@@ -73,15 +73,15 @@ class MessageReassembler(object):
 		"""
 		packets = self.packets_received
 		
-		assert start in packets and packets[start].data_flags == JAUSPacketDataFlags.FIRST_PACKET
+		assert start in packets and packets[start].data_flags == JUDPPacketDataFlags.FIRST_PACKET
 		
 		sequence_number = start
 		
 		while (sequence_number in packets
 				and (packets[sequence_number].data_flags
-					!= JAUSPacketDataFlags.LAST_PACKET)):
+					!= JUDPPacketDataFlags.LAST_PACKET)):
 			if sequence_number != start:
-				assert packets[sequence_number].data_flags == JAUSPacketDataFlags.NORMAL_PACKET
+				assert packets[sequence_number].data_flags == JUDPPacketDataFlags.NORMAL_PACKET
 			sequence_number += 1
 		
 		# sequence is only completed if the loop terminated on the last

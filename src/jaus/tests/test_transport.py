@@ -6,7 +6,7 @@ from mock import Mock, patch, call, sentinel
 from jaus.transport import (
 	DuplicatePacket,
 	MessageReassembler,
-	JAUSPacketDataFlags,
+	JUDPPacketDataFlags,
 	Transport,
 	UnsupportedJUDPVersion,
 	WrongDestination,
@@ -30,7 +30,7 @@ class TestMessageReassembler(object):
 			mr.add_packet(packet1)
 		
 		packet2 = Mock(name='packet2')
-		packet2.data_flags = JAUSPacketDataFlags.SINGLE_PACKET
+		packet2.data_flags = JUDPPacketDataFlags.SINGLE_PACKET
 		mr.add_packet(packet2)
 		
 		assert mr.complete_packets == {packet2.sequence_number}
@@ -40,7 +40,7 @@ class TestMessageReassembler(object):
 		}
 		
 		packet3 = Mock(name='packet3')
-		packet3.data_flags = JAUSPacketDataFlags.FIRST_PACKET
+		packet3.data_flags = JUDPPacketDataFlags.FIRST_PACKET
 		mr.add_packet(packet3)
 		assert mr.start_packets == {packet3.sequence_number}
 		assert mr.packets_received == {
@@ -51,15 +51,15 @@ class TestMessageReassembler(object):
 	
 	def test__get_complete_message_sequence(self, mr):
 		start = Mock(name='start')
-		start.data_flags = JAUSPacketDataFlags.FIRST_PACKET
+		start.data_flags = JUDPPacketDataFlags.FIRST_PACKET
 		middle1 = Mock(name='middle1')
-		middle1.data_flags = JAUSPacketDataFlags.NORMAL_PACKET
+		middle1.data_flags = JUDPPacketDataFlags.NORMAL_PACKET
 		middle2 = Mock(name='middle2')
-		middle2.data_flags = JAUSPacketDataFlags.NORMAL_PACKET
+		middle2.data_flags = JUDPPacketDataFlags.NORMAL_PACKET
 		end = Mock(name='end')
-		end.data_flags = JAUSPacketDataFlags.LAST_PACKET
+		end.data_flags = JUDPPacketDataFlags.LAST_PACKET
 		only = Mock(name='only')
-		only.data_flags = JAUSPacketDataFlags.SINGLE_PACKET
+		only.data_flags = JUDPPacketDataFlags.SINGLE_PACKET
 		
 		mr.packets_received = {
 			1: Mock(name='wrong_place'),
@@ -111,13 +111,13 @@ class TestMessageReassembler(object):
 		Message.side_effect = lambda packets:packets
 		
 		start = Mock(name='start')
-		start.data_flags = JAUSPacketDataFlags.FIRST_PACKET
+		start.data_flags = JUDPPacketDataFlags.FIRST_PACKET
 		start.sequence_number = 5
 		end = Mock(name='end')
-		end.data_flags = JAUSPacketDataFlags.LAST_PACKET
+		end.data_flags = JUDPPacketDataFlags.LAST_PACKET
 		end.sequence_number = 6
 		only = Mock(name='only')
-		only.data_flags = JAUSPacketDataFlags.SINGLE_PACKET
+		only.data_flags = JUDPPacketDataFlags.SINGLE_PACKET
 		only.sequence_number = 1
 		
 		mr.packets_received = {
