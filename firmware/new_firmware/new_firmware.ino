@@ -22,6 +22,7 @@ void setup() {
   pinMode(5,INPUT);
   LeftM.attach(9);
   RightM.attach(10);
+  set_off();
 }
 
 void loop() {
@@ -30,8 +31,10 @@ void loop() {
   //responding to queries from usb
   sig_read();
   if (Mode == -1)serial_read();
-  else if (Mode == 1){lx = 128; ly = 128; az = 128;}
-  else {lx = R2; ly=128; az = R4;}
+  else if (Mode == 0){
+  //Serial.println(az);
+  lx = 128; ly=R2; az = R4;}
+  else{lx = 128; ly = 128; az = 128;}
   //Serial.print("lx: ");Serial.print(lx);Serial.print(" ly: ");Serial.print(ly);Serial.print(" az: ");Serial.println(az);
 
   convert();
@@ -40,7 +43,7 @@ void loop() {
 
 void set_off(){
   int lx_mid = 1915; 
-  int az_mid = 1915;
+  int az_mid = 1850;
   lx_h = lx_mid+100; lx_l = lx_mid-100;
   az_h = az_mid+100; az_l = az_mid-100;
 }
@@ -56,12 +59,20 @@ void sig_read(){
   R4 = pulseIn(5,HIGH);//1021 - 1850 LX LEFT-RIGHT
   //R1 = map (R1, 1035, 1880, 0, 255);
   //Serial.print("Mode: ");Serial.print(R3);Serial.print("az: ");Serial.print(R2);Serial.print("lx: ");Serial.println(R4);
+  if (R2 < az_h && R2 > az_l)
+  R2 = 128;
+  else
   R2 = map (R2, 1350, 2480, 0, 255);//az
   Mode = map (R3, 1880,1050 , 0, 2);
+  if (R4 < lx_h && R4 > lx_l)
+  R4 = 128;
+  else 
   R4 = map (R4, 1350, 2480, 0, 255); //lx
+
+  
   //Serial.print("Mode: ");Serial.print(Mode);Serial.print("az: ");Serial.print(R2);Serial.print("lx: ");Serial.println(R4);
-  if(abs(R2-90) < TRIM) R2 = 90;
-  if(abs(R4-90) < TRIM) R4 = 90;
+  if(abs(R2-90) < TRIM) R2 = 128;
+  if(abs(R4-90) < TRIM) R4 = 128;
 }
  
 void serial_read(){
@@ -82,16 +93,16 @@ lx = ly = az = 128;}
 }
 
 void convert(){
- if (lx > 255)lx = 255; else if (lx < 0)lx = 0;
- if (az > 255)lx = 255; else if (az < 0)az = 0;
+ if (ly > 255)ly = 255; else if (ly < 0)ly = 0;
+ if (az > 255)az = 255; else if (az < 0)az = 0;
  lx = map (lx, 0, 255, 80, 100);
  ly = map (ly, 0, 255, 80, 100);
- az = map (az, 0, 255, 75, 115);
+ az = map (az, 0, 255, 80, 100);
 }
 
 
 void drive(){
-  //Serial.print("lx: ");Serial.print(lx);Serial.print(" ly: ");Serial.println(ly);Serial.print(" az: ");Serial.println(az);
+  //Serial.print("lx: ");Serial.print(lx);Serial.print(" ly: ");Serial.print(ly);Serial.print(" az: ");Serial.println(az);
  if(lx == 90){
   if(ly == 90){
    if (az == 90){
@@ -104,16 +115,29 @@ void drive(){
    }
   }
   else{
-   LeftM.write(ly);
-   RightM.write(ly);
+   if (ly > 90){
+   int y = ly - 90; 
+   LeftM.write(90+y);//if 80 //if 100 
+   RightM.write(90-y);//needs to be 100 //needs to be 80 
+   //Serial.print("left: ");Serial.print(90+y);Serial.print(" right: ");Serial.println(90-y);
    }
+   else{
+   int y = 90-ly;
+   LeftM.write(90-y);
+   RightM.write(90+y);
+     // Serial.print("left: ");Serial.print(90+y);Serial.print(" right: ");Serial.println(90-y);
+   }
+ }
  }
  else{
    if (lx > 90){
-   LeftM.write(lx);//if 80 //if 100 
-   RightM.write(lx+20);//needs to be 100 //needs to be 80 
+   int x = lx - 90;
+   LeftM.write(90+x);//if 80 //if 100 
+   RightM.write(90-x);//needs to be 100 //needs to be 80 
    }
-   else{LeftM.write(lx);
-   RightM.write(lx-20);}
+   else{
+   int x = lx + 90;  
+   LeftM.write(90-x);
+   RightM.write(90+x);}
  }
 }
