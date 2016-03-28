@@ -25,9 +25,10 @@ struct waypoint{
   }
 };
 
-waypoint CurrentWaypoint, LastWaypoint, nextWaypoint;
+waypoint CurrentWaypoint, LastWaypoint, nextWaypoint, TargetWaypoint;
 /* CurrentWaypoint holds current waypoint in lon lat
 *  LastWaypoint holds last waypoint in lon lat
+*  targetWaypoint holds target waypoint in lon lat
    nextWaypoint holds nextWaypoint in meters dx dy */ 
 
 static const string ROS_NODE_NAME = "gps_manager"; 
