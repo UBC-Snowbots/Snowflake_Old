@@ -25,11 +25,14 @@ struct waypoint{
   }
 };
 
-waypoint CurrentWaypoint, LastWaypoint, nextWaypoint, TargetWaypoint;
+waypoint CurrentWaypoint, LastWaypoint, nextWaypoint, TargetWaypoint, avgWaypoint;
 /* CurrentWaypoint holds current waypoint in lon lat
 *  LastWaypoint holds last waypoint in lon lat
 *  targetWaypoint holds target waypoint in lon lat
-   nextWaypoint holds nextWaypoint in meters dx dy */ 
+   nextWaypoint holds nextWaypoint in meters dx dy 
+   avgWaypoint holds currentWaypoint avg in meteres dx dy
+   */ 
+
 
 static const string ROS_NODE_NAME = "gps_manager"; 
 static const int ROS_LOOP_RATE = 200; //Hz

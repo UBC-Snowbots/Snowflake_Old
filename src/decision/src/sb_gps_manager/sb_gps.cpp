@@ -82,3 +82,19 @@ double calculate_distance(){
   distance *= 6371000; //Earth radius in m
   return distance; 
 }
+bool checkGoal (waypoint CurrentWaypoint, waypoint TargetWaypoint){
+  //cout<<fabs(avgWaypoint.lon - TargetWaypoint.lon)*100000 <<endl;
+   // cout<<(int)fabs(avgWaypoint.lon - TargetWaypoint.lon)*100000 <<endl;
+        if (fabs(avgWaypoint.lon - TargetWaypoint.lon)*100000 < 2.5 && fabs(avgWaypoint.lon - TargetWaypoint.lon)*100000 > 0){  
+     //         cout<<fabs(avgWaypoint.lat - TargetWaypoint.lat)*10000 <<endl;
+                    if (fabs(avgWaypoint.lat - TargetWaypoint.lat)*100000 < 2.5 && fabs(avgWaypoint.lon - TargetWaypoint.lon)*100000 > 0){
+                        
+                              return true;
+                                    }
+                          else
+                                    return false;
+                              }    
+            else
+                    return false;
+   /* return (CurrentWaypoint.lon == TargetWaypoint.lon) && (CurrentWaypoint.lat == TargetWaypoint.lat);*/
+}
