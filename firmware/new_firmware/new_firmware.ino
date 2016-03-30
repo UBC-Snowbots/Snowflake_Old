@@ -12,10 +12,10 @@
 Servo LeftM;//5
 Servo RightM;
 int lx,ly,az = 0;
-int R1,R2,R3,R4,Mode = 0;
+int R1,R2,R3,R4,B2,B4,Mode = 0;
 int lx_h,lx_l,az_h,az_l = 0;
 void setup() {
-  Serial.begin(9600);
+  Serial.begin(115200);
   pinMode(2,INPUT);
   pinMode(3,INPUT);
   pinMode(4,INPUT);
@@ -26,26 +26,31 @@ void setup() {
 }
 
 void loop() {
-  if (Serial.read() == 'I'){Serial.print("DRIVE");}
-  else Serial.flushRX();
+  //if (Serial.read() == 'I'){Serial.print("DRIVE");}
+  //else Serial.flushRX();
   //responding to queries from usb
   sig_read();
-  if (Mode == -1)serial_read();
+  //Serial.println(Mode);
+  //serial_read();
+  if (Mode == -1){serial_read();lx = 128; ly = B2; az = B4;  convert();
+  drive();}
   else if (Mode == 0){
   //Serial.println(az);
-  lx = 128; ly=R2; az = R4;}
-  else{lx = 128; ly = 128; az = 128;}
+  lx = 128; ly=R2; az = R4;  convert();
+  drive();  Serial.flushRX();
+}
+  else{lx = 128; ly = 128; az = 128;  convert();
+  drive();  Serial.flushRX();
+}
   //Serial.print("lx: ");Serial.print(lx);Serial.print(" ly: ");Serial.print(ly);Serial.print(" az: ");Serial.println(az);
 
-  convert();
-  drive();
 }
 
 void set_off(){
-  int lx_mid = 1915; 
-  int az_mid = 1850;
-  lx_h = lx_mid+100; lx_l = lx_mid-100;
-  az_h = az_mid+100; az_l = az_mid-100;
+  int lx_mid = 1915; //pulseIn(3,HIGH); 
+  int az_mid = 1850; //pulseIn(5,HIGH);
+  lx_h = lx_mid+150; lx_l = lx_mid-150;
+  az_h = az_mid+150; az_l = az_mid-150;
 }
 
 void sig_read(){
@@ -78,25 +83,25 @@ void sig_read(){
 void serial_read(){
   if (Serial.available()>9){
     if (Serial.read() == 'B'){
-    lx = (Serial.read()-'0')*100 + (Serial.read()-'0')*10 + (Serial.read()-'0');
-    ly =(Serial.read()-'0')*100 + (Serial.read()-'0')*10 + (Serial.read()-'0');
-    az = (Serial.read()-'0')*100 + (Serial.read()-'0')*10 + (Serial.read()-'0');
+    //lx = (Serial.read()-'0')*100 + (Serial.read()-'0')*10 + (Serial.read()-'0');
+    B2 =(Serial.read()-'0')*100 + (Serial.read()-'0')*10 + (Serial.read()-'0');
+    B4 = (Serial.read()-'0')*100 + (Serial.read()-'0')*10 + (Serial.read()-'0');
+    if (B4 > 128) B4+=
     }
-    else{lx = ly = az = 128;}
+    else{B2 = B4 = 128;}
 }
 else{  
-lx = ly = az = 128;}
+B2 = B4 = 128;}
 //Serial.end();
 //Serial.begin(9600);
   Serial.flushRX();
-
 }
 
 void convert(){
  if (ly > 255)ly = 255; else if (ly < 0)ly = 0;
  if (az > 255)az = 255; else if (az < 0)az = 0;
  lx = map (lx, 0, 255, 80, 100);
- ly = map (ly, 0, 255, 80, 100);
+ ly = map (ly, 0, 255, 85, 95);
  az = map (az, 0, 255, 80, 100);
 }
 
@@ -110,34 +115,48 @@ void drive(){
      RightM.write(90);
    }
    else{
-    LeftM.write(az);
-    RightM.write(az);  
+     if(az > 90){
+    LeftM.write(az+10);
+    RightM.write(az+10);  
+           Serial.print("left: ");//qSerial.print(az+10);Serial.print(" right: ");Serial.println(az+10);
+         }
+     else{
+       LeftM.write(az);
+       RightM.write(az);      //Serial.print("left: ");Serial.print(az);Serial.print(" right: ");Serial.println(az);
+   }
    }
   }
   else{
    if (ly > 90){
    int y = ly - 90; 
-   LeftM.write(90+y);//if 80 //if 100 
-   RightM.write(90-y);//needs to be 100 //needs to be 80 
+   LeftM.write(90+y+13);//if 80 //if 100 
+   RightM.write(90-y-7);//needs to be 100 //needs to be 80 
    //Serial.print("left: ");Serial.print(90+y);Serial.print(" right: ");Serial.println(90-y);
    }
    else{
    int y = 90-ly;
-   LeftM.write(90-y);
-   RightM.write(90+y);
-     // Serial.print("left: ");Serial.print(90+y);Serial.print(" right: ");Serial.println(90-y);
+   LeftM.write(90-y-7);
+   RightM.write(90+y+11);
+     // Serial.print("left: ");Serial.print(90-y);Serial.print(" right: ");Serial.println(90+y);
    }
  }
  }
  else{
    if (lx > 90){
-   int x = lx - 90;
-   LeftM.write(90+x);//if 80 //if 100 
-   RightM.write(90-x);//needs to be 100 //needs to be 80 
+   //int x = lx - 90;
+   //LeftM.write(90+x+13);//if 80 //if 100 
+   //RightM.write(90-x-7);//needs to be 100 //needs to be 80 
+      //Serial.print("left: ");Serial.print(90+x);Serial.print(" right: ");Serial.println(90-x);
+  LeftM.write(90);
+  RightM.write(90);
    }
    else{
-   int x = lx + 90;  
-   LeftM.write(90-x);
-   RightM.write(90+x);}
+   //int x = lx + 90;  
+   //LeftM.write(90-x-7);
+   //RightM.write(90+x+11);
+       //Serial.print("left: ");Serial.print(90-x);Serial.print(" right: ");Serial.println(90+x);
+   LeftM.write(90);
+   RightM.write(90);
+}
  }
 }
