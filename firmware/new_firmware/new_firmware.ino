@@ -83,12 +83,14 @@ void sig_read(){
 void serial_read(){
   if (Serial.available()>9){
     if (Serial.read() == 'B'){
-    //lx = (Serial.read()-'0')*100 + (Serial.read()-'0')*10 + (Serial.read()-'0');
+    int B9 = (Serial.read()-'0')*100 + (Serial.read()-'0')*10 + (Serial.read()-'0');
     B2 =(Serial.read()-'0')*100 + (Serial.read()-'0')*10 + (Serial.read()-'0');
     B4 = (Serial.read()-'0')*100 + (Serial.read()-'0')*10 + (Serial.read()-'0');
-    if (B4 > 128) B4+=
+   //Serial.print("B4: "); Serial.print(B4);
+   
     }
     else{B2 = B4 = 128;}
+    B2 = 128;
 }
 else{  
 B2 = B4 = 128;}
@@ -116,13 +118,14 @@ void drive(){
    }
    else{
      if(az > 90){
-    LeftM.write(az+10);
-    RightM.write(az+10);  
-           Serial.print("left: ");//qSerial.print(az+10);Serial.print(" right: ");Serial.println(az+10);
+    LeftM.write(az+8);
+    RightM.write(az+8);  
+           //Serial.print("left: ");Serial.print(az+10);Serial.print(" right: ");Serial.println(az+10);
          }
      else{
-       LeftM.write(az);
-       RightM.write(az);      //Serial.print("left: ");Serial.print(az);Serial.print(" right: ");Serial.println(az);
+       LeftM.write(az-2);
+       RightM.write(az-2);      
+       //Serial.print("left: ");Serial.print(az);Serial.print(" right: ");Serial.println(az);
    }
    }
   }
@@ -137,7 +140,7 @@ void drive(){
    int y = 90-ly;
    LeftM.write(90-y-7);
    RightM.write(90+y+11);
-     // Serial.print("left: ");Serial.print(90-y);Serial.print(" right: ");Serial.println(90+y);
+     //Serial.print("left: ");Serial.print(90-y);Serial.print(" right: ");Serial.println(90+y);
    }
  }
  }

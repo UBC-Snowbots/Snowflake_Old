@@ -152,7 +152,7 @@ int main(int argc, char** argv) {
                                   << twist_z[2];
 	    link.writeData(ss.str(), 10);
 
-        //cout << ss.str() << endl;
+       cout << ss.str() << endl;
 
 	    //publish data	
 	    char test[24];
