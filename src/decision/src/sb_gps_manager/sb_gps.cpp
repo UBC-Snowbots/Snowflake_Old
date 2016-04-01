@@ -61,4 +61,40 @@ void gpsSubHandle(const std_msgs::String::ConstPtr& msg){
   CurrentWaypoint.lat = atoi(temp); 
   
   return;
-} 
+}
+
+double calculate_distance(){
+/*
+ * Input Parameter: void
+ * Output: distance in meteres from currentWaypoint to targetWaypoint
+ * Purpose: Calculate distance from target waypoints
+ * Note: Based on haversine formula
+ * Requirements: CurrentWaypoint, TargetWaypoint
+ */
+  double cLat = CurrentWaypoint.lat*M_PI/180;//CurrentLat in radians
+  double cLon = CurrentWaypoint.lon*M_PI/180;//CurrentLon in radians
+  double tLat = TargetWaypoint.lat*M_PI/180;//TargetLat in  radians
+  double tLon = TargetWaypoint.lon*M_PI/180;
+
+  //Haversine: 
+  double distance = pow(sin((tLat - cLat)/2),2) + cos(cLat)*cos(tLat)*pow(sin((tLon - cLon)/2),2); 
+  distance = 2*atan2(sqrt(distance),sqrt(1-distance));
+  distance *= 6371000; //Earth radius in m
+  return distance; 
+}
+bool checkGoal (waypoint CurrentWaypoint, waypoint TargetWaypoint){
+  //cout<<fabs(avgWaypoint.lon - TargetWaypoint.lon)*100000 <<endl;
+   // cout<<(int)fabs(avgWaypoint.lon - TargetWaypoint.lon)*100000 <<endl;
+        if (fabs(avgWaypoint.lon - TargetWaypoint.lon)*100000 < 2.5 && fabs(avgWaypoint.lon - TargetWaypoint.lon)*100000 > 0){  
+     //         cout<<fabs(avgWaypoint.lat - TargetWaypoint.lat)*10000 <<endl;
+                    if (fabs(avgWaypoint.lat - TargetWaypoint.lat)*100000 < 2.5 && fabs(avgWaypoint.lon - TargetWaypoint.lon)*100000 > 0){
+                        
+                              return true;
+                                    }
+                          else
+                                    return false;
+                              }    
+            else
+                    return false;
+   /* return (CurrentWaypoint.lon == TargetWaypoint.lon) && (CurrentWaypoint.lat == TargetWaypoint.lat);*/
+}

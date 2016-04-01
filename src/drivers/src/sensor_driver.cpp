@@ -13,19 +13,10 @@ int main (int argc, char** argv){
 	ros::Rate loop_rate(ROS_LOOP_RATE);
   ros::Publisher sensor_imu_publisher = nh.advertise<sensor_msgs::Imu>(SENSOR_OUTPUT_TOPIC,20);
   //Attempts at opening the Serial Port
-  unsigned int count = 0;
-  while( !link_port.connect(BAUD_RATE,(ARDUINO_PORT_NAME + to_string(count)))&& count < 9){
-    count++;
-  }
-  cout << endl;
-  if (link_port.connect(BAUD_RATE,(ARDUINO_PORT_NAME + to_string(count)))){
-    cout << "Connected on port" << ARDUINO_PORT_NAME << count << endl;
-    }
-  else{ 
-    cout << "[1]Check Permissions" << endl << "[2]Check USB" << endl;
-    return 1;
-      }
-  
+  if(!connect_device("SENS"))
+        return 1;//Error signal
+  else
+        cout << "Connected to Accelerometer, Gyroscope" << endl;
   //Temporary Function for Setting covariance values 
   for (int i = 0; i < 9; i++){
   IMU.linear_acceleration_covariance[i] = 0; 
@@ -38,12 +29,8 @@ int main (int argc, char** argv){
     //ROS Loop - All procedures repeated are done here
     char buff1[32];
     char buff2[32];
-    data_request('A');//request dat
-    loop_rate.sleep(); // Wait for messages to arrive 
-    link_port.readData(32,buff1); // Read messsages
-    data_request('G');
-    loop_rate.sleep();
-    link_port.readData(32,buff2);
+    data_request('A',buff1);
+    data_request('G',buff2);
     if(Serial_Store(buff2,3) && Serial_Store(buff1,0))
         sensor_imu_publisher.publish(IMU);
           //if the messages read are good, publish them, else do nothing 
@@ -52,13 +39,44 @@ int main (int argc, char** argv){
   ROS_ERROR("Sensor Input Node Terminated"); 
   return 0; 
 }
+bool connect_device(std::string device_name){
+    int i = 0;
+    while (i < 9){
+    char buff[32]="\0";
+      if(!open_port(i)){
+        ROS_ERROR("PORT ERROR");
+        return false;
+       }
+    data_request('I',buff);
+    std::string s_input = to_string2(buff);
+    if(s_input.find(device_name)!=std::string::npos)
+        return true;
+    else
+        i++;
+    }
+    ROS_ERROR("Connected device is not GPS");
+    return false; 
+}
+bool open_port(unsigned int count){
+    while(!link_port.connect(BAUD_RATE,(ARDUINO_PORT_NAME + to_string(count)))&& count < 9){count++;} 
+    cout << endl;
+    if(link_port.connect(BAUD_RATE,(ARDUINO_PORT_NAME+to_string(count)))){cout << "Connected on port" << ARDUINO_PORT_NAME << count << endl;
+    return true;} 
+    else{cout << "[1]Check Permissions" << endl << "[2]Check USB" <<endl;
+    return false;
+    }
+}
 
 std::string to_string(int i){
   ostringstream out;
   out << i;
   return out.str();
 }
-
+std::string to_string2(char *c){
+  ostringstream out;
+  out << c; 
+  return out.str();
+}
 void IMU_write(int c, double val){
   //Takes in value val and writes to IMU.msg depending on situation 
    switch (c){
@@ -121,12 +139,15 @@ bool Serial_Store(char *buffer,int sensor){
   return true;
 }
 
-void data_request(char c){
+void data_request(char c, char*buffer){
   //clears input buffer and sends confirmation byte to prepare acceptance of message in serial
+  while(buffer[0] == '\0'){
   link_port.clearBuffer();
   stringstream ss; 
   ss << c; 
   link_port.writeData(ss.str(),1); 
-}
+  link_port.readData(32,buffer);
+  }
+ }
 
 
