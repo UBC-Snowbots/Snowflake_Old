@@ -1,4 +1,6 @@
 <launch>
+    
+    <node pkg="tf" type="static_transform_publisher" name="laser_to_map" args="0 0 0 0 0 0 /laser /map 40"/>
 
     <!-- Start the sick driver -->
     <node pkg="sicktoolbox_wrapper" type="sicklms"
@@ -6,19 +8,13 @@
         <param name="port" value="/dev/ttyUSB0" />
         <remap from="scan" to="sickscan"/>
     </node>
-    
+
     <!-- Start laser_scan_multi_merger -->
     <node pkg="ira_laser_tools" name="laserscan_multi_merger"
         type="laserscan_multi_merger" output="screen">
-       
-        <param name="destination_frame" value="/laser"/> 
-        <param name="cloud_destination_topic" value="/merged_cloud"/>
-        <param name="scan_destination_topic" value="/scan"/>
-        <param name="laserscan_topics" value="/hokuyoscan /sickscan"/>
+        
+        <param name="scan_destination_topic" value="/merged_scan"/>
+        <param name="laserscan_topics" value="/hokuyoscan"/>
     
     </node>
-  
-    <!-- Run the common launch file -->
-    <include file="$(find drivers)/../launch/common.launch"/>
-
 </launch>

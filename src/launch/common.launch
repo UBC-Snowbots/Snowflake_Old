@@ -33,6 +33,7 @@
         <param name="angularUpdate" value="0.2"/>
         <param name="delta" value="0.04"/>
         <param name="occ_thresh" value="0.1"/>
+        <param name="odom_frame" value="odom"/>
 
     </node>
 

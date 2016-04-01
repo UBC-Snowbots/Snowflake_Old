@@ -1,0 +1,8 @@
+<launch>
+    <!-- Start the hokoyu driver-->
+    <node pkg="hokuyo_node" type="hokuyo_node"
+    name="hokuyo_node" output="screen">
+        <param name="port" value="/dev/ttyACM0"/>
+        <remap from="scan" to="hokuyoscan"/>
+    </node>
+</launch>
