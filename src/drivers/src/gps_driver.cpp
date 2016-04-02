@@ -11,12 +11,17 @@ int main (int argc, char **argv){
   ros::init(argc, argv, ROS_NODE_NAME);
   ros::NodeHandle nh; 
   ros::Rate loop_rate(ROS_LOOP_RATE); 
-  ros::Publisher gps_publisher = nh.advertise<std_msgs::String>(SENSOR_OUTPUT_TOPIC,20); 
+  ros::Publisher gps_publisher = nh.advertise<::messages::gps>(SENSOR_OUTPUT_TOPIC,20); 
   if(!connect_device("GPS"))
     return 1;//Notify Error
   else 
     cout << "Connected to GPS Arduino" << endl;  
-  while(ros::ok() && link_port.isActive()){} 
+  while(ros::ok() && link_port.isActive()){
+    char buff[32];
+    data_request('G',buff);
+    if(gps_store(buff))
+      gps_publisher.publish(gps_msg); 
+  } 
   ROS_ERROR("GPS Node Terminated"); 
   return 0;
 }
@@ -75,9 +80,11 @@ bool open_port(unsigned int count){
   else{ 
     cout << "[1]Check Permissions" << endl << "[2]Check USB" << endl; 
     return false; 
-  } 
- 
+  }  
 }
+
+
+
 std::string to_string(int i){
   ostringstream out;
   out << i; 
@@ -88,3 +95,24 @@ std::string to_string2(char* c){
   out << c;
   return out.str();
 }
+
+bool gps_store(char *buffer){
+  //To parse GPS data coming from arduino 
+  //Assumed format for data already being parsed from arduino side
+  char *c; 
+  if (buffer[0] = 'G'){
+    c = strtok(buffer,",:");
+    while (c != NULL){
+//      c = strtok(NULL,",:");
+      gps_msg.Lon = atoi(c);
+      c = strtok(NULL,",:");
+      gps_msg.Lat = atoi(c);
+      c = strtok(NULL,",:");
+      gps_msg.Head = atoi(c); 
+      }
+    return true;
+    }
+  else 
+     return false; 
+}
+

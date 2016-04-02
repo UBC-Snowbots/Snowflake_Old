@@ -8,6 +8,8 @@
 #include <Servo.h>
 #include <math.h>
 #define TRIM 8 
+#define LEFT_TURN 9
+#define RIGHT_TURN -3
 
 Servo LeftM;//5
 Servo RightM;
@@ -32,15 +34,23 @@ void loop() {
   sig_read();
   //Serial.println(Mode);
   //serial_read();
-  if (Mode == -1){serial_read();lx = 128; ly = B2; az = B4;  convert();
-  drive();}
-  else if (Mode == 0){
-  //Serial.println(az);
-  lx = 128; ly=R2; az = R4;  convert();
-  drive();  Serial.flushRX();
-}
-  else{lx = 128; ly = 128; az = 128;  convert();
-  drive();  Serial.flushRX();
+  if (Mode == -1){//Auto Mode
+    serial_read();lx = 128; ly = 128; az = B4;  
+    convert();
+    drive();
+  }
+  else if (Mode == 0){//RC Mode
+    //Serial.println(az);
+    lx = 128; ly=R2; az = R4;  
+    convert();
+    drive();  
+    Serial.flushRX();
+  }
+  else{//STOP MODE
+    lx = 128; ly = 128; az = 128;  
+    convert();
+    drive();  
+    Serial.flushRX();
 }
   //Serial.print("lx: ");Serial.print(lx);Serial.print(" ly: ");Serial.print(ly);Serial.print(" az: ");Serial.println(az);
 
@@ -90,7 +100,7 @@ void serial_read(){
    
     }
     else{B2 = B4 = 128;}
-    B2 = 128;
+    //B2 = 128;
 }
 else{  
 B2 = B4 = 128;}
@@ -118,14 +128,14 @@ void drive(){
    }
    else{
      if(az > 90){
-    LeftM.write(az+8);
-    RightM.write(az+8);  
-           //Serial.print("left: ");Serial.print(az+10);Serial.print(" right: ");Serial.println(az+10);
+    LeftM.write(az+LEFT_TURN);
+    RightM.write(az+LEFT_TURN);  
+           Serial.print("left: ");Serial.print(az+10);Serial.print(" right: ");Serial.println(az+10);
          }
      else{
-       LeftM.write(az-2);
-       RightM.write(az-2);      
-       //Serial.print("left: ");Serial.print(az);Serial.print(" right: ");Serial.println(az);
+       LeftM.write(az+RIGHT_TURN);
+       RightM.write(az+RIGHT_TURN);      
+       Serial.print("left: ");Serial.print(az);Serial.print(" right: ");Serial.println(az);
    }
    }
   }
