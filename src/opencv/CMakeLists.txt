@@ -30,31 +30,15 @@ include_directories(
 catkin_package()
 
 
-add_executable(color_analyzer src/color_analyzer.cpp)
-
-add_executable(ipm src/main.cpp src/IPM.h src/IPM.cpp)
-
-add_executable(mouse src/mouse.cpp)
-
-add_executable(vision src/vision.cpp src/filter.h src/filter.cpp src/IPM.h src/IPM.cpp)
-
 add_executable(camera_publisher src/camera.cpp)
 
 add_executable(camera_subscriber src/camera_subscriber.cpp)
 
 add_executable(ros_vision src/ros_vision.cpp src/filter.h src/filter.cpp src/IPM.h src/IPM.cpp)
 
-
 add_executable(image_to_laser_scan src/image_to_laser_scan.cpp)
 
 
-target_link_libraries(color_analyzer ${catkin_LIBRARIES} ${OpenCV_LIBS})
-
-target_link_libraries(ipm ${catkin_LIBRARIES} ${OpenCV_LIBS})
-
-target_link_libraries(mouse ${catkin_LIBRARIES} ${OpenCV_LIBS})
-
-target_link_libraries(vision ${catkin_LIBRARIES} ${OpenCV_LIBS})
 
 target_link_libraries(camera_publisher ${catkin_LIBRARIES} ${OpenCV_LIBS})
 
@@ -62,17 +46,9 @@ target_link_libraries(camera_subscriber ${catkin_LIBRARIES} ${OpenCV_LIBS})
 
 target_link_libraries(ros_vision ${catkin_LIBRARIES} ${OpenCV_LIBS})
 
-
 target_link_libraries(image_to_laser_scan ${catkin_LIBRARIES})
 
 
-add_dependencies(color_analyzer opencv)
-
-add_dependencies(ipm opencv)
-
-add_dependencies(mouse opencv)
-
-add_dependencies(vision opencv)
 
 add_dependencies(camera_publisher opencv)
 
