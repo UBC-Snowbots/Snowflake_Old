@@ -44,7 +44,7 @@ void imageCallback(const sensor_msgs::ImageConstPtr& msg)
     ROS_ERROR("Could not convert from '%s' to 'bgr8'.", msg->encoding.c_str());
   }
 }
-
+  
 int main(int argc, char** argv){
     
     //Window Names
@@ -70,14 +70,13 @@ int main(int argc, char** argv){
     ros::NodeHandle nh;
     image_transport::ImageTransport it(nh);
     image_transport::Subscriber sub = it.subscribe("camera/midcam/image_raw", 1, imageCallback);
-    image_transport::Publisher pub = it.advertise("vision/binary_image", 1);
+    image_transport::Publisher pub = it.advertise("image", 1);
     ros::Rate loop_rate(5); 
     //Manual initialization, maybe automate through parameter server
     int width = 640;
     int height = 480;
     cout << "Frame size: " << width << " x " << height << endl;
 
-    //Creating Mutex Lock to test things out
 
     //Manually Setting up the IPM points
     vector<Point2f> origPoints;
@@ -143,4 +142,3 @@ int main(int argc, char** argv){
     }
     return 0;
 }
-    

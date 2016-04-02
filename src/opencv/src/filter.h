@@ -38,6 +38,7 @@ class snowbotsFilter
 	//Window Names
 	std::string manualCalibrationWindow;
 	std::string calibrationWindow;
+	std::string imageCalibration; 
 	
 	public:
 		
@@ -82,7 +83,7 @@ class snowbotsFilter
 		 */
 		void printValues(void);
 
-
+		//static void onMouse( int event, int x, int y, int f, void* param);
 		/**
 		 * A mouse event handler for the automatic calibration
 		 */

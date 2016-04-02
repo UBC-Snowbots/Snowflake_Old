@@ -31,11 +31,12 @@ void snowbotsFilter::createFilter(int iLowH, int iHighH, int iLowS, int iHighS, 
 	_iHighV = iHighV;
 	manualCalibrationWindow = "Manual Calibration";
 	calibrationWindow = "Frame Calibration";
+    imageCalibration = "Image Calibration";
 
 }
 
 //Functions
-void snowbotsFilter::manualCalibration(){
+void snowbotsFilter::manualCalibration(void){
 	cv::namedWindow(manualCalibrationWindow, CV_WINDOW_AUTOSIZE);
     cv::createTrackbar("LowH", manualCalibrationWindow, &_iLowH, 179); //Hue (0 - 179)
     cv::createTrackbar("HighH", manualCalibrationWindow, &_iHighH, 179);
@@ -45,6 +46,7 @@ void snowbotsFilter::manualCalibration(){
 
     cv::createTrackbar("LowV", manualCalibrationWindow, &_iLowV, 255); //Value (0 - 255)
     cv::createTrackbar("HighV", manualCalibrationWindow, &_iHighV, 255);
+
 }
 
 void snowbotsFilter::stopManualCalibration(){
@@ -77,7 +79,37 @@ void snowbotsFilter::printValues(void){
 	std::cout << "iHighV: " << _iHighV << std::endl;
 
 }
+
 /* Put on backlog
+static void onMouse( int event, int x, int y, int f, void* param){
+    cv::Mat src = *((cv::Mat*) param);
+    cv::Mat image = src.clone();
+    cv::Vec3b hsv = image.at<cv::Vec3b>(y,x);
+    int H=hsv.val[0];
+    int S=hsv.val[1];
+    int V=hsv.val[2];
+
+    char name[30];
+    sprintf(name,"H=%d",H);
+    cv::putText(image,name, cv::Point(25,40) , CV_FONT_HERSHEY_SIMPLEX, .7, cv::Scalar(0,255,0), 2,8,false );
+
+    sprintf(name,"S=%d",S);
+    cv::putText(image,name, cv::Point(25,80) , CV_FONT_HERSHEY_SIMPLEX, .7, cv::Scalar(0,255,0), 2,8,false );
+
+    sprintf(name,"V=%d",V);
+    cv::putText(image,name, cv::Point(25,120) , CV_FONT_HERSHEY_SIMPLEX, .7, cv::Scalar(0,255,0), 2,8,false );
+
+    sprintf(name,"X=%d",x);
+    cv::putText(image,name, cv::Point(25,300) , CV_FONT_HERSHEY_SIMPLEX, .7, cv::Scalar(0,0,255), 2,8,false );
+
+    sprintf(name,"Y=%d",y);
+    cv::putText(image,name, cv::Point(25,340) , CV_FONT_HERSHEY_SIMPLEX, .7, cv::Scalar(0,0,255), 2,8,false );
+
+     //imwrite("hsv.jpg",image);
+     cv::imshow("imageCalibration", image);
+}
+
+
 static void snowbotsFilter::clickAndDrag_Rectangle(int event, int x, int y, int flags, void* param){
         if (event == cv::EVENT_LBUTTONDOWN)
         {
