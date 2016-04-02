@@ -2,7 +2,7 @@ cmake_minimum_required(VERSION 2.8.3)
 
 project(opencv)
 
-
+add_definitions(--std=c++11)
 
 ## Find catkin macros and libraries
 
@@ -45,6 +45,8 @@ add_executable(camera_subscriber src/camera_subscriber.cpp)
 add_executable(ros_vision src/ros_vision.cpp src/filter.h src/filter.cpp src/IPM.h src/IPM.cpp)
 
 
+add_executable(image_to_laser_scan src/image_to_laser_scan.cpp)
+
 
 target_link_libraries(color_analyzer ${catkin_LIBRARIES} ${OpenCV_LIBS})
 
@@ -59,6 +61,9 @@ target_link_libraries(camera_publisher ${catkin_LIBRARIES} ${OpenCV_LIBS})
 target_link_libraries(camera_subscriber ${catkin_LIBRARIES} ${OpenCV_LIBS})
 
 target_link_libraries(ros_vision ${catkin_LIBRARIES} ${OpenCV_LIBS})
+
+
+target_link_libraries(image_to_laser_scan ${catkin_LIBRARIES})
 
 
 add_dependencies(color_analyzer opencv)
