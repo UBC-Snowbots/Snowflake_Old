@@ -16,6 +16,7 @@ find_package(catkin REQUIRED COMPONENTS roscpp rospy cv_bridge genmsg image_tran
 
 find_package(OpenCV REQUIRED)
 
+find_package(PCL 1.3 REQUIRED COMPONENTS common io)
 
 
 include_directories(
@@ -24,7 +25,14 @@ include_directories(
 
   ${OpenCV_INCLUDE_DIRS}
 
+  ${PCL_INCLUDE_DIRS}
+
 )
+
+link_directories(${PCL_LIBRARY_DIRS})
+
+add_definitions(${PCL_DEFINITIONS})
+
 
 
 catkin_package()
@@ -38,6 +46,9 @@ add_executable(ros_vision src/ros_vision.cpp src/filter.h src/filter.cpp src/IPM
 
 add_executable(image_to_laser_scan src/image_to_laser_scan.cpp)
 
+add_executable(write_test src/pointCloud.cpp)
+
+add_executable(image_to_cloud src/imageToCloud.cpp)
 
 
 target_link_libraries(camera_publisher ${catkin_LIBRARIES} ${OpenCV_LIBS})
@@ -48,6 +59,9 @@ target_link_libraries(ros_vision ${catkin_LIBRARIES} ${OpenCV_LIBS})
 
 target_link_libraries(image_to_laser_scan ${catkin_LIBRARIES})
 
+target_link_libraries(write_test ${PCL_COMMON_LIBRARIES} ${PCL_IO_LIBRARIES})
+
+target_link_libraries(image_to_cloud ${catkin_LIBRARIES} ${OpenCV_LIBS} ${PCL_COMMON_LIBRARIES} ${PCL_IO_LIBRARIES})
 
 
 add_dependencies(camera_publisher opencv)
@@ -55,4 +69,6 @@ add_dependencies(camera_publisher opencv)
 add_dependencies(camera_subscriber opencv)
 
 add_dependencies(ros_vision opencv)
+
+add_dependencies(image_to_cloud opencv)
 
