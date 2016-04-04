@@ -15,7 +15,7 @@ using namespace std;
 
 struct waypoint{
   double lon; 
-  double lat; 
+  double lat;
   waypoint(){
   lon = lat = 0; 
   }
@@ -24,7 +24,7 @@ struct waypoint{
   lat = y; 
   }
 };
-
+::messages::gps CurrentPosition, LastPosition;
 waypoint CurrentWaypoint, LastWaypoint, nextWaypoint, TargetWaypoint, avgWaypoint;
 /* CurrentWaypoint holds current waypoint in lon lat
 *  LastWaypoint holds last waypoint in lon lat
@@ -40,5 +40,11 @@ static const string INPUT_TOPIC = "GPS";
 static const string SERVICE_NAME = "gps_waypoint_manager";
 
 bool waypointHandle(decision::gps_waypoint::Request &req, decision::gps_waypoint::Response &res);
+void gpsDriverHandler(const ::messages::gps::ConstPtr& gps); 
+void gpsSubHandle(const std_msgs::String::ConstPtr& msg);
+bool checkGoal(waypoint CurrentWaypoint, waypoint TargetWaypoint);
+double calculate_distance(void);
 
-void gpsSubHandle(const std_msgs::String::ConstPtr& msg); 
+static const waypoint TARGET_POINTS[] = {{123.456,45.32},{32.234,2321}};
+
+

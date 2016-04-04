@@ -12,13 +12,13 @@ int main(int argc, char **argv){
   ros::init(argc, argv, ROS_NODE_NAME);
   ros::NodeHandle nh; 
   ros::Rate loop_rate(ROS_LOOP_RATE);   
-  ros::Subscriber driver_sub = nh.subscribe(INPUT_TOPIC, 20, gpsSubHandle);
+  ros::Subscriber driver_sub = nh.subscribe(INPUT_TOPIC, 20, gpsDriverHandler);
   ros::ServiceServer service = nh.advertiseService(SERVICE_NAME, waypointHandle);
   
   while (ros::ok()){}
   return 0; 
 }
- 
+ /*
 bool waypointHandle(decision::gps_waypoint::Request &req, decision::gps_waypoint::Response &res){
   if (req.next){
     ROS_INFO("Requesting next waypoint");
@@ -26,9 +26,17 @@ bool waypointHandle(decision::gps_waypoint::Request &req, decision::gps_waypoint
     res.dy = nextWaypoint.lat; 
   }
   return true; 
+}*/
+
+void gpsDriverHandler(const ::messages::gps::ConstPtr& gps){
+  LastPosition.Lat = CurrentPosition.Lat; 
+  LastPosition.Lon = CurrentPosition.Lon;
+  LastPosition.Head = CurrentPosition.Head; 
+  CurrentPosition.Lat = gps->Lat; 
+  CurrentPosition.Lon = gps->Lon; 
+  CurrentPosition.Head = gps->Head; 
+ 
 }
-
-
 void gpsSubHandle(const std_msgs::String::ConstPtr& msg){
   /* Copied function from old NMEA parser written last year
    * Input: Message picked up by subscriber 
@@ -82,6 +90,20 @@ double calculate_distance(){
   distance *= 6371000; //Earth radius in m
   return distance; 
 }
+
+bool waypointHandle(decision::gps_waypoint::Request &req, decision::gps_waypoint::Response &res){
+  if(req.next){
+    if (checkGoal(CurrentWaypoint,TargetWaypoint))
+       //Get new waypoint from list of waypoints.
+       return true;
+    else{
+     // dx = calculate_dx();
+     // dy = calculate_dy();      
+    }}
+  else 
+    return false; 
+}
+
 bool checkGoal (waypoint CurrentWaypoint, waypoint TargetWaypoint){
   //cout<<fabs(avgWaypoint.lon - TargetWaypoint.lon)*100000 <<endl;
    // cout<<(int)fabs(avgWaypoint.lon - TargetWaypoint.lon)*100000 <<endl;
