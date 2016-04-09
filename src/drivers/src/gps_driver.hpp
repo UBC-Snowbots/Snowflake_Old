@@ -20,7 +20,8 @@ static const int BAUD_RATE = 115200;
 static const string SENSOR_OUTPUT_TOPIC = "GPS"; 
 static const string ARDUINO_PORT_NAME = "/dev/ttyACM"; 
 
-::messages::gps gps_msg; 
+::messages::gps gps_msg;
+int gps_fix; 
 //Objects 
 SerialCommunication link_port; 
 //messages::gps GPS; 

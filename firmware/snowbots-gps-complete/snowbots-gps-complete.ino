@@ -17,10 +17,7 @@ void setup() {
 
 void loop() {
   gps_check_new_data();
-  //char input = Serial.read(); 
-  //Serial.flush();
-  char input = 'D';
-  delay(1000);
+  char input = Serial.read();
   if (input == 'I') {
     send_gps(false);
   } else if (input == 'D') {
@@ -46,9 +43,9 @@ void gps_check_new_data() {
 void send_gps(boolean data) {
   //F:fix,N:latitude,W:longitude
   if (data) {
-    Serial.print("F:"); Serial.print((int)GPS.fix);
-    Serial.print(",N:"); Serial.print(GPS.latitudeDegrees, 4);
-    Serial.print(",W:"); Serial.print(GPS.longitudeDegrees, 4);
+    Serial.print("G"); Serial.print(GPS.latitudeDegrees, 4);
+    Serial.print(","); Serial.print(GPS.longitudeDegrees, 4);
+    Serial.print(","); Serial.print((int)GPS.fix);
   } else {
     Serial.print("GPS");
   }

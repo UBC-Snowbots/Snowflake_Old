@@ -101,13 +101,16 @@ bool gps_store(char *buffer){
   //Assumed format for data already being parsed from arduino side
   char *c; 
   if (buffer[0] = 'G'){
-    c = strtok(buffer,",:");
+	buffer += 1;
+    c = strtok(buffer,",");
     while (c != NULL){
-//      c = strtok(NULL,",:");
+	  // c = strtok(NULL,",:");
       gps_msg.Lon = atoi(c);
-      c = strtok(NULL,",:");
+      c = strtok(NULL,",");
       gps_msg.Lat = atoi(c);
-      c = strtok(NULL,",:");
+	  c = strtok(NULL,",");
+	  gps_fix = atoi(c);
+      c = strtok(NULL,",");
       gps_msg.Head = atoi(c); 
       }
     return true;
