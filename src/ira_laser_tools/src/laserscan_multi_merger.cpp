@@ -9,7 +9,7 @@
 #include <pcl/io/pcd_io.h>
 #include <sensor_msgs/PointCloud.h>
 #include <sensor_msgs/PointCloud2.h>
-#include <sensor_msgs/point_cloud_conversion.h> 
+#include <sensor_msgs/point_cloud_conversion.h>
 #include "sensor_msgs/LaserScan.h"
 #include "pcl_ros/point_cloud.h"
 #include <Eigen/Dense>
@@ -24,7 +24,8 @@ class LaserscanMerger
 {
 public:
     LaserscanMerger();
-    void scanCallback(const sensor_msgs::LaserScan::ConstPtr& scan, std::string topic);
+    void laserscanCallback(const sensor_msgs::LaserScan::ConstPtr& scan, std::string topic);
+    void pointcloudCallback(const sensor_msgs::PointCloud::ConstPtr& input_pointcloud, std::string topic);
     void pointcloud_to_laserscan(Eigen::MatrixXf points, pcl::PCLPointCloud2 *merged_cloud);
     void reconfigureCallback(laserscan_multi_mergerConfig &config, uint32_t level);
 
@@ -35,13 +36,15 @@ private:
 
     ros::Publisher point_cloud_publisher_;
     ros::Publisher laser_scan_publisher_;
-    vector<ros::Subscriber> scan_subscribers;
+    vector<ros::Subscriber> laserscan_subscribers;
+    vector<ros::Subscriber> pointcloud_subscribers;
     vector<bool> clouds_modified;
 
     vector<pcl::PCLPointCloud2> clouds;
-    vector<string> input_topics;
+    vector<string> laserscan_input_topics;
+    vector<string> pointcloud_input_topics;
 
-    void laserscan_topic_parser();
+    void topic_parser();
 
     double angle_min;
     double angle_max;
@@ -54,8 +57,9 @@ private:
     string destination_frame;
     string cloud_destination_topic;
     string scan_destination_topic;
-    string laserscan_topics;
+    string input_topics;
 };
+
 
 void LaserscanMerger::reconfigureCallback(laserscan_multi_mergerConfig &config, uint32_t level)
 {
@@ -68,61 +72,111 @@ void LaserscanMerger::reconfigureCallback(laserscan_multi_mergerConfig &config, 
 	this->range_max = config.range_max;
 }
 
-void LaserscanMerger::laserscan_topic_parser()
+
+void LaserscanMerger::topic_parser()
 {
-	// LaserScan topics to subscribe
+	// Get all topics presently being published to master
 	ros::master::V_TopicInfo topics;
 	ros::master::getTopics(topics);
 
-    istringstream iss(laserscan_topics);
+    // Parse out the requested topic names from the strings passed in as params
+  istringstream iss(input_topics);
 	vector<string> tokens;
 	copy(istream_iterator<string>(iss), istream_iterator<string>(), back_inserter<vector<string> >(tokens));
 
-	vector<string> tmp_input_topics;
+	vector<string> tmp_laserscan_input_topics;
+  vector<string> tmp_pointcloud_input_topics;
 
+    // Look through all the topics presently being published to master, and find each requested topic name,
+    // adding it to a temporary list of pointcloud/laserscan input topics, depending on what topic type the
+    // topic on master is
 	for(int i=0;i<tokens.size();++i)
 	{
 	        for(int j=0;j<topics.size();++j)
 		{
 			if( (tokens[i].compare(topics[j].name) == 0) && (topics[j].datatype.compare("sensor_msgs/LaserScan") == 0) )
 			{
-				tmp_input_topics.push_back(topics[j].name);
+				tmp_laserscan_input_topics.push_back(topics[j].name);
+			}
+
+            else if( (tokens[i].compare(topics[j].name) == 0) && (topics[j].datatype.compare("sensor_msgs/PointCloud") == 0) )
+			{
+				tmp_pointcloud_input_topics.push_back(topics[j].name);
 			}
 		}
 	}
 
-	sort(tmp_input_topics.begin(),tmp_input_topics.end());
-	std::vector<string>::iterator last = std::unique(tmp_input_topics.begin(), tmp_input_topics.end());
-	tmp_input_topics.erase(last, tmp_input_topics.end());
+    // Get iterators for laserscan and pointcloud input topics
+	sort(tmp_laserscan_input_topics.begin(),tmp_laserscan_input_topics.end());
+	std::vector<string>::iterator laserscan_last = std::unique(tmp_laserscan_input_topics.begin(), tmp_laserscan_input_topics.end());
+	tmp_laserscan_input_topics.erase(laserscan_last, tmp_laserscan_input_topics.end());
 
+  sort(tmp_pointcloud_input_topics.begin(), tmp_pointcloud_input_topics.end());
+  std::vector<string>::iterator pointcloud_last = std::unique(tmp_pointcloud_input_topics.begin(), tmp_pointcloud_input_topics.end());
+  tmp_pointcloud_input_topics.erase(pointcloud_last, tmp_pointcloud_input_topics.end());
 
-	// Do not re-subscribe if the topics are the same
-	if( (tmp_input_topics.size() != input_topics.size()) || !equal(tmp_input_topics.begin(),tmp_input_topics.end(),input_topics.begin()))
+	// This section deals with subscribing/resubscribing to given laserscan topics
+	// Do not re-subscribe if laserscan topics are the same
+    if(!equal(tmp_laserscan_input_topics.begin(),tmp_laserscan_input_topics.end(),tmp_laserscan_input_topics.begin()))
 	{
 
 		// Unsubscribe from previous topics
-		for(int i=0; i<scan_subscribers.size(); ++i)
-			scan_subscribers[i].shutdown();
+		for(int i=0; i<laserscan_subscribers.size(); ++i)
+			laserscan_subscribers[i].shutdown();
 
-		input_topics = tmp_input_topics;
-		if(input_topics.size() > 0)
+		laserscan_input_topics = tmp_laserscan_input_topics;
+		if(laserscan_input_topics.size() > 0)
 		{
-            scan_subscribers.resize(input_topics.size());
-			clouds_modified.resize(input_topics.size());
-			clouds.resize(input_topics.size());
-            ROS_INFO("Subscribing to %d topics", scan_subscribers.size());
-            //ROS_INFO("Subscribing to topics\t%ld", scan_subscribers.size());
-			for(int i=0; i<input_topics.size(); ++i)
+      laserscan_subscribers.resize(laserscan_input_topics.size());
+			clouds_modified.resize(laserscan_input_topics.size() + pointcloud_input_topics.size());
+			clouds.resize(laserscan_input_topics.size() + pointcloud_input_topics.size());
+      ROS_INFO("Subscribing to %d topics", laserscan_subscribers.size());
+            //ROS_INFO("Subscribing to topics\t%ld", laserscan_subscribers.size());
+			for(int i=0; i<laserscan_input_topics.size(); ++i)
 			{
-                scan_subscribers[i] = node_.subscribe<sensor_msgs::LaserScan> (input_topics[i].c_str(), 1, boost::bind(&LaserscanMerger::scanCallback,this, _1, input_topics[i]));
+                // TODO: THE BELOW LINE STILL NEEDS WORK - LASERSCANS AND POINTCLOUDS NOW
+        laserscan_subscribers[i] = node_.subscribe<sensor_msgs::LaserScan>
+          (laserscan_input_topics[i].c_str(), 1,
+          boost::bind(&LaserscanMerger::laserscanCallback,this, _1, laserscan_input_topics[i]));
 				clouds_modified[i] = false;
-				cout << input_topics[i] << " ";
+				cout << laserscan_input_topics[i] << " ";
 			}
 		}
-		else
-            ROS_INFO("Not subscribed to any topic.");
+		else ROS_INFO("Not subscribed to any laserscan topic.");
 	}
+
+	// This section deals with subscribing/resubscribing to given pointcloud topics
+	// Do not re-subscribe if pointcloud topics are the same
+    if(!equal(tmp_pointcloud_input_topics.begin(),tmp_pointcloud_input_topics.end(),tmp_pointcloud_input_topics.begin()))
+	{
+
+		// Unsubscribe from previous topics
+		for(int i=0; i<pointcloud_subscribers.size(); ++i)
+			pointcloud_subscribers[i].shutdown();
+
+		pointcloud_input_topics = tmp_pointcloud_input_topics;
+		if(pointcloud_input_topics.size() > 0)
+		{
+      pointcloud_subscribers.resize(pointcloud_input_topics.size());
+			clouds_modified.resize(pointcloud_input_topics.size() + pointcloud_input_topics.size());
+			clouds.resize(pointcloud_input_topics.size() + pointcloud_input_topics.size());
+      ROS_INFO("Subscribing to %d topics", pointcloud_subscribers.size());
+            //ROS_INFO("Subscribing to topics\t%ld", pointcloud_subscribers.size());
+			for(int i=0; i<pointcloud_input_topics.size(); ++i)
+			{
+                // TODO: THE BELOW LINE STILL NEEDS WORK - LASERSCANS AND POINTCLOUDS NOW
+        pointcloud_subscribers[i] = node_.subscribe<sensor_msgs::PointCloud>
+          (pointcloud_input_topics[i].c_str(), 1,
+          boost::bind(&LaserscanMerger::pointcloudCallback,this, _1, pointcloud_input_topics[i]));
+				clouds_modified[i] = false;
+				cout << pointcloud_input_topics[i] << " ";
+			}
+		}
+		else ROS_INFO("Not subscribed to any pointcloud topic.");
+	}
+
 }
+
 
 LaserscanMerger::LaserscanMerger()
 {
@@ -131,9 +185,9 @@ LaserscanMerger::LaserscanMerger()
 	nh.getParam("destination_frame", destination_frame);
 	nh.getParam("cloud_destination_topic", cloud_destination_topic);
 	nh.getParam("scan_destination_topic", scan_destination_topic);
-    nh.getParam("laserscan_topics", laserscan_topics);
+  nh.getParam("scan_and_pointcloud_topics", input_topics);
 
-    this->laserscan_topic_parser();
+    this->topic_parser();
 
 	point_cloud_publisher_ = node_.advertise<sensor_msgs::PointCloud2> (cloud_destination_topic.c_str(), 1, false);
 	laser_scan_publisher_ = node_.advertise<sensor_msgs::LaserScan> (scan_destination_topic.c_str(), 1, false);
@@ -141,7 +195,8 @@ LaserscanMerger::LaserscanMerger()
 	tfListener_.setExtrapolationLimit(ros::Duration(0.1));
 }
 
-void LaserscanMerger::scanCallback(const sensor_msgs::LaserScan::ConstPtr& scan, std::string topic)
+
+void LaserscanMerger::laserscanCallback(const sensor_msgs::LaserScan::ConstPtr& scan, std::string topic)
 {
 	sensor_msgs::PointCloud tmpCloud1,tmpCloud2;
 	sensor_msgs::PointCloud2 tmpCloud3;
@@ -155,15 +210,15 @@ void LaserscanMerger::scanCallback(const sensor_msgs::LaserScan::ConstPtr& scan,
 		tfListener_.transformPointCloud(destination_frame.c_str(), tmpCloud1, tmpCloud2);
 	}catch (tf::TransformException ex){ROS_ERROR("%s",ex.what());return;}
 
-	for(int i=0; i<input_topics.size(); ++i)
+	for(int i=0; i<laserscan_input_topics.size(); ++i)
 	{
-		if(topic.compare(input_topics[i]) == 0)
+		if(topic.compare(laserscan_input_topics[i]) == 0)
 		{
 			sensor_msgs::convertPointCloudToPointCloud2(tmpCloud2,tmpCloud3);
 			pcl_conversions::toPCL(tmpCloud3, clouds[i]);
 			clouds_modified[i] = true;
 		}
-	}	
+	}
 
     // Count how many scans we have
 	int totalClouds = 0;
@@ -171,7 +226,7 @@ void LaserscanMerger::scanCallback(const sensor_msgs::LaserScan::ConstPtr& scan,
 		if(clouds_modified[i])
 			++totalClouds;
 
-    // Go ahead only if all subscribed scans have arrived
+    // Go ahead only if all subscribed scans/pointclouds have arrived
 	if(totalClouds == clouds_modified.size())
 	{
 		pcl::PCLPointCloud2 merged_cloud = clouds[0];
@@ -182,7 +237,53 @@ void LaserscanMerger::scanCallback(const sensor_msgs::LaserScan::ConstPtr& scan,
 			pcl::concatenatePointCloud(merged_cloud, clouds[i], merged_cloud);
 			clouds_modified[i] = false;
 		}
-	
+
+		point_cloud_publisher_.publish(merged_cloud);
+
+		Eigen::MatrixXf points;
+		getPointCloudAsEigen(merged_cloud,points);
+
+		pointcloud_to_laserscan(points, &merged_cloud);
+	}
+}
+
+
+void LaserscanMerger::pointcloudCallback(const sensor_msgs::PointCloud::ConstPtr& input_pointcloud, std::string topic)
+{
+	sensor_msgs::PointCloud tmpCloud1,tmpCloud2;
+	sensor_msgs::PointCloud2 tmpCloud3;
+
+    // Verify that TF knows how to transform from the received pointcloud  to the destination scan frame
+	tfListener_.waitForTransform(input_pointcloud->header.frame_id.c_str(), destination_frame.c_str(), input_pointcloud->header.stamp, ros::Duration(1));
+
+	for(int i=0; i<pointcloud_input_topics.size(); ++i)
+	{
+		if(topic.compare(pointcloud_input_topics[i]) == 0)
+		{
+			sensor_msgs::convertPointCloudToPointCloud2(tmpCloud2,tmpCloud3);
+			pcl_conversions::toPCL(tmpCloud3, clouds[i]);
+			clouds_modified[i] = true;
+		}
+	}
+
+    // Count how many scans we have
+	int totalClouds = 0;
+	for(int i=0; i<clouds_modified.size(); ++i)
+		if(clouds_modified[i])
+			++totalClouds;
+
+    // Go ahead only if all subscribed scans/pointclouds have arrived
+	if(totalClouds == clouds_modified.size())
+	{
+		pcl::PCLPointCloud2 merged_cloud = clouds[0];
+		clouds_modified[0] = false;
+
+		for(int i=1; i<clouds_modified.size(); ++i)
+		{
+			pcl::concatenatePointCloud(merged_cloud, clouds[i], merged_cloud);
+			clouds_modified[i] = false;
+		}
+
 		point_cloud_publisher_.publish(merged_cloud);
 
 		Eigen::MatrixXf points;
