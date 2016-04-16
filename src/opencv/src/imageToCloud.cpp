@@ -1,7 +1,17 @@
+/**
+ * A node which creates a point cloud from a binary image
+ * Author: Valerian Ratu
+ * contact: leri.ratu@gmail.com
+ *
+ * Subscribes to: image
+ * Publishes to: point_cloud
+ */
 
 //OpenCv
 #include <opencv2/core/core.hpp>
 #include <opencv2/highgui/highgui.hpp>
+#include <image_transport/image_transport.h>
+#include <cv_bridge/cv_bridge.h>
 
 //stdlibs
 #include <iostream>
@@ -19,10 +29,6 @@
 #include <pcl/visualization/pcl_visualizer.h>
 #include <pcl/console/parse.h>
 
-//Filter
-#include "filter.h"
-#include "IPM.h"
-
 
 using namespace cv; 
 using namespace std; 
@@ -30,70 +36,36 @@ using namespace std;
 const int NUM_ELTS_SKIPPED = 2;
 const int MAX_HEIGHT = 20;
 
+Mat inputImage;
+
+void imageCallback(const sensor_msgs::ImageConstPtr& msg)
+{
+  try
+  {
+    inputImage = cv_bridge::toCvShare(msg, "mono8")->image;
+  }
+  catch (cv_bridge::Exception& e)
+  {
+    ROS_ERROR("Could not convert from '%s' to 'mono8'.", msg->encoding.c_str());
+  }
+}
 
 int main (int argc, char** argv){
 
-	VideoCapture cap("/home/valerian/Documents/src/opencv/course.mov");
-
-	if (!cap.isOpened()){
-		cout << "File can't be opened" << endl;
-		return -1;
-	}
-
-  	//Window Names
-    string inputWindow = "Input Image";
-    string ipmOutputWindow = "IPM Output";
-    string filterOutputWindow = "Filter Output";
-    namedWindow(inputWindow, CV_WINDOW_AUTOSIZE);
-    //namedWindow(ipmOutputWindow, CV_WINDOW_AUTOSIZE);
-    namedWindow(filterOutputWindow, CV_WINDOW_AUTOSIZE);
-
-    //Calibration Variables
-    bool isCalibratingManually = false;
-
-    //Working Variables
-    Mat inputImage;
-    Mat ipmOutput;
-    Mat filterOutput;
-    Mat workingInput;
-    inputImage = Mat::zeros(480, 640, CV_32FC4);
-
-    cap.read(inputImage);
-
-    int width = inputImage.cols;
-    int height = inputImage.rows;
-
-    //Manually Setting up the IPM points
-    vector<Point2f> origPoints;
-    origPoints.push_back( Point2f(0, height));
-    origPoints.push_back( Point2f(width, height));
-    origPoints.push_back( Point2f(width/2+100, 200));
-    origPoints.push_back( Point2f(width/2-100, 200));
-
-    vector<Point2f> dstPoints;
-    dstPoints.push_back( Point2f(0, height) );
-    dstPoints.push_back( Point2f(width, height) );
-    dstPoints.push_back( Point2f(width, 0) );
-    dstPoints.push_back( Point2f(0, 0) );
-
+    //Ros initialization
 	ros::init(argc, argv, "image_to_cloud_node");
 	ros::NodeHandle nh;
+    image_transport::ImageTransport it(nh);
+    image_transport::Subscriber sub = it.subscribe("image", 1, imageCallback);
 	string topic = nh.resolveName("point_cloud");
 	uint32_t queue_size = 1;
 	ros::Rate loop_rate(5);
 	ros::Publisher pub = nh.advertise<pcl::PointCloud<pcl::PointXYZ>>(topic, queue_size);
 
-	//Creating the binary filter
-    snowbotsFilter filter(80, 128, 13, 125, 185, 255);
-
-    //Creating the IPM transformer
-    IPM ipm(Size(width, height), Size(width,height), origPoints, dstPoints);
-
-
     //Creating the viewer object
     pcl::visualization::PCLVisualizer viewer("3D Viewer");
     viewer.setBackgroundColor (0, 0, 0);
-    viewer.setPointCloudRenderingProperties (pcl::visualization::PCL_VISUALIZER_POINT_SIZE, 1, "sample cloud");
+    viewer.setPointCloudRenderingProperties (pcl::visualization::PCL_VISUALIZER_POINT_SIZE, 1, "input");
     viewer.addCoordinateSystem (1.0);
     viewer.initCameraParameters ();
 
@@ -102,37 +74,25 @@ int main (int argc, char** argv){
     //Cloud and pointer initialization
     pcl::PointCloud<pcl::PointXYZ> cloud;
     pcl::PointCloud<pcl::PointXYZ>::Ptr cloud_ptr(&cloud);
+
+    //Empty Image initializatoin
+    inputImage = Mat::zeros(480, 640, CV_8UC1);
 	
     while (nh.ok()){
 
-		cap.read(inputImage);
+        //Isn't needed? Questionable
+        cloud.clear();
 
-		//Image is empty so quit
-        if (inputImage.empty()) continue;
-
-        inputImage.copyTo(workingInput);
-        imshow(inputWindow, workingInput);
-
-        //Applies the filter to the image
-        filter.filterImage(workingInput, filterOutput);
-        imshow(filterOutputWindow, filterOutput);       
-
-        //Calibration
-        if (isCalibratingManually){
-            filter.manualCalibration();
-        } else {
-            filter.stopManualCalibration();
-        }
-
+        //Creating the cloud and its points
 		cloud.header.frame_id = "map";
 		cloud.width = inputImage.cols * inputImage.rows;
 		cloud.height = 1;
 		cloud.is_dense = false;
 		cloud.points.resize(cloud.width * cloud.height);
 
-		for (int row = 0; row < filterOutput.rows; row = row + NUM_ELTS_SKIPPED){
-			for (int col = 0; col < filterOutput.cols; col = col + NUM_ELTS_SKIPPED){
-				if (filterOutput.at<uchar>(row, col) > 0){
+		for (int row = 0; row < inputImage.rows; row = row + NUM_ELTS_SKIPPED){
+			for (int col = 0; col < inputImage.cols; col = col + NUM_ELTS_SKIPPED){
+				if (inputImage.at<uchar>(row, col) > 0){
                     for (int i = 0; i < MAX_HEIGHT; i++){
                         pcl::PointXYZ point;
                         point.x = col;
@@ -150,6 +110,7 @@ int main (int argc, char** argv){
 			}
 		}
 
+        //Publishes the cloud
 		cloud.header.stamp = ros::Time::now().toNSec();
 		pub.publish(cloud);
 		
@@ -160,23 +121,16 @@ int main (int argc, char** argv){
             cout << "Escaped by user" << endl;
             break;
         }
-        //Press 'm' to calibrate manually
-        else if (a == 109){ 
-            if (!isCalibratingManually){
-                cout << "Beginning manual calibration" << endl;     
-            } else {
-                cout << "Ending manual calibration" << endl;
-            }
-            isCalibratingManually = !isCalibratingManually;
-            filter.printValues();
-        }
 
+        //Show the cloud in the viewer
         if (!cloudSet){
             viewer.addPointCloud(cloud_ptr, "input");
             cloudSet = true;
         } else{
             viewer.updatePointCloud(cloud_ptr, "input"); 
         }
+
+        //Needed to update the viewer and to keep ros working
 		viewer.spinOnce();
 		ros::spinOnce();
 	}

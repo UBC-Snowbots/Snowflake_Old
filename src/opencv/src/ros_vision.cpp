@@ -12,7 +12,7 @@
  * Usage: Point to a video file/camera, press m to start/stop calibrating.
  *
  * Subscribes to: camera/midcam/image_raw
- * Publishes to: vision/binary_image
+ * Publishes to: image
  */   
 
 #include <ros/ros.h>
@@ -112,7 +112,7 @@ int main(int argc, char** argv){
         //Applies the filter to the image
         filter.filterImage(ipmOutput, filterOutput);
         imshow(filterOutputWindow, filterOutput);
-        sensor_msgs::ImagePtr msg = cv_bridge::CvImage(std_msgs::Header(), "bgr8", filterOutput).toImageMsg();
+        sensor_msgs::ImagePtr msg = cv_bridge::CvImage(std_msgs::Header(), "mono8", filterOutput).toImageMsg();
         pub.publish(msg);        
 
         //Calibration
