@@ -28,20 +28,7 @@ using namespace cv;
 using namespace std; 
 
 const int NUM_ELTS_SKIPPED = 2;
-
-boost::shared_ptr<pcl::visualization::PCLVisualizer> simpleVis(pcl::PointCloud<pcl::PointXYZ>::ConstPtr cloud)
-{
-  // --------------------------------------------
-  // -----Open 3D viewer and add point cloud-----
-  // --------------------------------------------
-  boost::shared_ptr<pcl::visualization::PCLVisualizer> viewer(new pcl::visualization::PCLVisualizer("3D Viewer"));
-  viewer->setBackgroundColor (0, 0, 0);
-  viewer->addPointCloud<pcl::PointXYZ> (cloud, "sample cloud");
-  viewer->setPointCloudRenderingProperties (pcl::visualization::PCL_VISUALIZER_POINT_SIZE, 1, "sample cloud");
-  viewer->addCoordinateSystem (1.0);
-  viewer->initCameraParameters ();
-  return (viewer);
-}
+const int MAX_HEIGHT = 20;
 
 
 int main (int argc, char** argv){
@@ -145,12 +132,20 @@ int main (int argc, char** argv){
 
 		for (int row = 0; row < filterOutput.rows; row = row + NUM_ELTS_SKIPPED){
 			for (int col = 0; col < filterOutput.cols; col = col + NUM_ELTS_SKIPPED){
-				cloud.points[col+row*filterOutput.cols].x = col;
-				cloud.points[col+row*filterOutput.cols].y = row;
 				if (filterOutput.at<uchar>(row, col) > 0){
-					cloud.points[col+row*filterOutput.cols].z = 20;
+                    for (int i = 0; i < MAX_HEIGHT; i++){
+                        pcl::PointXYZ point;
+                        point.x = col;
+                        point.y = row;
+					    point.z = i;
+                        cloud.push_back(point);
+                    }
 				} else {
-					cloud.points[col+row*filterOutput.cols].z = 0;
+					pcl::PointXYZ point;
+                    point.x = col;
+                    point.y = row;
+                    point.z = 0;
+                    cloud.push_back(point);
 				}
 			}
 		}
