@@ -10,13 +10,11 @@ add_definitions(--std=c++11)
 
 ## is used, also find other catkin packages
 
-find_package(catkin REQUIRED COMPONENTS roscpp rospy cv_bridge genmsg image_transport sensor_msgs
-)
-
+find_package(catkin REQUIRED COMPONENTS roscpp rospy cv_bridge genmsg image_transport sensor_msgs)
 
 find_package(OpenCV REQUIRED)
 
-find_package(PCL 1.3 REQUIRED COMPONENTS common io)
+find_package(PCL 1.3 REQUIRED)
 
 
 include_directories(
@@ -48,7 +46,9 @@ add_executable(image_to_laser_scan src/image_to_laser_scan.cpp)
 
 add_executable(write_test src/pointCloud.cpp)
 
-add_executable(image_to_cloud src/imageToCloud.cpp)
+add_executable(image_to_cloud src/imageToCloud.cpp src/filter.h src/filter.cpp src/IPM.h src/IPM.cpp)
+
+add_executable(pcl_visualizer_demo src/point_cloud_viewer.cpp)
 
 
 target_link_libraries(camera_publisher ${catkin_LIBRARIES} ${OpenCV_LIBS})
@@ -61,8 +61,9 @@ target_link_libraries(image_to_laser_scan ${catkin_LIBRARIES})
 
 target_link_libraries(write_test ${PCL_COMMON_LIBRARIES} ${PCL_IO_LIBRARIES})
 
-target_link_libraries(image_to_cloud ${catkin_LIBRARIES} ${OpenCV_LIBS} ${PCL_COMMON_LIBRARIES} ${PCL_IO_LIBRARIES})
+target_link_libraries(image_to_cloud ${PCL_LIBRARIES} ${catkin_LIBRARIES} ${OpenCV_LIBS} ${PCL_COMMON_LIBRARIES} ${PCL_IO_LIBRARIES})
 
+target_link_libraries(pcl_visualizer_demo ${PCL_LIBRARIES} ${catkin_LIBRARIES} ${OpenCV_LIBS} ${PCL_COMMON_LIBRARIES} ${PCL_IO_LIBRARIES})
 
 add_dependencies(camera_publisher opencv)
 
