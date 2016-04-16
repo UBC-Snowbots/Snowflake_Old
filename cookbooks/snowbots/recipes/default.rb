@@ -29,6 +29,7 @@ end
 
 apt_package 'gdb'
 apt_package 'python-pip'
+apt_package 'python3-setuptools'
 apt_package 'python-mock'
 apt_package 'git'
 
