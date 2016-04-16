@@ -1,19 +1,19 @@
-import logging
+import asyncio as _asyncio
 
-from twisted.web import server
-from twisted.internet import reactor, endpoints
-from . import Test
-from . import JAUSProtocol
 
-def setup_logging():
-	logging.basicConfig(level=logging.DEBUG)
+@_asyncio.coroutine
+def install_component(component, loop=None):
+    if loop is None:
+        loop = _asyncio.get_event_loop()
+    yield from loop.create_datagram_endpoint(
+        lambda: component.transport.protocol,
+        local_addr=('127.0.0.1', 9999))
 
-def test_twisted():
-	setup_logging()
-	endpoints.serverFromString(reactor, "tcp:8080").listen(server.Site(Test()))
-	reactor.run()
-
-def test_jaus():
-	setup_logging()
-	reactor.listenUDP(9999, JAUSProtocol())
-	reactor.run()
+def run_event_loop(component, loop=None):
+    if loop is None:
+        loop = _asyncio.get_event_loop()
+    try:
+        loop.run_forever()
+    finally:
+        component.transport.protocol.close()
+        loop.close()
