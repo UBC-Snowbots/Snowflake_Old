@@ -2,6 +2,23 @@ import abc as _abc
 import bitstring as _bitstring
 import collections as _collections
 
+def defaultnamedtuple(name, fields, defaults):
+    superclass = _collections.namedtuple(name, fields)
+
+    def __new__(cls, *args, **kwargs):
+        properties = defaults.copy()
+        properties.update(kwargs)
+        return super(subclass, cls).__new__(
+            cls, *args, **properties)
+    def _asdict(self):
+        return _collections.OrderedDict(
+            zip(self._fields, self))
+
+    subclass = type(name, (superclass,), {
+        '__new__': __new__,
+        '_asdict': _asdict,
+    })
+    return subclass
 
 class Spec(metaclass=_abc.ABCMeta):
     @_abc.abstractmethod
@@ -50,7 +67,6 @@ class Group(Spec):
             try:
                 attrs = spec.read(buf, combined_attributes)
             except _bitstring.ReadError:
-                print("Attributes so far: ", new_attributes)
                 raise
             new_attributes.update(attrs)
         return new_attributes
@@ -63,16 +79,17 @@ class Group(Spec):
         return sum(spec.size(attributes) for spec in self.specs)
 
 class Specification(Group):
-    def __init__(self, name, specs):
+    def __init__(self, name, specs, defaults={}):
         super(Specification, self).__init__(specs)
         self.name = name
-        self.type = _collections.namedtuple(name, self.own_names)
+        self.type = defaultnamedtuple(
+            name, self.own_names, defaults)
 
     def instantiate(self, buf):
         return self.type(**self.read(buf))
 
     def serialize_to_bytes(self, *args, **kwargs):
-        return self.serialize(*args, **kwargs)
+        return self.serialize(*args, **kwargs).bytes
 
     def serialize(self, instance):
         buf = _bitstring.BitStream()
@@ -106,7 +123,6 @@ class NamedSpec(Spec):
 
     def read(self, buf, attributes={}):
         value = self.read_one(buf, attributes)
-        print('Reading {}={}'.format(self.name, value))
         return {
                 self.name: value
         }
@@ -158,7 +174,7 @@ class Consume(NamedSpec):
         return result
     def write_one(self, buf, prop, _):
         for p in prop:
-            self.specification.serialize(buf, p)
+            buf.append(self.specification.serialize(p))
     def size_one(self, attribute, _):
         return sum(
                 self.specification.size_instance(a) for a in attribute)
@@ -199,7 +215,7 @@ class Enum(Int):
         return self.enum(
                 super(Enum, self).read_one(buf, attributes))
     def write_one(self, buf, prop, _):
-        super(Enum, self).write_one(buf, prop.value)
+        super(Enum, self).write_one(buf, prop.value, _)
 
 class Bytes(NamedSpec):
     def __init__(self, name, length):

@@ -1,12 +1,11 @@
 import asyncio as _asyncio
-import dispatch as _dispatch
 
 import jaus.messages as _messages
 import jaus.judp as _judp
+import jaus.signal as _signal
 
 class Service:
-    state_changed = _dispatch.Signal(
-      providing_args=['new_state', 'old_state'])
+    state_changed = _signal.Signal(key='new_state')
 
     def __init__(self, component, state=None):
         self.component = component
@@ -14,8 +13,8 @@ class Service:
 
     def on_message(self, message_code):
         def register(fn):
-            self.component.message_received.connect(
-              fn, sender=message_code)
+            return self.component.message_received.connect(
+              fn, message_code=message_code)
         return register
 
     @property
@@ -28,34 +27,37 @@ class Service:
         self._state = state
 
         self.state_changed.send(
-          sender=self,
           new_state=self._state,
           old_state=old_state)
 
 class Component(object):
-    message_received = _dispatch.Signal(
-      providing_args=['message', 'source_id'])
-
     def __init__(self, id, services = set()):
         self.id = id
         self.services = {}
+        self.message_received = _signal.Signal(key='message_code')
 
         for service in services:
             instance = service(component=self)
             self.services[instance.name] = instance
 
+        @_asyncio.coroutine
+        def message_handler(**kwargs):
+            for result in self.message_received.send(**kwargs):
+                yield from result
+        self.transport.message_received.connect(message_handler)
+
     def __getattr__(self, name):
         if name in self.services:
             return self.services[name]
         else:
-            raise AttributeError()
+            raise AttributeError(name)
 
 class Transport(Service):
     name='transport'
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        message_received = _dispatch.Signal(providing_args=['message', 'source_id'])
+        message_received = _signal.Signal(key='message_code')
         self.protocol = _judp.JUDPProtocol(
             message_received_signal=message_received,
             own_id=self.component.id)
@@ -72,7 +74,7 @@ class Liveness(Service):
         super().__init__(*args, **kwargs)
         @self.on_message(_messages.MessageCode.QueryHeartbeatPulse)
         @_asyncio.coroutine
-        def on_query_heartbeat(sender, **kwargs):
+        def on_query_heartbeat(source_id, **kwargs):
             yield from self.component.transport.send_message(
-                destination_id=sender,
-                message=ReportHeartbeatPulseMessage())
+                destination_id=source_id,
+                message=_messages.ReportHeartbeatPulseMessage())

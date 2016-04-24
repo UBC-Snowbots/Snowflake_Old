@@ -7,8 +7,8 @@ setup(
     install_requires=[
         "pytest",
         "bitstring",
-        "git+git://github.com/olivierverdier/dispatch.git@ae6a88633183a7ba3830d06fd0ce46f7e314bdd5",
         "pytest-asyncio",
+        "pytest-catchlog",
     ],
     entry_points={}
 )

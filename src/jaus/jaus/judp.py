@@ -6,6 +6,7 @@ import enum as _enum
 import logging as _logging
 
 import jaus.format as _format
+import jaus.messages as _messages
 
 class JUDPPacketDataFlags(_enum.Enum):
     SINGLE_PACKET = 0b00
@@ -40,31 +41,44 @@ class JUDPPacketACKNACKFlags(_enum.Enum):
     NACK = 2
     ACK = 3
 
-JUDPPacketSpecification = _format.Specification('JUDPPacket', specs=[
-    _format.Int('message_type', bits=6),
-    # if message type is not 0, bail now
-    # as this is not a protocol we know
-    _format.Optional(lambda attrs: attrs['message_type']==0, [
-        _format.Enum('HC_flags', enum=JUDPPacketHCFlags, bits=2),
-        _format.Int('data_size', bytes=2, endianness='le'),
-        # these fields only exist if header compression is used
-        _format.Optional(lambda attrs: attrs['HC_flags'] != JUDPPacketHCFlags.NONE, [
-            _format.Int('HC_number', bytes=1),
-            _format.Int('HC_length', bytes=1),
+JUDPPacketSpecification = _format.Specification(
+    'JUDPPacket',
+    specs=[
+        _format.Int('message_type', bits=6),
+        # if message type is not 0, bail now
+        # as this is not a protocol we know
+        _format.Optional(lambda attrs: attrs['message_type']==0, [
+            _format.Enum('HC_flags', enum=JUDPPacketHCFlags, bits=2),
+            _format.Int('data_size', bytes=2, endianness='le'),
+            # these fields only exist if header compression is used
+            _format.Optional(lambda attrs: attrs['HC_flags'] != JUDPPacketHCFlags.NONE, [
+                _format.Int('HC_number', bytes=1),
+                _format.Int('HC_length', bytes=1),
+              ]),
+            _format.Enum('priority', enum=JUDPPacketPriority, bits=2),
+            _format.Enum('broadcast', enum=JUDPPacketBroadcastFlags, bits=2),
+            _format.Enum('ack_nack', enum=JUDPPacketACKNACKFlags, bits=2),
+            _format.Enum('data_flags', enum=JUDPPacketDataFlags, bits=2),
+            _format.Int('destination_id', bytes=4, endianness='le'),
+            _format.Int('source_id', bytes=4, endianness='le'),
+            _format.Bytes(
+              'contents',
+              length=lambda attrs: attrs['data_size'] - (
+                16
+                if attrs['HC_flags'] != JUDPPacketHCFlags.NONE
+                else 14)),
+            _format.Int('sequence_number', bytes=2, endianness='le'),
           ]),
-        _format.Enum('priority', enum=JUDPPacketPriority, bits=2),
-        _format.Enum('broadcast', enum=JUDPPacketBroadcastFlags, bits=2),
-        _format.Enum('ack_nack', enum=JUDPPacketACKNACKFlags, bits=2),
-        _format.Enum('data_flags', enum=JUDPPacketDataFlags, bits=2),
-        _format.Int('destination_id', bytes=4, endianness='le'),
-        _format.Int('source_id', bytes=4, endianness='le'),
-        _format.Bytes(
-          'contents',
-          length=lambda attrs: attrs['data_size'] - (
-            16 if attrs['HC_flags'] else 14)),
-        _format.Int('sequence_number', bytes=2, endianness='le'),
-      ]),
-  ])
+    ],
+    defaults={
+        'message_type': 0,
+        'HC_flags': JUDPPacketHCFlags.NONE,
+        'HC_number': None,
+        'HC_length': None,
+        'priority': JUDPPacketPriority.STANDARD,
+        'broadcast': JUDPPacketBroadcastFlags.LOCAL,
+        'ack_nack': JUDPPacketACKNACKFlags.NO_RESPONSE_REQUIRED,
+    })
 JUDPPacket = JUDPPacketSpecification.type
 
 JUDPPayloadSpecification = _format.Specification('JUDPPayload', specs=[
@@ -113,7 +127,7 @@ class MessageReassembler:
                     != JUDPPacketDataFlags.LAST_PACKET)):
             if sequence_number != start:
                 assert packets[sequence_number].data_flags == JUDPPacketDataFlags.NORMAL_PACKET
-                sequence_number += 1
+            sequence_number += 1
 
         # sequence is only completed if the loop terminated on the last
         # packet inclusive
@@ -153,41 +167,43 @@ def split_to_chunks(data, size):
 
 def make_packets(message, sequence_number, **kwargs):
     """Split the message into packets, passing on extra arguments to the packet constructor."""
+    CHUNK_SIZE = 512
     data = _messages.MessageSpecification.serialize_to_bytes(message)
-    chunks = split_to_chunks(data, MAX_PAYLOAD_SIZE)
+    chunks = split_to_chunks(data, CHUNK_SIZE)
     sequence_numbers = (
-      num for num, chunk in enumerate(chunks, start=sequence_number))
+        num for num, chunk in enumerate(chunks, start=sequence_number))
     if len(chunks) == 1:
-        data_flags = JUDPPacketDataFlags.SINGLE_PACKET
+        data_flags = [JUDPPacketDataFlags.SINGLE_PACKET]
     elif len(chunks) >= 2:
         data_flags = (
-          [JUDPPacketDataFlags.FIRST_PACKET] +
-          [JUDPPacketDataFlags.NORMAL_PACKET] * (len(chunks) - 2) +
-          [JUDPPacketDataFlags.LAST_PACKET])
+            [JUDPPacketDataFlags.FIRST_PACKET] +
+            [JUDPPacketDataFlags.NORMAL_PACKET] * (len(chunks) - 2) +
+            [JUDPPacketDataFlags.LAST_PACKET])
     return [
-      JUDPPacket(
-        data_flags=flags,
-        contents=chunk,
-        data_size=len(chunk) + 14,
-        sequence_number=sequence_number,
-        **kwargs)
-      for flags, chunk, sequence_number
-      in zip(data_flags, chunks, sequence_numbers)]
+        JUDPPacket(
+            data_flags=flags,
+            contents=chunk,
+            data_size=len(chunk) + 14,
+            sequence_number=sequence_number,
+            **kwargs)
+        for flags, chunk, sequence_number
+        in zip(data_flags, chunks, sequence_numbers)]
 
 def consume_one_payload(packets):
     """Pack as many packets as possible into a payload, returning
       it as well as the remaining packets."""
     payload_size = 0
     packets_consumed = []
-    while payload_size < MAX_PAYLOAD_SIZE and packets:
+    CHUNK_SIZE = 512
+    while payload_size < CHUNK_SIZE and packets:
         packet = packets[0]
-        if payload_size + packet.data_size > MAX_PAYLOAD_SIZE:
+        if payload_size + packet.data_size > CHUNK_SIZE:
             break
         packets_consumed.append(packet)
         packets = packets[1:]
     return JUDPPayload(
-      transport_version=2,
-      packets=packets_consumed), packets
+        transport_version=2,
+        packets=packets_consumed), packets
 
 def split_payloads(packets):
     payloads = []
@@ -203,8 +219,10 @@ class Connection:
         self.message_reassembler = MessageReassembler()
         self.ack_nack = {}
         self.packets_to_send = []
+        self.sequence_number = 0
 
-        self.batching_loop = _asyncio.ensure_future(self._send_batching_loop())
+        self.batching_loop = _asyncio.async(
+            self._send_batching_loop())
 
     @_asyncio.coroutine
     def _send_batching_loop(self):
@@ -214,15 +232,21 @@ class Connection:
                 self.packets_to_send = []
                 for payload in payloads:
                     self.protocol.transport.sendto(
-                        JUDPPayload.serialize_to_bytes(payload),
+                        JUDPPayloadSpecification.serialize_to_bytes(payload),
                         self.address)
             yield from _asyncio.sleep(0.5)
 
     @_asyncio.coroutine
     def send(self, message, **kwargs):
-        packets = make_packets(message, kwargs)
-        yield from _asyncio.gather(
-            [self.send_packet(packet) for packet in packets])
+        packets = make_packets(
+            message,
+            sequence_number=self.sequence_number,
+            **kwargs)
+        self.sequence_number += len(packets)
+        for snd in (self.send_packet(packet) for packet in packets):
+            yield from snd
+        #yield from _asyncio.gather(
+        #    self.send_packet(packet) for packet in packets)
 
     @_asyncio.coroutine
     def send_packet(self, packet):
@@ -289,7 +313,8 @@ class JUDPProtocol(FormatSpecificationProtocol):
                 if packet.destination_id != self.own_id:
                     _logging.info(
                         'Ignoring packet sent to %s, we are %s',
-                        packet.destination_id, self.own_id)
+                        str(packet.destination_id),
+                        str(self.own_id))
                     continue
                 connection = self.connection_map.add_connection(
                     source_id=source_id,
@@ -299,20 +324,28 @@ class JUDPProtocol(FormatSpecificationProtocol):
                     self.message_received(message, source_id)
         else:
             _logging.warning(
-                'Received payload with incorrect transport version from %s: %d, %s',
-                address, payload.transport_version, _bitstring.Bits(bytes=data))
+                'Received payload with incorrect'
+                ' transport version from %s: %d',
+                str(address), payload.transport_version)
 
     def message_received(self, message, source_id):
         responses = self.message_received_signal.send(
-            sender=message.message_code, message=message, source_id=source_id)
-
-        for receiver, response in responses:
-            _asyncio.ensure_future(response)
+            message_code=message.message_code, message=message, source_id=source_id)
+        for response in responses:
+            _asyncio.async(response)
 
     @_asyncio.coroutine
     def send_message(self, destination_id, *args, **kwargs):
-        connection = self.connection_map[destination_id]
-        yield from connection.send(*args, **kwargs)
+        try:
+            connection = self.connection_map[destination_id]
+        except KeyError:
+            raise ValueError(
+                'No record of {}'.format(destination_id))
+        yield from connection.send(
+            *args,
+            destination_id=destination_id,
+            source_id=self.own_id,
+            **kwargs)
 
     def connection_lost(self, exc):
         for connection in self.connection_map.iteritems():

@@ -22,7 +22,7 @@ def define_message(name, specs):
 def assemble_message(packets):
     cumulative = _bitstring.BitStream()
     for packet in packets:
-        cumulative.append(_bitstring.Bits(bytes=packet.contents))
+        cumulative.append(_bitstring.BitString(bytes=packet.contents))
         return MessageSpecification.instantiate(cumulative)
 
 
