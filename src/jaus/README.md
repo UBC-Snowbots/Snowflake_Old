@@ -26,6 +26,7 @@ UDP - User Datagram Protocol. Unreliable best-effort connectionless message deli
 --you only need to do steps 0.2 and 0.3 once--
 1. Go to src/jaus (type in `cd src/jaus`);
 2. Install Twisted, (type in `sudo python setup.py develop`); // https://twistedmatrix.com/trac/
+--You only need to install Twisted once--
 3. Begin Twisted server. (type in `test_twisted`);
 4. Open new git bash window in src/jaus;
 5. In new git bash window, log into vagrant (type in 'vagrant ssh' in new window);
@@ -37,6 +38,6 @@ This message comes from the file src/jaus/jaus/__init__.py
 
 ## How to run the unit tests
 
-1. Go to src/jaus
+1. Go to src/jaus in new window
 2. Type `py.test`
 3. Watch them pass (or fail)
