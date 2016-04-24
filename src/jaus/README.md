@@ -19,24 +19,20 @@ UDP - User Datagram Protocol. Unreliable best-effort connectionless message deli
 
 ## How to set up and run stuff
 
-0.01. In Git Bash set up Vagrant defaults (type in `vagrant up`, then type in `vagrant ssh`);
+### Set up (git and things)
+1. In Git Bash set up Vagrant defaults (type in `vagrant up`, then type in `vagrant ssh`)
 --you do the above for anything in Snowflake--
-0.2. Go to the Jaus branch (type in `git checkout jaus`, only needs to be done once until you checkout another branch)
-0.3. Pull (type in `git pull`);
+
+2. Go to the Jaus branch (type in `git checkout jaus`, only needs to be done once until you checkout another branch)
+3. Pull (type in `git pull`)
 --you only need to do steps 0.2 and 0.3 once--
-1. Go to src/jaus (type in `cd src/jaus`);
-2. Install Twisted, (type in `sudo python setup.py develop`); // https://twistedmatrix.com/trac/
---You only need to install Twisted once--
-3. Begin Twisted server. (type in `test_twisted`);
-4. Open new git bash window in src/jaus;
-5. In new git bash window, log into vagrant (type in 'vagrant ssh' in new window);
-6. Try out test message (Type in `curl http://localhost:8080`);
-7. You should receive a message "test". 
-Note: Message does not contain any newlines so it will show up as "testvagrant@vagrant-ubuntuss-trusty-32"
 
-This message comes from the file src/jaus/jaus/__init__.py
+### Things to do each time you start
+1. Go to src/jaus (type in `cd src/jaus`)
+2. sudo python3 setup.py develop --do step 2 only once--
+3. Everything should now
 
-## How to run the unit tests
+### How to run the unit tests
 
 1. Go to src/jaus in new window
 2. Type `py.test`

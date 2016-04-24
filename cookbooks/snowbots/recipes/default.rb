@@ -29,7 +29,9 @@ end
 
 apt_package 'gdb'
 apt_package 'python-pip'
+apt_package 'python3-setuptools'
 apt_package 'python-mock'
+apt_package 'git'
 
 apt_package 'libgtk2.0-dev'
 apt_package 'x11-xserver-utils'
