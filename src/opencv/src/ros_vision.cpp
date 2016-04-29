@@ -11,7 +11,7 @@
  *          - Sketchy, works better if you make a rectangle on the ground
  * Usage: Point to a video file/camera, press m to start/stop calibrating.
  *
- * Subscribes to: camera/midcam/image_raw
+ * Subscribes to: /camera/image_raw
  * Publishes to: image
  */   
 
@@ -69,7 +69,7 @@ int main(int argc, char** argv){
     ros::init(argc, argv, "vision_node");
     ros::NodeHandle nh;
     image_transport::ImageTransport it(nh);
-    image_transport::Subscriber sub = it.subscribe("camera/midcam/image_raw", 1, imageCallback);
+    image_transport::Subscriber sub = it.subscribe("/camera/image_raw", 1, imageCallback);
     image_transport::Publisher pub = it.advertise("image", 1);
     ros::Rate loop_rate(5); 
     //Manual initialization, maybe automate through parameter server

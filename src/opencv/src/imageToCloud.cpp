@@ -68,7 +68,7 @@ int main (int argc, char** argv){
     viewer.setPointCloudRenderingProperties (pcl::visualization::PCL_VISUALIZER_POINT_SIZE, 1, "input");
     viewer.addCoordinateSystem (1.0);
     viewer.initCameraParameters ();
-
+    
     bool cloudSet = false;
 
     //Cloud and pointer initialization
