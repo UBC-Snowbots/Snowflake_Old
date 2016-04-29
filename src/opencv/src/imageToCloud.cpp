@@ -112,7 +112,7 @@ int main (int argc, char** argv){
 
         //Publishes the cloud
 		cloud.header.stamp = ros::Time::now().toNSec();
-		pub.publish(cloud);
+		pub.publish(cloud_ptr);
 		
     
 		//Escape key to finish program
