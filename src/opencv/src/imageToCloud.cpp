@@ -111,7 +111,7 @@ int main (int argc, char** argv){
 		}
 
         //Publishes the cloud
-		cloud.header.stamp = ros::Time::now().toNSec();
+		//cloud.header.stamp = ros::Time::now().toNSec();
 		pub.publish(cloud_ptr);
 		
     
