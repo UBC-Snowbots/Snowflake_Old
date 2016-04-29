@@ -96,8 +96,8 @@ int main (int argc, char** argv){
 				if (inputImage.at<uchar>(row, col) > 0){
                     for (int i = 0; i < MAX_HEIGHT; i++){
                         pcl::PointXYZ point;
-                        point.x = (double) col /SCALE_FACTOR;
-                        point.y = (double) row/SCALE_FACTOR;
+                        point.y = (double) col /SCALE_FACTOR;
+                        point.x = (double) row/SCALE_FACTOR;
 					    point.z = (double) i/SCALE_FACTOR;
                         cloud.push_back(point);
                     }
