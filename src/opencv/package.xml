@@ -1,6 +1,6 @@
 <?xml version="1.0"?>
 <package>
-  <name>Snowbots Vision</name>
+  <name>opencv</name>
   <version>0.0.0</version>
   <description>Branch dedicated to analyzing images and transforming them into maps</description>
 
@@ -22,6 +22,4 @@
   <run_depend>roscpp</run_depend>
   <run_depend>rospy</run_depend>
   <run_depend>OpenCV</run_depend>
-
-  </export>
 </package>
