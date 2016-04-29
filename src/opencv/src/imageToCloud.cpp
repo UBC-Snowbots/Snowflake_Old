@@ -35,6 +35,7 @@ using namespace std;
 
 const int NUM_ELTS_SKIPPED = 2;
 const int MAX_HEIGHT = 20;
+const int SCALE_FACTOR = 100;
 
 Mat inputImage;
 
@@ -95,15 +96,15 @@ int main (int argc, char** argv){
 				if (inputImage.at<uchar>(row, col) > 0){
                     for (int i = 0; i < MAX_HEIGHT; i++){
                         pcl::PointXYZ point;
-                        point.x = col;
-                        point.y = row;
-					    point.z = i;
+                        point.x = col/SCALE_FACTOR;
+                        point.y = row/SCALE_FACTOR;
+					    point.z = i/SCALE_FACTOR;
                         cloud.push_back(point);
                     }
 				} else {
 					pcl::PointXYZ point;
-                    point.x = col;
-                    point.y = row;
+                    point.x = col/SCALE_FACTOR;
+                    point.y = row/SCALE_FACTOR;
                     point.z = 0;
                     cloud.push_back(point);
 				}
