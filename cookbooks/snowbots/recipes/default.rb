@@ -41,6 +41,9 @@ apt_package 'ros-indigo-rosbash'
 apt_package 'ros-indigo-scan-tools'
 apt_package 'ros-indigo-gmapping'
 apt_package 'ros-indigo-sicktoolbox-wrapper'
+apt_package 'ros-indigo-image-pipeline'
+apt_package 'v4l-utils'
+apt_package 'ros-indigo-cv-camera'
 
 python_pip 'docopt'
 
