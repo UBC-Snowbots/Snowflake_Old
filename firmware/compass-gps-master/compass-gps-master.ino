@@ -36,14 +36,12 @@ void loop() {
   mag.getEvent(&event);
 
   char input = Serial.read();
-  input = 'D';
-  delay(1000);
   if (input == 'I') {
     send_gps(false);
-  } else if (input == 'D') {
+  } 
+  if (input == 'D') {
     send_gps(true);
     send_compass(event);
-    Serial.println();
   } 
 }
 void compass_setup() {
