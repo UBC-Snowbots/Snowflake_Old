@@ -1,16 +1,18 @@
 <launch>
     
+    <node pkg="tf" type="static_transform_publisher" name="base_link_to_img_scan" args="0 0 0 0 0 0 /base_link /img_scan_frame 40"/>
+        
     <node pkg="ira_laser_tools" name="laserscan_virtualizer"
     type="laserscan_virtualizer" output="screen">
     
     <!-- Base frame of the robot --> 
-    <param name="/laserscan_virtualizer/base_frame" value="odom"/>
+    <param name="base_frame" value="base_link"/>
     <!-- Topic to get the PointCloud From -->
-    <param name="/laserscan_virtualizer/cloud_topic" value="image_pcl"/>
+    <param name="cloud_topic" value="/point_cloud"/>
     <!-- Topic to publish the laserscan to -->
-    <param name="/laserscan_virtualizer/output_laser_topic" value="img_scan"/>
+    <param name="output_laser_topic" value="img_scan"/>
     <!-- Frame of the published laserscan -->
-    <param name= "/laserscan_virtualizer/virtual_laser_scan" value="img_scan_frame"/>
+    <param name= "virtual_laser_scan" value="img_scan_frame"/>
       
     </node>
 
