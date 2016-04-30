@@ -62,7 +62,9 @@ void data_request(char c, char *buffer){
   ss << c; 
   link_port.writeData(ss.str(),1);
   link_port.readData(32,buffer);
-  } 
+ 	cout << buffer << endl;
+	//cout << "data_request" << endl;  
+ } 
   return;
 }
 
@@ -107,9 +109,9 @@ bool gps_store(char *buffer){
       gps_comp_data.latitude = atof(c);
       c = strtok(NULL,",");
       gps_comp_data.longitude = atof(c);
-	    c = strtok(NULL,",");
-	    gps_comp_data.fix = atoi(c);
-	    c = strtok(NULL,",");
+	c = strtok(NULL,",");
+	gps_comp_data.fix = atoi(c);
+	 c = strtok(NULL,",");
       gps_comp_data.x = atof(c);
       c = strtok(NULL,",");
       gps_comp_data.y = atof(c);

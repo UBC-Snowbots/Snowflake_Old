@@ -25,10 +25,12 @@ struct gps_comp_data {
   int fix;
   float x, y, z, headingDegrees;
 } gps_comp_data;
-::messages::gps gps_msg;
-int gps_fix; 
+
+::messages::gps gps_msg; 
+
 //Objects 
 SerialCommunication link_port; 
+
 //messages::gps GPS;
 std::string msg; 
 std::string to_string(int i); 
