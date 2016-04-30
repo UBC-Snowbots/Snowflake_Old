@@ -7,7 +7,7 @@
 #include <iostream> 
 #include <sstream> 
 #include <string> 
-#include <ros/ros.h> 
+#include <ros/ros.h>
 #include <std_msgs/String.h>
 #include <std_msgs/Bool.h> 
 #include "messages/gps.h"
@@ -20,11 +20,16 @@ static const int BAUD_RATE = 115200;
 static const string SENSOR_OUTPUT_TOPIC = "GPS"; 
 static const string ARDUINO_PORT_NAME = "/dev/ttyACM"; 
 
+struct gps_comp_data {
+  float latitude, longitude;
+  int fix;
+  float x, y, z, headingDegrees;
+} gps_comp_data;
 ::messages::gps gps_msg;
 int gps_fix; 
 //Objects 
 SerialCommunication link_port; 
-//messages::gps GPS; 
+//messages::gps GPS;
 std::string msg; 
 std::string to_string(int i); 
 std::string to_string2(char* c);

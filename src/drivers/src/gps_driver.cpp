@@ -100,22 +100,26 @@ bool gps_store(char *buffer){
   //To parse GPS data coming from arduino 
   //Assumed format for data already being parsed from arduino side
   char *c; 
-  if (buffer[0] = 'G'){
-	buffer += 1;
+  if (buffer[0] == 'D'){
+	  buffer += 1;
     c = strtok(buffer,",");
     while (c != NULL){
-	  // c = strtok(NULL,",:");
-      gps_msg.Lon = atoi(c);
+      gps_comp_data.latitude = atof(c);
       c = strtok(NULL,",");
-      gps_msg.Lat = atoi(c);
-	  c = strtok(NULL,",");
-	  gps_fix = atoi(c);
+      gps_comp_data.longitude = atof(c);
+	    c = strtok(NULL,",");
+	    gps_comp_data.fix = atoi(c);
+	    c = strtok(NULL,",");
+      gps_comp_data.x = atof(c);
       c = strtok(NULL,",");
-      gps_msg.Head = atoi(c); 
-      }
-    return true;
+      gps_comp_data.y = atof(c);
+	    c = strtok(NULL,",");
+	    gps_comp_data.z = atof(c);
+	    c = strtok(NULL,",");
+	    gps_comp_data.headingDegrees = atof(c);
+      return true;
     }
-  else 
-     return false; 
+  }
+  return false;
 }
 

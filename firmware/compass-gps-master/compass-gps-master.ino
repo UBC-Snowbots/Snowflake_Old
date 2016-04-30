@@ -5,8 +5,7 @@
   In Addition, download compass libraries: https://learn.adafruit.com/adafruit-hmc5883l-breakout-triple-axis-magnetometer-compass-sensor/wiring-and-test
   -Nick Wu
 */
-//GPS Data form: G(lat),(long),(fix)
-//Compass Data form: C(x),(y),(z),(headingDegrees)
+//Data format: D(lat),(long),(fix),(x),(y),(z),(headingDegrees)
 // ^ things within brackets are variables
 #include <SoftwareSerial.h>
 #include <Wire.h>
@@ -37,20 +36,15 @@ void loop() {
   mag.getEvent(&event);
 
   char input = Serial.read();
-  input = 'T';
+  input = 'D';
   delay(1000);
   if (input == 'I') {
     send_gps(false);
   } else if (input == 'D') {
     send_gps(true);
-  } else if (input == 'C') {
-    send_compass(event);
-  } else if (input == 'T') {
-    send_gps(true);
-    Serial.println();
     send_compass(event);
     Serial.println();
-  }
+  } 
 }
 void compass_setup() {
   if (!mag.begin())
@@ -72,7 +66,7 @@ void send_compass(sensors_event_t event) {
   if (heading > 2 * PI) heading -= 2 * PI;
   float headingDegrees = heading * 180 / M_PI;
   //C(x),(y),(z)
-  Serial.print("C"); Serial.print(event.magnetic.x);
+  Serial.print(","); Serial.print(event.magnetic.x);
   Serial.print(","); Serial.print(event.magnetic.y);
   Serial.print(","); Serial.print(event.magnetic.z);
   Serial.print(","); Serial.print(headingDegrees);
@@ -95,7 +89,7 @@ void gps_check_new_data() {
 void send_gps(boolean data) {
   //G(long),(lat),(fix)
   if (data) {
-    Serial.print("G"); Serial.print(GPS.latitudeDegrees, 4);
+    Serial.print("D"); Serial.print(GPS.latitudeDegrees, 4);
     Serial.print(","); Serial.print(GPS.longitudeDegrees, 4);
     Serial.print(","); Serial.print((int)GPS.fix);
   } else {
