@@ -32,55 +32,55 @@ class PointCloudMerger {
         pcl::PCLPointCloud2 merged_cloud;
 };
 
-    PointCloudMerger::PointCloudMerger(){
-        ros::NodeHandle nh("~");
-        // Get parameters
-        nh.getParam("cloud_a", cloud_A_name);
-        nh.getParam("cloud_b", cloud_B_name);
-        nh.getParam("merged_cloud", merged_cloud_name);
-        // Start Publisher
-        pointcloud_publisher_ = node_.advertise<sensor_msgs::PointCloud2> (merged_cloud_name.c_str(), 1, false);
+PointCloudMerger::PointCloudMerger(){
+    ros::NodeHandle nh("~");
+    // Get parameters
+    nh.getParam("cloud_a", cloud_A_name);
+    nh.getParam("cloud_b", cloud_B_name);
+    nh.getParam("merged_cloud", merged_cloud_name);
+    // Start Publisher
+    pointcloud_publisher_ = node_.advertise<sensor_msgs::PointCloud2> (merged_cloud_name.c_str(), 1, false);
 
-        this->pointcloud_topic_parser();
-    }
+    this->pointcloud_topic_parser();
+}
 
-    // Gets the request "cloud_a" and "cloud_b" topics from master
-    void PointCloudMerger::pointcloud_topic_parser() {
-        // Get all topics from master
-        ros::master::V_TopicInfo topics;
-        ros::master::getTopics(topics);
+// Gets the request "cloud_a" and "cloud_b" topics from master
+void PointCloudMerger::pointcloud_topic_parser() {
+    // Get all topics from master
+    ros::master::V_TopicInfo topics;
+    ros::master::getTopics(topics);
 
-        for (int i=0; i < topics.size(); i++) {
-            if ((cloud_A_name.compare(topics[i].name) == 0) && (topics[i].datatype.compare("sensor_msgs/PointCloud2") == 0)) {
-                cloud_A_subscriber = node_.subscribe<sensor_msgs::PointCloud2> (cloud_A_name.c_str(), 1, boost::bind(&PointCloudMerger::pointCloudCallBack, this, _1, cloud_A_name));
-                ROS_INFO("Subscribed to topic A: %s", cloud_A_name.c_str());
-            } else if ((cloud_B_name.compare(topics[i].name) == 0) && (topics[i].datatype.compare("sensor_msgs/PointCloud2") == 0)) {
-                cloud_B_subscriber = node_.subscribe<sensor_msgs::PointCloud2> (cloud_B_name.c_str(), 1, boost::bind(&PointCloudMerger::pointCloudCallBack, this, _1, cloud_B_name));
-                ROS_INFO("Subscribed to topic B: %s", cloud_B_name.c_str());
-            }
+    for (int i=0; i < topics.size(); i++) {
+        if ((cloud_A_name.compare(topics[i].name) == 0) && (topics[i].datatype.compare("sensor_msgs/PointCloud2") == 0)) {
+            cloud_A_subscriber = node_.subscribe<sensor_msgs::PointCloud2> (cloud_A_name.c_str(), 1, boost::bind(&PointCloudMerger::pointCloudCallBack, this, _1, cloud_A_name));
+            ROS_INFO("Subscribed to topic A: %s", cloud_A_name.c_str());
+        } else if ((cloud_B_name.compare(topics[i].name) == 0) && (topics[i].datatype.compare("sensor_msgs/PointCloud2") == 0)) {
+            cloud_B_subscriber = node_.subscribe<sensor_msgs::PointCloud2> (cloud_B_name.c_str(), 1, boost::bind(&PointCloudMerger::pointCloudCallBack, this, _1, cloud_B_name));
+            ROS_INFO("Subscribed to topic B: %s", cloud_B_name.c_str());
         }
     }
+}
 
-    void PointCloudMerger::pointCloudCallBack(const sensor_msgs::PointCloud2::ConstPtr& tmp_cloud, std::string topic) {
-        // Update appropriate cloud
-        pcl::PCLPointCloud2 cloud;
-        pcl_conversions::toPCL (*tmp_cloud, cloud);
-        if (topic == cloud_A_name){
-            cloud_A = cloud;
-        } else if (topic == cloud_B_name){
-            cloud_B = cloud;
-        }
-        // Merge the two clouds and publish to desired topic
-        pcl::concatenateFields (cloud_A, cloud_B, merged_cloud);
-        pointcloud_publisher_.publish(merged_cloud);
+void PointCloudMerger::pointCloudCallBack(const sensor_msgs::PointCloud2::ConstPtr& tmp_cloud, std::string topic) {
+    // Update appropriate cloud
+    pcl::PCLPointCloud2 cloud;
+    pcl_conversions::toPCL (*tmp_cloud, cloud);
+    if (topic == cloud_A_name){
+        cloud_A = cloud;
+    } else if (topic == cloud_B_name){
+        cloud_B = cloud;
     }
+    // Merge the two clouds and publish to desired topic
+    pcl::concatenateFields (cloud_A, cloud_B, merged_cloud);
+    pointcloud_publisher_.publish(merged_cloud);
+}
 
-    int main(int argc, char** argv){
-        ros::init(argc, argv, "point_cloud_merger");
+int main(int argc, char** argv){
+    ros::init(argc, argv, "point_cloud_merger");
 
-        PointCloudMerger _point_cloud_merger;
+    PointCloudMerger _point_cloud_merger;
 
-        ros::spin();
+    ros::spin();
 
-        return 0;
-    }
+    return 0;
+}
