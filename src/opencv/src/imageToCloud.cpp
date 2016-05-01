@@ -35,6 +35,7 @@ using namespace std;
 
 const int NUM_ELTS_SKIPPED = 2;
 const int MAX_HEIGHT = 20;
+const int SCALE_FACTOR = 100;
 
 Mat inputImage;
 
@@ -68,7 +69,7 @@ int main (int argc, char** argv){
     viewer.setPointCloudRenderingProperties (pcl::visualization::PCL_VISUALIZER_POINT_SIZE, 1, "input");
     viewer.addCoordinateSystem (1.0);
     viewer.initCameraParameters ();
-
+    
     bool cloudSet = false;
 
     //Cloud and pointer initialization
@@ -95,15 +96,15 @@ int main (int argc, char** argv){
 				if (inputImage.at<uchar>(row, col) > 0){
                     for (int i = 0; i < MAX_HEIGHT; i++){
                         pcl::PointXYZ point;
-                        point.x = col;
-                        point.y = row;
-					    point.z = i;
+                        point.y = (double) -(col - (inputImage.cols/2)) /SCALE_FACTOR;
+                        point.x = (double) -(row - inputImage.rows)/SCALE_FACTOR;
+					    point.z = (double) i/SCALE_FACTOR;
                         cloud.push_back(point);
                     }
 				} else {
 					pcl::PointXYZ point;
-                    point.x = col;
-                    point.y = row;
+                    point.y = (double) -(col - (inputImage.cols/2)) /SCALE_FACTOR;
+                    point.x = (double) -(row - inputImage.rows)/SCALE_FACTOR;
                     point.z = 0;
                     cloud.push_back(point);
 				}
@@ -111,8 +112,8 @@ int main (int argc, char** argv){
 		}
 
         //Publishes the cloud
-		cloud.header.stamp = ros::Time::now().toNSec();
-		pub.publish(cloud);
+		//cloud.header.stamp = ros::Time::now().toNSec();
+		pub.publish(cloud_ptr);
 		
     
 		//Escape key to finish program

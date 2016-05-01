@@ -1,0 +1,14 @@
+<launch>
+    <!-- <node ns="cam0" name="cv_camera" pkg="cv_camera" type="cv_camera_node">
+        <param name="device_id" value="0"/>
+	<param name="camera_info_url" value="/home/valerian/Documents/logitech.yaml"/>
+    </node> -->
+
+    <node ns="camera" name="midcam" pkg="cv_camera" type="cv_camera_node">
+        <param name="device_id" value="1"/>
+	<param name="camera_info_url" value="midcam.yaml"/>
+    <param name="image_height" value="480" />
+	<param name="image_width" value="640" />
+	</node> 
+
+</launch>

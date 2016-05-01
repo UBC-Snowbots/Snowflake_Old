@@ -17,18 +17,20 @@ Building the repository AFTER you've cloned it
 
 This is a more involved process so unless you need it, we recommend just using Vagrant instead. As of writing, this requires Ubuntu or something close. Try other systems at your own risk.
 
-First, install [Chef](https://www.chef.io/chef/), usually by typing `sudo apt-get install chef`. Then, make sure you have ruby (type `ruby --version` - it should say 1.9.3 or something similar). If not, `sudo apt-get install ruby` should do it.
+First, install [Chef](https://www.chef.io/chef/), usually by typing `sudo apt-get install chef` (or `sudo gem install chef`). Then, make sure you have ruby (type `ruby --version` - it should say 1.9.3 or something similar). If not, `sudo apt-get install ruby-full` should do it.(If you had previously installed ruby via apt already, try uninstalling ruby or ruby1.8 then installing ruby-full)
 
 The next step should set everything else up: `./local_setup`. Enter your password when prompted, and once it completes everything should be in the right places. When we release updates to the build (like adding new libraries such as OpenCV, or fixing bugs), you can safely re-run this script in order to painlessly install those updates.
 
 Note: do not run `sudo ./local_setup`. It will transfer ownership of your catkin workspace to root.
+
+After everything installs, if you are unable to run ROS commands, make sure you have ran `source /opt/ros/indigo/setup.bash` and/or added that to your .bashrc
 
 ### With Vagrant ###
 You will need to install the following before continuing on:
 
 [VirtualBox 4.3](http://www.virtualbox.org/wiki/Download_Old_Builds_4_3) *VirtualBox 5.0 is unfortunity not supported by vagrant at the moment.
 
-[Vagrant](http://www.vagrantup.com/downloads) *Installing this will require you to restart afterwards
+[Vagrant](http://www.vagrantup.com/downloads.html) *Installing this will require you to restart afterwards
 
 1) Change directory using the command `cd` and goto the Snowflake repository 
 
@@ -36,7 +38,9 @@ Ex: If you've cloned your repository onto your desktop you can type `cd Desktop/
 
 2) Once in the repository type `vagrant up` this will start downloading a vagrant box.
 
-`The download can take several minutes depending on your internet connection. Be aware that the download can automatically disconnect (you can tell this if the rate is 0/s). If this happens stop the current download by pressing CTRL C, then resume the download again by pressing the UP and ENTER or retyping the whole command again.`
+`The download can take several minutes depending on your internet connection. Be aware that the download can disconnect on bad internet connections (your download rate will goto 0/s), if this happens stop the current download by pressing CTRL C, then resume the download again by pressing the UP and ENTER or retyping the whole command again.`
+
+Note: If you get an error regarding Chef failing to install something, make note of the failed installation package. Type in `vagrant ssh` and `sudo apt-get install <failed-package-name>`. For example if the package `ros-indigo-desktop` failed to install via Chef: ssh into your machine and execute `sudo apt-get install ros-indigo-desktop` 
 
 Once the download is complete it will automatically install itself; this procress and take around 10+ minutes. You'll know that the installation is done once your `$` prompt comes back on the terminal screen.
 

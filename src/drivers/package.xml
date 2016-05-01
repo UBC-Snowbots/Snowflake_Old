@@ -7,15 +7,17 @@
   <!-- TODO: Add other maintainers -->
   <maintainer email="fhackett.py@gmail.com">Finn Hackett</maintainer>
   <maintainer email="gareth.ellis0@gmail.com">Gareth Ellis</maintainer>
+  <maintainer email="yuanv@alumni.ubc.ca">Vincent Yuan</maintainer> 
   <license>BSD</license>
 
 
   <depend>std_msgs</depend>
   <depend>nav_msgs</depend>
   <depend>sensor_msgs</depend>
+  <depend>messages</depend>
   <depend>tf</depend>
   <depend>geometry_msgs</depend>
-
+  <build_depend>message_generation</build_depend>
   <exec_depend>message_runtime</exec_depend>
   <exec_depend>rospy</exec_depend>
   <depend>roscpp</depend>

@@ -1,0 +1,20 @@
+<launch>
+    
+    <node pkg="tf" type="static_transform_publisher" name="laser_to_map" args="0 0 0 0 0 0 /laser /map 40"/>
+
+    <!-- Start the sick driver -->
+    <node pkg="sicktoolbox_wrapper" type="sicklms"
+    name="sicklms" output="screen">
+        <param name="port" value="/dev/ttyUSB0" />
+        <remap from="scan" to="sickscan"/>
+    </node>
+
+    <!-- Start laser_scan_multi_merger -->
+    <node pkg="ira_laser_tools" name="laserscan_multi_merger"
+        type="laserscan_multi_merger" output="screen">
+        
+        <param name="scan_destination_topic" value="/merged_scan"/>
+        <param name="laserscan_topics" value="/hokuyoscan"/>
+    
+    </node>
+</launch>
