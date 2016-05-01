@@ -3,11 +3,28 @@ import bitstring as _bitstring
 import collections as _collections
 
 def defaultnamedtuple(name, fields, defaults):
+    """Generate a defaultnamedtuple.
+
+    defaultnamedtuple aims to remote unnecessary parameters
+    required in namedtuple instantiations by allowing
+    programmers to define defaults that are filled if not
+    provided by the user.
+
+    As an extra feature, if a default value is callable it
+    will be called to generate the actual value used.
+
+    This can be helpful for generating length fields based
+    on the size of another attribute that was provided.
+    """
     superclass = _collections.namedtuple(name, fields)
 
     def __new__(cls, *args, **kwargs):
         properties = defaults.copy()
         properties.update(kwargs)
+        properties = {
+            k: v(properties) if callable(v) else v
+            for k,v in properties.items()
+        }
         return super(subclass, cls).__new__(
             cls, *args, **properties)
     def _asdict(self):
@@ -38,15 +55,43 @@ class Spec(metaclass=_abc.ABCMeta):
         :param buf BitStream
         """
 
-    @_abc.abstractmethod
-    def size(self, attributes):
-        """Predict the size in bits of ``attributes`` written to a buffer."""
-        pass
-
     @property
     @_abc.abstractmethod
     def own_names(self):
         return []
+
+def specification(name, specs, defaults={}):
+    """Generate a specification.
+
+    A specification is an end user's interface to the format module.
+    It uses a Group to generate a set of properties
+    for itself and can be transparently used like a namedtuple.
+
+    It provides the extra features found in defaultnamedtuple,
+    as well as methods to convert to and from bitstreams.
+    """
+    _group = Group(specs)
+    base_class = defaultnamedtuple(
+            name, _group.own_names, defaults)
+
+    @classmethod
+    def _instantiate(cls, buf):
+        return cls(**cls._group.read(buf))
+
+    def _serialize_to_bytes(self, *args, **kwargs):
+        return self._serialize(*args, **kwargs).bytes
+
+    def _serialize(self):
+        buf = _bitstring.BitStream()
+        _group.write(buf, self._asdict())
+        return buf
+
+    return type(name, (base_class,), {
+        '_instantiate': _instantiate,
+        '_serialize_to_bytes': _serialize_to_bytes,
+        '_serialize': _serialize,
+        '_group': _group,
+    })
 
 class Group(Spec):
     def __init__(self, specs):
@@ -75,30 +120,6 @@ class Group(Spec):
         for spec in self.specs:
             spec.write(buf, attributes)
 
-    def size(self, attributes):
-        return sum(spec.size(attributes) for spec in self.specs)
-
-class Specification(Group):
-    def __init__(self, name, specs, defaults={}):
-        super(Specification, self).__init__(specs)
-        self.name = name
-        self.type = defaultnamedtuple(
-            name, self.own_names, defaults)
-
-    def instantiate(self, buf):
-        return self.type(**self.read(buf))
-
-    def serialize_to_bytes(self, *args, **kwargs):
-        return self.serialize(*args, **kwargs).bytes
-
-    def serialize(self, instance):
-        buf = _bitstring.BitStream()
-        self.write(buf, instance._asdict())
-        return buf
-
-    def size_instance(self, instance):
-        return self.size(instance._asdict())
-
 class Optional(Group):
     def __init__(self, condition, specs):
         super(Optional, self).__init__(specs)
@@ -111,11 +132,6 @@ class Optional(Group):
     def write(self, buf, attributes):
         if self.condition(attributes):
             super(Optional, self).write(buf, attributes)
-    def size(self, attributes):
-        if self.condition(attributes):
-            return super(Optional, self).size(attributes)
-        else:
-            return 0
 
 class NamedSpec(Spec):
     def __init__(self, name):
@@ -130,9 +146,6 @@ class NamedSpec(Spec):
     def write(self, buf, attributes):
         self.write_one(buf, attributes[self.name], attributes)
 
-    def size(self, attributes):
-        return self.size_one(attributes[self.name], attributes)
-
     @property
     def own_names(self):
         return [self.name]
@@ -145,23 +158,16 @@ class NamedSpec(Spec):
     def write_one(self, buf, prop, attributes):
         pass
 
-    @_abc.abstractmethod
-    def size_one(self, attribute, attributes):
-        pass
-
 class Switch(NamedSpec):
     def __init__(self, name, spec_generator):
         super(Switch, self).__init__(name)
         self.spec_generator = spec_generator
     def read_one(self, buf, attributes):
         specification = self.spec_generator(attributes)
-        return specification.instantiate(buf)
+        return specification._instantiate(buf)
     def write_one(self, buf, prop, attributes):
         specification = self.spec_generator(attributes)
-        buf.append(specification.serialize(prop))
-    def size_one(self, attribute, attributes):
-        specification = self.spec_generator(attributes)
-        return specification.size_instance(attribute)
+        buf.append(prop._serialize())
 
 class Consume(NamedSpec):
     def __init__(self, name, specification):
@@ -170,14 +176,11 @@ class Consume(NamedSpec):
     def read_one(self, buf, attributes):
         result = []
         while buf.pos < buf.len:
-            result.append(self.specification.instantiate(buf))
+            result.append(self.specification._instantiate(buf))
         return result
     def write_one(self, buf, prop, _):
         for p in prop:
-            buf.append(self.specification.serialize(p))
-    def size_one(self, attribute, _):
-        return sum(
-                self.specification.size_instance(a) for a in attribute)
+            buf.append(p._serialize())
 
 class Int(NamedSpec):
     def __init__(self, name, bits=0, bytes=0, endianness=None):
@@ -204,8 +207,6 @@ class Int(NamedSpec):
                 'length': self.bits,
                 self._get_type_string(): prop
         }))
-    def size_one(self, attribute, _):
-        return self.bits
 
 class Enum(Int):
     def __init__(self, name, enum, *args, **kwargs):
@@ -231,5 +232,3 @@ class Bytes(NamedSpec):
         return buf.read('bytes:{}'.format(length))
     def write_one(self, buf, prop, _):
         buf.append(_bitstring.BitArray(bytes=prop))
-    def size_one(self, prop, _):
-        return len(prop)*8

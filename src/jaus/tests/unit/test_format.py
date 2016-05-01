@@ -9,9 +9,17 @@ from jaus.format import (
     Int,
     Optional,
     Spec,
-    Specification,
+    specification,
+    defaultnamedtuple,
 )
 
+class test__defaultnamedtuple():
+    tp = defaultnamedtuple('Foo', ['a', 'b', 'c'], {
+        'b': 2,
+        'c': lambda props: props['b'],
+    })
+    a = tp(a=1)
+    assert a == tp(a=1, b=2, c=2)
 
 class TestGroup(object):
     @pytest.fixture
@@ -68,13 +76,13 @@ class TestConsume(object):
 
 class TestFuzz(object):
     def test_simple_specification(self):
-        spec = Specification('Test', [
+        spec = specification('Test', [
                 Int('foo', bits=3),
                 Int('bar', bits=5),
                 Int('ping', bytes=2, endianness='le'),
             ])
 
-        instance = spec.instantiate(bitstring.BitStream(
+        instance = spec._instantiate(bitstring.BitStream(
                 bin=(
                     '010'
                     '10110'
@@ -85,19 +93,18 @@ class TestFuzz(object):
         assert bin(instance.ping) == bin(0b0101101011010010)
 
     def test_basic_consume(self):
-        spec = Specification('Test', [
+        spec = specification('Test', [
                 Int('foo', bits=2),
                 Int('bar', bits=5),
             ])
-        tp = spec.type
         c = Consume('test', spec)
 
         assert c.read(bitstring.BitStream(bin=(
                     '10' '01001'
                     '01' '10110'))) == {
             'test': [
-                tp(foo=0b10, bar=0b01001),
-                tp(foo=0b01, bar=0b10110),
+                spec(foo=0b10, bar=0b01001),
+                spec(foo=0b01, bar=0b10110),
             ]
         }
 
@@ -106,11 +113,10 @@ class TestFuzz(object):
         }
 
     def test_consume_size_not_multiple_of_spec(self):
-        spec = Specification('Test', [
+        spec = specification('Test', [
                 Int('foo', bits=2),
                 Int('bar', bits=5),
             ])
-        tp = spec.type
         c = Consume('test', spec)
 
         with pytest.raises(bitstring.ReadError):
@@ -120,23 +126,23 @@ class TestFuzz(object):
 
     def test_optional(self):
         pred = Mock(name='test_predicate')
-        spec = Specification('Test', [
+        spec = specification('Test', [
                 Optional(pred, [
                         Int('test', bytes=1),
                     ]),
             ])
 
         pred.return_value = True
-        assert spec.instantiate(
-            bitstring.BitStream(hex='0xAB')) == spec.type(
+        assert spec._instantiate(
+            bitstring.BitStream(hex='0xAB')) == spec(
             test=0xAB)
         assert pred.call_args == call({
                 'test': 0xAB
             })
 
         pred.return_value = False
-        assert spec.instantiate(
-            bitstring.BitStream(hex='0xAB')) == spec.type(
+        assert spec._instantiate(
+            bitstring.BitStream(hex='0xAB')) == spec(
             test=None)
         assert pred.call_args == call({
                 'test': None

@@ -41,7 +41,13 @@ class JUDPPacketACKNACKFlags(_enum.Enum):
     NACK = 2
     ACK = 3
 
-JUDPPacketSpecification = _format.Specification(
+def packet_overhead(attrs):
+    if attrs['HC_flags'] != JUDPPacketHCFlags.NONE:
+        return 16
+    else:
+        return 14
+
+JUDPPacket = _format.specification(
     'JUDPPacket',
     specs=[
         _format.Int('message_type', bits=6),
@@ -63,10 +69,9 @@ JUDPPacketSpecification = _format.Specification(
             _format.Int('source_id', bytes=4, endianness='le'),
             _format.Bytes(
               'contents',
-              length=lambda attrs: attrs['data_size'] - (
-                16
-                if attrs['HC_flags'] != JUDPPacketHCFlags.NONE
-                else 14)),
+              length=lambda attrs: (
+                attrs['data_size']
+                - packet_overhead(attrs))),
             _format.Int('sequence_number', bytes=2, endianness='le'),
           ]),
     ],
@@ -78,17 +83,20 @@ JUDPPacketSpecification = _format.Specification(
         'priority': JUDPPacketPriority.STANDARD,
         'broadcast': JUDPPacketBroadcastFlags.LOCAL,
         'ack_nack': JUDPPacketACKNACKFlags.NO_RESPONSE_REQUIRED,
+        'data_size': lambda attrs: (
+            len(attrs['contents'])
+            + packet_overhead(attrs))
     })
-JUDPPacket = JUDPPacketSpecification.type
 
-JUDPPayloadSpecification = _format.Specification('JUDPPayload', specs=[
+JUDPPayload = _format.specification('JUDPPayload', specs=[
     _format.Int('transport_version', bytes=1),
     # We only support transport version 2 right now...
     _format.Optional(lambda attrs: attrs['transport_version'] == 2, [
-        _format.Consume('packets', JUDPPacketSpecification),
+        _format.Consume('packets', JUDPPacket),
       ]),
   ])
-JUDPPayload = JUDPPayloadSpecification.type
+
+CHUNK_SIZE = 512
 
 class DuplicatePacket(Exception):
     """A second packet with the same sequence number was added."""
@@ -167,8 +175,7 @@ def split_to_chunks(data, size):
 
 def make_packets(message, sequence_number, **kwargs):
     """Split the message into packets, passing on extra arguments to the packet constructor."""
-    CHUNK_SIZE = 512
-    data = _messages.MessageSpecification.serialize_to_bytes(message)
+    data = message._serialize_to_bytes()
     chunks = split_to_chunks(data, CHUNK_SIZE)
     sequence_numbers = (
         num for num, chunk in enumerate(chunks, start=sequence_number))
@@ -183,7 +190,6 @@ def make_packets(message, sequence_number, **kwargs):
         JUDPPacket(
             data_flags=flags,
             contents=chunk,
-            data_size=len(chunk) + 14,
             sequence_number=sequence_number,
             **kwargs)
         for flags, chunk, sequence_number
@@ -192,15 +198,16 @@ def make_packets(message, sequence_number, **kwargs):
 def consume_one_payload(packets):
     """Pack as many packets as possible into a payload, returning
       it as well as the remaining packets."""
-    payload_size = 0
+    payload_size = 1
     packets_consumed = []
-    CHUNK_SIZE = 512
     while payload_size < CHUNK_SIZE and packets:
         packet = packets[0]
+        assert packet.data_size < CHUNK_SIZE
         if payload_size + packet.data_size > CHUNK_SIZE:
             break
         packets_consumed.append(packet)
         packets = packets[1:]
+        payload_size += packet.data_size
     return JUDPPayload(
         transport_version=2,
         packets=packets_consumed), packets
@@ -211,6 +218,14 @@ def split_payloads(packets):
         payload, packets = consume_one_payload(packets)
         payloads.append(payload)
     return payloads
+
+class SendError(Exception):
+    """Failed to send packet."""
+    def __init__(self, packet):
+        super().__init__(
+            'Failed to send packet {}'
+            .format(packet))
+        self.packet = packet
 
 class Connection:
     def __init__(self, address, protocol):
@@ -232,7 +247,7 @@ class Connection:
                 self.packets_to_send = []
                 for payload in payloads:
                     self.protocol.transport.sendto(
-                        JUDPPayloadSpecification.serialize_to_bytes(payload),
+                        payload._serialize_to_bytes(),
                         self.address)
             yield from _asyncio.sleep(0.5)
 
@@ -243,10 +258,8 @@ class Connection:
             sequence_number=self.sequence_number,
             **kwargs)
         self.sequence_number += len(packets)
-        for snd in (self.send_packet(packet) for packet in packets):
-            yield from snd
-        #yield from _asyncio.gather(
-        #    self.send_packet(packet) for packet in packets)
+        yield from _asyncio.gather(
+            *[self.send_packet(packet) for packet in packets])
 
     @_asyncio.coroutine
     def send_packet(self, packet):
@@ -254,20 +267,29 @@ class Connection:
 
         if packet.ack_nack is JUDPPacketACKNACKFlags.RESPONSE_REQUIRED:
             assert packet.sequence_number not in self.ack_nack
-            tries = 5
-            while tries > 0:
+            tries = 0
+            while tries < 5:
                 sent = _asyncio.Future()
                 self.ack_nack[packet.sequence_number] = sent
                 result = yield from sent
                 if result is JUDPPacketACKNACKFlags.ACK:
                     return
                 tries += 1
-            raise SendError()
+                self.packets_to_send.append(packet)
+            raise SendError(packet)
 
+    @_asyncio.coroutine
     def receive_packet(self, packet):
         if packet.ack_nack in (JUDPPacketACKNACKFlags.ACK, JUDPPacketACKNACKFlags.NACK):
             self.ack_nack[packet.sequence_number].set_result(packet.ack_nack)
+            del self.ack_nack[packet.sequence_number]
+            return []
         else:
+            if packet.ack_nack is JUDPPacketACKNACKFlags.RESPONSE_REQUIRED:
+                yield from self.send_packet(packet._replace(
+                    contents=b'',
+                    data_size=packet.data_size-len(packet.contents),
+                    ack_nack=JUDPPacketACKNACKFlags.ACK))
             self.message_reassembler.add_packet(packet)
             return self.message_reassembler.pop_messages()
 
@@ -289,21 +311,22 @@ class FormatSpecificationProtocol(metaclass=_abc.ABCMeta):
     def __init__(self, specification):
         self.specification = specification
     def datagram_received(self, data, address):
-        instance = self.specification.instantiate(
+        instance = self.specification._instantiate(
             _bitstring.ConstBitStream(bytes=data))
-        return self.instance_received(instance, address)
+        _asyncio.async(self.instance_received(instance, address))
     @_abc.abstractmethod
     def instance_received(self, instance, address):
         pass
 
 class JUDPProtocol(FormatSpecificationProtocol):
     def __init__(self, own_id, message_received_signal):
-        super().__init__(specification=JUDPPayloadSpecification)
+        super().__init__(specification=JUDPPayload)
         self.connection_map = ConnectionMap(self)
         self.message_received_signal = message_received_signal
         self.own_id = own_id
     def connection_made(self, transport):
         self.transport = transport
+    @_asyncio.coroutine
     def instance_received(self, instance, address):
         payload = instance
 
@@ -319,7 +342,7 @@ class JUDPProtocol(FormatSpecificationProtocol):
                 connection = self.connection_map.add_connection(
                     source_id=source_id,
                     address=address)
-                messages = connection.receive_packet(packet)
+                messages = yield from connection.receive_packet(packet)
                 for message in messages:
                     self.message_received(message, source_id)
         else:

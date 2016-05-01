@@ -38,8 +38,7 @@ class JUDPConnection:
 
     @asyncio.coroutine
     def send_payload(self, payload):
-        data = judp.JUDPPayloadSpecification.serialize_to_bytes(
-            payload)
+        data = payload._serialize_to_bytes()
         yield from self.protocol.send(data, self.remote_addr)
 
     @asyncio.coroutine
@@ -49,7 +48,7 @@ class JUDPConnection:
             timeout=timeout)
 
         assert addr == self.remote_addr
-        payload = judp.JUDPPayloadSpecification.instantiate(
+        payload = judp.JUDPPayload._instantiate(
             bitstring.ConstBitStream(data))
         return payload
 
