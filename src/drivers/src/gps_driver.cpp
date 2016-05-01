@@ -19,11 +19,25 @@ int main (int argc, char **argv){
   while(ros::ok() && link_port.isActive()){
     char buff[32];
     data_request('G',buff);
-    if(gps_store(buff))
-      gps_publisher.publish(gps_msg); 
-  } 
+    if(gps_store(buff)){
+    gps_msg_create();  
+		gps_publisher.publish(gps_msg); 
+		}
+	} 
   ROS_ERROR("GPS Node Terminated"); 
   return 0;
+}
+
+void gps_msg_create(void){
+	if (gps_comp_data.fix){
+	gps_msg.Lon = gps_comp_data.longitude;
+	gps_msg.Lat = gps_comp_data.latitude;
+	gps_msg.Head = gps_comp_data.headingDegrees;}
+	else 
+	gps_msg.Lon = -1;
+	gps_msg.Lat = -1; 
+	gps_msg.Head = -1; 
+return;
 }
 bool connect_device(std::string device_name){
 //  char buff[32] = "\0"; 

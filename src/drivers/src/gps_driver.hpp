@@ -39,3 +39,4 @@ bool gps_store(char *buffer);
 void data_request(char c, char *buffer);
 bool connect_device(std::string device_name); 
 bool open_port(unsigned int count);
+void gps_msg_create(void);
