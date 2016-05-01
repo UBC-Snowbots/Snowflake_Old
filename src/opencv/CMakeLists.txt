@@ -37,14 +37,16 @@ catkin_package()
 
 add_executable(ros_vision src/ros_vision.cpp src/filter.h src/filter.cpp src/IPM.h src/IPM.cpp)
 
-
 add_executable(image_to_cloud src/imageToCloud.cpp src/filter.h src/filter.cpp src/IPM.h src/IPM.cpp)
 
+add_executable(point_cloud_merger src/pointCloudMerger.cpp)
 
 
 target_link_libraries(ros_vision ${catkin_LIBRARIES} ${OpenCV_LIBS})
 
 target_link_libraries(image_to_cloud ${PCL_LIBRARIES} ${catkin_LIBRARIES} ${OpenCV_LIBS} ${PCL_COMMON_LIBRARIES} ${PCL_IO_LIBRARIES})
+
+target_link_libraries(point_cloud_merger ${PCL_LIBRARIES} ${catkin_LIBRARIES} ${OpenCV_LIBS} ${PCL_COMMON_LIBRARIES} ${PCL_IO_LIBRARIES})
 
 
 add_dependencies(ros_vision opencv)
