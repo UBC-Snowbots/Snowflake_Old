@@ -25,7 +25,7 @@ boolean usingInterrupt = false; //keeps track of using interrupt, off by default
 void useInterrupt(boolean);
 
 void setup() {
-  Serial.begin(19200);
+  Serial.begin(15200);
   gps_setup();
   compass_setup();
 }
