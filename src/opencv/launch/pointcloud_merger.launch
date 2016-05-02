@@ -4,7 +4,7 @@
     <node pkg="opencv" name="point_cloud_merger"
     type="point_cloud_merger" output="screen">
         <param name="cloud_a" value="/point_cloud"/>
-        <param name="cloud_b" value="/point_cloud"/>
+        <param name="cloud_b" value="/lidar_cloud"/>
         <param name="merged_cloud" value="merged_cloud"/>
     </node>
 

@@ -10,7 +10,7 @@ add_definitions(--std=c++11)
 
 ## is used, also find other catkin packages
 
-find_package(catkin REQUIRED COMPONENTS roscpp rospy cv_bridge genmsg image_transport sensor_msgs)
+find_package(catkin REQUIRED COMPONENTS tf laser_geometry roscpp rospy cv_bridge genmsg image_transport sensor_msgs)
 
 find_package(OpenCV REQUIRED)
 
@@ -41,6 +41,8 @@ add_executable(image_to_cloud src/imageToCloud.cpp src/filter.h src/filter.cpp s
 
 add_executable(point_cloud_merger src/pointCloudMerger.cpp)
 
+add_executable(laserscan_to_pointcloud src/laserscanToPointCloud.cpp)
+
 
 target_link_libraries(ros_vision ${catkin_LIBRARIES} ${OpenCV_LIBS})
 
@@ -48,8 +50,11 @@ target_link_libraries(image_to_cloud ${PCL_LIBRARIES} ${catkin_LIBRARIES} ${Open
 
 target_link_libraries(point_cloud_merger ${PCL_LIBRARIES} ${catkin_LIBRARIES} ${OpenCV_LIBS} ${PCL_COMMON_LIBRARIES} ${PCL_IO_LIBRARIES})
 
+target_link_libraries(laserscan_to_pointcloud ${catkin_LIBRARIES} ${PCL_LIBRARIES} ${PCL_COMMON_LIBRARIES} ${PCL_IO_LIBRARIES})
+
 
 add_dependencies(ros_vision opencv)
 
 add_dependencies(image_to_cloud opencv)
 
+add_dependencies(laserscan_to_pointcloud laser_geometry)

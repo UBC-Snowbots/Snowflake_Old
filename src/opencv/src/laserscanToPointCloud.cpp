@@ -1,5 +1,13 @@
 #include <ros/ros.h>
+#include <string.h>
 #include <sensor_msgs/LaserScan.h>
+#include <laser_geometry/laser_geometry.h>
+#include <pcl_ros/point_cloud.h>
+#include <pcl/point_types.h>
+#include <pcl/point_cloud.h>
+
+using namespace pcl;
+using namespace std;
 
 class LaserScanToPointCloud {
 public:
@@ -18,7 +26,6 @@ private:
     string cloud_topic;
 
     sensor_msgs::LaserScan scan;
-    pcl::PCLPointCloud2 cloud;
 };
 
 LaserScanToPointCloud::LaserScanToPointCloud() {
@@ -27,27 +34,27 @@ LaserScanToPointCloud::LaserScanToPointCloud() {
     nh.getParam("scan_topic", scan_topic);
     nh.getParam("cloud_topic", cloud_topic);
     // Start the publisher
-    pointcloud_publisher_ = node_.advertise<sensor_msgs::PointCloud2> (merged_cloud_name.c_str(), 1, false);
+    pointcloud_publisher_ = node_.advertise<sensor_msgs::PointCloud2> (cloud_topic.c_str(), 1, false);
 
     this->scan_topic_parser();
 }
 
-LaserScanToPointCloud::scan_topic_parser(){
+void LaserScanToPointCloud::scan_topic_parser(){
     // Get all topics from master
     ros::master::V_TopicInfo topics;
     ros::master::getTopics(topics);
 
     for (int i=0; i < topics.size(); i++){
-        if ((scan_topic.compare(topics[i]) == 0) && (topics[i].datatype.compare("sensor_msgs/LaserScan") == 0)){
-            laserscan_subscriber_ = node_.subscribe<sensor_msgs::LaserScan> (scan_topic.c_str(), 1, boost::bind(&PointCloudMerger::scanCallback, this, _1, scan_topic));
-            ROS_INFO("Subscribed to topic: %s", scan_topic);
+        if ((scan_topic.compare(topics[i].name) == 0) && (topics[i].datatype.compare("sensor_msgs/LaserScan") == 0)){
+            laserscan_subscriber_ = node_.subscribe<sensor_msgs::LaserScan> (scan_topic.c_str(), 1, boost::bind(&LaserScanToPointCloud::scanCallBack, this, _1, scan_topic));
+            ROS_INFO("Subscribed to topic: %s", scan_topic.c_str());
         }
     }
 }
 
-LaserScanToPointCloud::scanCallBack(const sensor_msgs::LaserScan::ConstPtr& scan, std::string topic){
+void LaserScanToPointCloud::scanCallBack(const sensor_msgs::LaserScan::ConstPtr& scan, std::string topic){
     // Convert laserscan to a pointcloud and publish it
-    sensor_msgs::PointCloud cloud;
+    sensor_msgs::PointCloud2 cloud;
     projector_.projectLaser(*scan, cloud);
     pointcloud_publisher_.publish(cloud);
 }
