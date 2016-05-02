@@ -7,6 +7,7 @@
 #include <pcl/point_types.h>
 #include <pcl/point_cloud.h>
 #include <pcl/ros/conversions.h>
+#include <cstdint>
 
 using namespace std;
 using namespace pcl;
@@ -71,7 +72,35 @@ void PointCloudMerger::pointCloudCallBack(const sensor_msgs::PointCloud2::ConstP
         cloud_B = cloud;
     }
     // Merge the two clouds and publish to desired topic
-    pcl::concatenateFields (cloud_A, cloud_B, merged_cloud);
+    // Add all the points of the smaller field to the larger one
+    pcl::PCLPointCloud2 smaller_cloud;
+    pcl::PCLPointCloud2 larger_cloud;
+    if ((cloud_A.height != 0) && (cloud_B.height != 0)){
+        if (cloud_A.height < cloud_B.height){
+            smaller_cloud = cloud_A;
+            larger_cloud = cloud_B;
+        } else {
+            smaller_cloud = cloud_B;
+            larger_cloud = cloud_A;
+        }
+        // The array we'll be replacing the smaller clouds 'data' array with
+        uint8_t new_data [larger_cloud.height * larger_cloud.row_step];
+        // Add all the points from the smaller cloud to this new cloud
+        for (int i=0; i < (smaller_cloud.data.size()); i++){
+            smaller_cloud.data.push_back(smaller_cloud.data[i]);
+        }
+        // Add points to the new cloud to make it match the size of the larger cloud
+        for (int i=0; i < (larger_cloud.height - smaller_cloud.height); i++){
+            // Take the last point in the cloud, and append it again
+            for (int j=smaller_cloud.row_step; j >= 0; j--){
+                smaller_cloud.data.push_back(smaller_cloud.data[smaller_cloud.data.size() - j]);
+            }
+        }
+        smaller_cloud.height = larger_cloud.height;
+    } else {
+        // If one cloud is null, this just passes through the cloud, doing nothing
+        pcl::concatenateFields (cloud_A, cloud_B, merged_cloud);
+    }
     pointcloud_publisher_.publish(merged_cloud);
 }
 
