@@ -18,6 +18,7 @@ class PointCloudMerger {
         void pointCloudCallBack(const sensor_msgs::PointCloud2::ConstPtr& tmp_cloud, std::string topic);
     private:
         void pointcloud_topic_parser();
+        void mergeClouds();
 
         ros::NodeHandle node_;
         ros::Publisher pointcloud_publisher_;
@@ -31,6 +32,7 @@ class PointCloudMerger {
         pcl::PCLPointCloud2 cloud_A;
         pcl::PCLPointCloud2 cloud_B;
         pcl::PCLPointCloud2 merged_cloud;
+        uint32_t seq; // Sequence ID: consecutively increasing
 };
 
 PointCloudMerger::PointCloudMerger(){
@@ -43,6 +45,8 @@ PointCloudMerger::PointCloudMerger(){
     pointcloud_publisher_ = node_.advertise<sensor_msgs::PointCloud2> (merged_cloud_name.c_str(), 1, false);
 
     this->pointcloud_topic_parser();
+
+    seq = 0;
 }
 
 // Gets the request "cloud_a" and "cloud_b" topics from master
@@ -71,37 +75,70 @@ void PointCloudMerger::pointCloudCallBack(const sensor_msgs::PointCloud2::ConstP
     } else if (topic == cloud_B_name){
         cloud_B = cloud;
     }
-    // Merge the two clouds and publish to desired topic
-    // Add all the points of the smaller field to the larger one
-    pcl::PCLPointCloud2 smaller_cloud;
-    pcl::PCLPointCloud2 larger_cloud;
+    // If both scans come in, merge them
     if ((cloud_A.height != 0) && (cloud_B.height != 0)){
-        if (cloud_A.height < cloud_B.height){
-            smaller_cloud = cloud_A;
-            larger_cloud = cloud_B;
-        } else {
-            smaller_cloud = cloud_B;
-            larger_cloud = cloud_A;
-        }
-        // The array we'll be replacing the smaller clouds 'data' array with
-        uint8_t new_data [larger_cloud.height * larger_cloud.row_step];
-        // Add all the points from the smaller cloud to this new cloud
-        for (int i=0; i < (smaller_cloud.data.size()); i++){
-            smaller_cloud.data.push_back(smaller_cloud.data[i]);
-        }
-        // Add points to the new cloud to make it match the size of the larger cloud
-        for (int i=0; i < (larger_cloud.height - smaller_cloud.height); i++){
-            // Take the last point in the cloud, and append it again
-            for (int j=smaller_cloud.row_step; j >= 0; j--){
-                smaller_cloud.data.push_back(smaller_cloud.data[smaller_cloud.data.size() - j]);
-            }
-        }
-        smaller_cloud.height = larger_cloud.height;
+        mergeClouds();
     } else {
-        // If one cloud is null, this just passes through the cloud, doing nothing
-        pcl::concatenateFields (cloud_A, cloud_B, merged_cloud);
+        if (cloud_A.height != 0) {
+            merged_cloud = cloud_A;
+        } else if (cloud_B.height != 0){
+            merged_cloud = cloud_B;
+        }
     }
     pointcloud_publisher_.publish(merged_cloud);
+}
+
+// Merges the first three fields (x,y,z) of clouds A and B
+// both clouds must have matching field datatypes and a count of 1
+void PointCloudMerger::mergeClouds() {
+    if (cloud_A.fields.size() < 3){
+        ROS_INFO("Error: %s has less then three fields", cloud_A_name.c_str());
+        return;
+    } else if (cloud_B.fields.size() < 3){
+        ROS_INFO("Error: %s has less then three fields", cloud_B_name.c_str());
+        return;
+    } else {
+        for (int i=0; i < 3; i++){
+            if (cloud_A.fields[i].datatype != cloud_B.fields[i].datatype){
+                ROS_INFO("Error: given clouds have fields with different datatypes");
+                return;
+            } else if (cloud_A.fields[i].count != 1){
+                ROS_INFO("Error: %s has a field with count > 1", cloud_A_name.c_str());
+                return;
+            } else if (cloud_B.fields[i].count != 1){
+                ROS_INFO("Error: %s has a field with count > 1", cloud_B_name.c_str());
+                return;
+            }
+        }
+    }
+    merged_cloud.header.seq = seq;
+    merged_cloud.header.frame_id = 1;
+    ros::Time time_st = ros::Time::now ();
+    merged_cloud.header.stamp = time_st.toNSec()/1e3;
+    merged_cloud.height = 1;
+    merged_cloud.width = cloud_A.width + cloud_B.width;
+    sensor_msgs::PointField fields[3];
+    for (int i=0; i < 3; i++){
+        merged_cloud.fields.push_back(cloud_A.fields[i]);
+    }
+    merged_cloud.is_bigendian = false;
+    if (cloud_A.fields.size() == 3){
+        merged_cloud.point_step = cloud_A.point_step;
+    } else {
+        merged_cloud.point_step = cloud_A.fields[3].offset;
+    }
+    merged_cloud.row_step = merged_cloud.point_step * merged_cloud.width;
+    for (int i=0; i < cloud_A.width; i++){
+        for (int j=0; j < merged_cloud.point_step; j++){
+            merged_cloud.data.push_back(cloud_A.data[(i * cloud_A.point_step) + j]);
+        }
+    }
+    for (int i=0; i < cloud_A.width; i++){
+        for (int j=0; j < merged_cloud.point_step; j++){
+            merged_cloud.data.push_back(cloud_B.data[(i * cloud_B.point_step) + j]);
+        }
+    }
+    merged_cloud.is_dense = false;
 }
 
 int main(int argc, char** argv){
