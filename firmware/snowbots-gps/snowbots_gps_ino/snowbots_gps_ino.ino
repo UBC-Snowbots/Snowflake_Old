@@ -36,12 +36,14 @@ void loop() {
   mag.getEvent(&event);
 
   char input = Serial.read();
+  input = 'D';
+  delay(1000);
   if (input == 'I') {
     send_gps(false);
-  } 
-  if (input == 'D') {
+  } else if (input == 'D') {
     send_gps(true);
     send_compass(event);
+    Serial.println();
   } 
 }
 void compass_setup() {
@@ -87,7 +89,7 @@ void gps_check_new_data() {
 void send_gps(boolean data) {
   //G(long),(lat),(fix)
   if (data) {
-    Serial.print("D"); Serial.print(GPS.latitudeDegrees, 4);
+    Serial.print("G"); Serial.print(GPS.latitudeDegrees, 4);
     Serial.print(","); Serial.print(GPS.longitudeDegrees, 4);
     Serial.print(","); Serial.print((int)GPS.fix);
   } else {
