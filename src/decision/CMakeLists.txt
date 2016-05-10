@@ -5,6 +5,7 @@ add_service_files(
   FILES
   gps_waypoint.srv
 )
+
 find_package(catkin REQUIRED COMPONENTS
     geometry_msgs
     laser_geometry
@@ -15,9 +16,13 @@ find_package(catkin REQUIRED COMPONENTS
     std_msgs
     tf
     tf2)
+
 generate_messages(DEPENDENCIES 
-std_msgs
+    std_msgs
+    nav_msgs
+    geometry_msgs
 )
+
 set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} ${CMAKE_CURRENT_SOURCE_DIR}/cmake-modules)
 
 include(Catch)

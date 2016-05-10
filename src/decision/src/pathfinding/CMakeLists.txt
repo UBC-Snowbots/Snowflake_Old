@@ -1,0 +1,1 @@
+add_executable(pathfinding pathfinding.cpp)
