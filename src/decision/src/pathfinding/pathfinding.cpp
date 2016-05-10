@@ -209,8 +209,10 @@ vector<node_t*> traceback(vector<node_t*>& node_list, node_t *start_point, node_
 	do{
 		terminal = node_list[i];
 		i++;
-	} while ((terminal->x != end_point->x) && (terminal->y != end_point->y));
-	cout << "Found proper node" << endl;
+	} while (!((terminal->x == end_point->x) && (terminal->y == end_point->y)));
+	cout << end_point->y << endl;
+	cout << terminal->y << endl;
+	cout << "Found proper node: " << printNode(terminal) << endl;
 	trace.push_back(terminal);
 	node_t *current_node = terminal->parent;
 	do{
@@ -218,7 +220,7 @@ vector<node_t*> traceback(vector<node_t*>& node_list, node_t *start_point, node_
 		trace.push_back(current_node);
 		current_node = current_node->parent;
 		cout << "Parent: " << printNode(current_node) << endl;	
-	} while ((current_node->x != start_point->x) && (current_node->y != start_point->y));
+	} while (!((current_node->x == start_point->x) && (current_node->y == start_point->y)));
 	return trace;
 }
 
@@ -252,6 +254,17 @@ geometry_msgs::Point get_next_waypoint(	nav_msgs::OccupancyGrid map,
 	starting_point->g = 0;
 	starting_point->f = 0;
 	starting_point->h = 0;
+
+	int** new_map = new int *[height];
+	for (int i = 0; i < height; i++){
+		new_map[i] = new int[width];
+	}
+
+	for (int i = 0; i < height; i++){
+		for (int j = 0; j < width; j++){
+			new_map[i][j] = map.data[i*width + j];
+		}
+	}
 
 	push(open_list, starting_point);
 	
@@ -312,6 +325,7 @@ geometry_msgs::Point get_next_waypoint(	nav_msgs::OccupancyGrid map,
 	end: 
 	printNodeList(open_list, "Open list");
 	printNodeList(closed_list, "Closed list");
+	printArray(new_map, 20, 20);
 	vector<node_t*> trace = traceback(closed_list, starting_point, end_goal);
 	printNodeList(trace, "Trace list");
 
@@ -347,6 +361,12 @@ int main(){
 	//create a sparse 100 x 100 map with nothing in it
 	for (int i = 0; i < 20*20; i++){
 		map.data.push_back(0);
+	}
+
+	//Make a barrier
+	for (int i = 2; i < 19; i++){
+		map.data[18*map.info.width+i] = 10;
+		map.data[map.info.width*i + 18] = 10;
 	}
 
 	//Initial and final position
