@@ -128,7 +128,9 @@ bool updateList(vector<node_t*>& node_list, node_t *node, node_t *parent_node)
 		if ((node_list[i]->x == node->x) && (node_list[i]->y == node->y)){
 			if (node_list[i]->f > node->f)
 			{
+				node_t* deprecated_node = node_list[i];
 				node_list[i] = node;
+				delete deprecated_node;
 				node_list[i]->parent = parent_node;
 				cout << "In update list: Child " << printNode(node) << "Parent " << printNode(parent_node) << endl;
 				push_heap(node_list.begin(), node_list.end(), compare());
