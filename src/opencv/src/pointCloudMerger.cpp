@@ -67,16 +67,21 @@ void PointCloudMerger::pointCloudCallBack(const sensor_msgs::PointCloud2::ConstP
     pcl_conversions::toPCL (*tmp_cloud, cloud);
     // Remove all but the first 3 fields (x,y,z) from the pointclouds and associated data
     if (cloud.fields.size() > 3){
+        ROS_INFO("Got topic with more then three fields: %s", topic.c_str()); 
         int old_point_step = cloud.point_step;
         cloud.point_step = cloud.fields[3].offset;
         std::vector<pcl::PCLPointField> fields(cloud.fields.begin(), cloud.fields.begin() + 3);
         cloud.fields = fields;
         cloud.row_step = cloud.point_step * cloud.width;
-        for (int i=0; i < cloud.width; i++){
+        ROS_INFO("Cloud has %d fields", cloud.width);
+        for (int i=cloud.width - 1; i >= 0; i--){
+            ROS_INFO("%d", i);
             cloud.data.erase(cloud.data.begin() + (i * old_point_step) + cloud.point_step, cloud.data.begin() + (i+1) * old_point_step);
         }
+        ROS_INFO("Created new cloud");
     } else if (cloud.fields.size() < 3){
         ROS_INFO("ERROR: %s has less then 3 fields", topic.c_str());
+        return;
     }
     // Update appropriate cloud
     if (topic == cloud_A_name){
@@ -84,6 +89,7 @@ void PointCloudMerger::pointCloudCallBack(const sensor_msgs::PointCloud2::ConstP
     } else if (topic == cloud_B_name){
         cloud_B = cloud;
     }
+    ROS_INFO("Updated: %s", topic.c_str());
     pcl::concatenatePointCloud (cloud_A, cloud_B, merged_cloud);
 
     pointcloud_publisher_.publish(merged_cloud);
