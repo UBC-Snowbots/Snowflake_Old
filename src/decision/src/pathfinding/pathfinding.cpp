@@ -3,6 +3,9 @@
  * Needs: OccupancyGrid, Pose2D initial_location, Pose2D final_location
  * Returns: A point (x,y) that brings you one step closer from initial to final location
  * Author: Valerian Ratu
+ *
+ * Subscribes to: Pose2D x 2, Occupancy Grid
+ * Publishes to: Point waypoint
  * 
  */
 
@@ -19,14 +22,38 @@
 #include <nav_msgs/OccupancyGrid.h>
 #include <nav_msgs/MapMetaData.h>
 
+//ROS MAIN LIBS
+#include <ros/ros.h>
+
 //The number which we consider to be a minimum for an obstacle
 #define OCCUPANCY_THRESHOLD 0
 
 //The movement cost of moving a tile
 //TODO: Optimize maybe with robot direction and giving a tile relative cost depening on that
-#define MOVEMENT_COST 10
+#define MOVEMENT_COST_STR 10
+#define MOVEMENT_COST_DIAG 14
 
 using namespace std;
+
+nav_msgs::OccupancyGrid g_map;
+geometry_msgs::Pose2D g_start;
+geometry_msgs::Pose2D g_end;
+
+void mapCallback(const nav_msgs::OccupancyGrid::ConstPtr& msg)
+{
+	g_map = *(msg);
+}
+
+void poseStartCallback(const geometry_msgs::Pose2D::ConstPtr& msg)
+{
+	g_start = *(msg);
+}
+
+void poseEndCallback(const geometry_msgs::Pose2D::ConstPtr& msg)
+{
+	g_end = *(msg);
+}
+
 
 /**
  * A node structure
@@ -132,7 +159,7 @@ bool updateList(vector<node_t*>& node_list, node_t *node, node_t *parent_node)
 				node_list[i] = node;
 				delete deprecated_node;
 				node_list[i]->parent = parent_node;
-				cout << "In update list: Child " << printNode(node) << "Parent " << printNode(parent_node) << endl;
+				//cout << "In update list: Child " << printNode(node) << "Parent " << printNode(parent_node) << endl;
 				push_heap(node_list.begin(), node_list.end(), compare());
 				return true;
 			}
@@ -229,6 +256,14 @@ vector<node_t*> traceback(vector<node_t*>& node_list, node_t *start_point, node_
 	return trace;
 }
 
+int getMovementCost(node_t *start, node_t* end){
+	if (get_man_distance(start, end) > 1){
+		return MOVEMENT_COST_DIAG;
+	} 
+	return MOVEMENT_COST_STR;
+}
+
+
 /**
  * Gets the next waypoint to ge to the target position
  * @param  map              an occupancy grid containing the map
@@ -278,6 +313,8 @@ geometry_msgs::Point get_next_waypoint(	nav_msgs::OccupancyGrid map,
 	{
 		node_t *curr_node = pop(open_list);
 		push(closed_list, curr_node);
+
+		//Iterate through all neighbouring nodes and analyze all valid ones
 		for (int x = curr_node->x - 1; x <= curr_node->x + 1; x++){
 			if ((x < 0) || (x >= map.info.width)){
 				//cout << "x: " << x << "didn't pass param" << endl;
@@ -288,12 +325,12 @@ geometry_msgs::Point get_next_waypoint(	nav_msgs::OccupancyGrid map,
 					//cout << "y: " << y << " didn't pass param" << endl;
 					continue;
 				}
-				//don't analyze the node again
+				//don't analyze the current node
 				if ((x == curr_node->x) && (y == curr_node->y)){
 					//cout << "(x,y) of analyzed node: (" << x << "," << y << ")" << endl;
 					continue;
 				}
-
+				//Skip if there's an object here
 				if ((int) map.data[y*width + x] > OCCUPANCY_THRESHOLD) {
 					//cout << "Occupancy at (" << x << "," << y << ") with: " << (int) map.data[x*width + y] << endl;
 					continue;
@@ -302,7 +339,7 @@ geometry_msgs::Point get_next_waypoint(	nav_msgs::OccupancyGrid map,
 				child->x = x;
 				child->y = y;
 
-				child->g = curr_node->g + MOVEMENT_COST;
+				child->g = curr_node->g + getMovementCost(curr_node, child);
 
 				child->h = get_man_distance(child, end_goal);
 				child->f = child->g + child->h;
@@ -348,8 +385,39 @@ geometry_msgs::Point get_next_waypoint(	nav_msgs::OccupancyGrid map,
 	return waypoint; 
 }
 
+int main(int argc, char** argv){
+
+	const string init_pose_topic = "initial_pose";
+	const string final_pose_topic = "final_pose";
+	const string occ_grid_topic = "occupancy_grid";
+	const string point_output_topic = "waypoint";
+	const string node_name = "pathfinding_node";
+
+	ros::init(argc, argv, node_name);
+	ros::NodeHandle nh;
+
+	ros::Subscriber poseStartSub = nh.subscribe(init_pose_topic, 10, poseStartCallback);
+	ros::Subscriber poseEndSub = nh.subscribe(final_pose_topic, 10, poseEndCallback);
+	ros::Subscriber occGridSub = nh.subscribe(occ_grid_topic, 5, mapCallback);
+	ros::Publisher pointPub = nh.advertise<geometry_msgs::Point>(point_output_topic, 1);
+	ros::Rate loop_rate(5);
+
+	while (nh.ok()){
+		geometry_msgs::Point waypoint = get_next_waypoint(g_map, g_start, g_end);
+		pointPub.publish(waypoint);
+		ros::spinOnce();
+	}
+}
+
+
+
+
+/*
 int main(){
 	//Creating occupancy grid
+
+
+
 	geometry_msgs::Pose origin;
 	origin.position.x = 0;
 	origin.position.y = 0;
@@ -370,12 +438,12 @@ int main(){
 	}
 
 	//Make a barrier (Test Case 1)
-	/*
+	
 	for (int i = 2; i < 19; i++){
 		map.data[18*map.info.width+i] = 10;
 		map.data[map.info.width*i + 18] = 10;
 	}
-	*/
+	
 
 	//Test Case 2
 	for (int i = 2; i < 8; i++){
@@ -409,3 +477,4 @@ int main(){
 	cout << "Y returned: " << waypoint.y << endl;
 	return 0;
 }
+*/
