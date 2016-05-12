@@ -163,7 +163,7 @@ void printNodeList(vector<node_t*>& node_list, string name)
 	cout << "Printing list: " << name << endl;
 	for (int j = 0; j < node_list.size(); j ++)
 	{
-		cout << "Node at: " << printNode(node_list[j]) << " with f: " << node_list[j]->f  << "and parent: " << printNode(node_list[j]->parent)<< endl;
+		cout << "Node at: " << printNode(node_list[j]) << " with f: " << node_list[j]->f  << " and parent: " << printNode(node_list[j]->parent)<< endl;
 	}
 
 }
@@ -186,9 +186,16 @@ void freeList(vector<node_t*>& node_list){
  * @param height the height of the array
  */
 void printArray(int** map, int width, int height){
+	cout << "\t";
+	for (int j = 0; j < width; j++){
+			cout << j << "\t";
+	}
+	cout << endl;
 	for (int i = 0; i < height; i++){
+		cout << i << ": " << "\t";
 		for (int j = 0; j < width; j++){
 			cout << map[i][j] << "\t";
+			
 		}
 		cout << endl;
 	}
@@ -210,16 +217,14 @@ vector<node_t*> traceback(vector<node_t*>& node_list, node_t *start_point, node_
 		terminal = node_list[i];
 		i++;
 	} while (!((terminal->x == end_point->x) && (terminal->y == end_point->y)));
-	cout << end_point->y << endl;
-	cout << terminal->y << endl;
-	cout << "Found proper node: " << printNode(terminal) << endl;
+	//cout << "Found proper node: " << printNode(terminal) << endl;
 	trace.push_back(terminal);
 	node_t *current_node = terminal->parent;
 	do{
-		cout << "Child: " << printNode(current_node) << endl;
+		//cout << "Child: " << printNode(current_node) << endl;
 		trace.push_back(current_node);
 		current_node = current_node->parent;
-		cout << "Parent: " << printNode(current_node) << endl;	
+		//cout << "Parent: " << printNode(current_node) << endl;	
 	} while (!((current_node->x == start_point->x) && (current_node->y == start_point->y)));
 	return trace;
 }
@@ -274,23 +279,23 @@ geometry_msgs::Point get_next_waypoint(	nav_msgs::OccupancyGrid map,
 		node_t *curr_node = pop(open_list);
 		push(closed_list, curr_node);
 		for (int x = curr_node->x - 1; x <= curr_node->x + 1; x++){
-			if ((x < 0) || (x > map.info.width)){
-				cout << "x: " << x << "didn't pass param" << endl;
+			if ((x < 0) || (x >= map.info.width)){
+				//cout << "x: " << x << "didn't pass param" << endl;
 				continue;
 			} 
 			for (int y = curr_node->y - 1; y <= curr_node->y + 1; y++){
-				if ((y < 0) || (y > map.info.height)){
-					cout << "y: " << y << " didn't pass param" << endl;
+				if ((y < 0) || (y >= map.info.height)){
+					//cout << "y: " << y << " didn't pass param" << endl;
 					continue;
 				}
 				//don't analyze the node again
 				if ((x == curr_node->x) && (y == curr_node->y)){
-					cout << "(x,y) of analyzed node: (" << x << "," << y << ")" << endl;
+					//cout << "(x,y) of analyzed node: (" << x << "," << y << ")" << endl;
 					continue;
 				}
 
-				if ((int) map.data[x*width + y] > OCCUPANCY_THRESHOLD) {
-					cout << "Occupancy at (" << x << "," << y << ") with: " << (int) map.data[x*width + y] << endl;
+				if ((int) map.data[y*width + x] > OCCUPANCY_THRESHOLD) {
+					//cout << "Occupancy at (" << x << "," << y << ") with: " << (int) map.data[x*width + y] << endl;
 					continue;
 				}
 				node_t *child = new node_t();
@@ -298,11 +303,12 @@ geometry_msgs::Point get_next_waypoint(	nav_msgs::OccupancyGrid map,
 				child->y = y;
 
 				child->g = curr_node->g + MOVEMENT_COST;
+
 				child->h = get_man_distance(child, end_goal);
 				child->f = child->g + child->h;
 				//Goto is disgusting but we're in a heavily nested loop
 				if ((end_goal->x == x) && (end_goal->y == y)){
-					cout << "Have reached end goal with (" << x << "," << y << ")" << endl;
+					//cout << "Have reached end goal with (" << x << "," << y << ")" << endl;
 					child->parent = curr_node;
 					push(closed_list, child);
 					goto end;
@@ -310,11 +316,11 @@ geometry_msgs::Point get_next_waypoint(	nav_msgs::OccupancyGrid map,
 
 				if (findNodeInList(open_list, child)){
 					updateList(open_list, child, curr_node);
-				} else if(findNodeInList(closed_list, child)) {
-					updateList(closed_list, child, curr_node);
+				//} else if(findNodeInList(closed_list, child)) {
+					//updateList(closed_list, child, curr_node);
 				} else {
 					child->parent = curr_node;
-					cout << "Pushing open list: Child " << printNode(child) << "Parent " << printNode(curr_node) << endl;
+					//cout << "Pushing open list: Child " << printNode(child) << "Parent " << printNode(curr_node) << endl;
 					push(open_list, child);
 				}
 			}
@@ -323,9 +329,9 @@ geometry_msgs::Point get_next_waypoint(	nav_msgs::OccupancyGrid map,
 	}
 
 	end: 
-	printNodeList(open_list, "Open list");
-	printNodeList(closed_list, "Closed list");
-	printArray(new_map, 20, 20);
+	//printNodeList(open_list, "Open list");
+	//printNodeList(closed_list, "Closed list");
+	printArray(new_map, width, height);
 	vector<node_t*> trace = traceback(closed_list, starting_point, end_goal);
 	printNodeList(trace, "Trace list");
 
@@ -363,20 +369,39 @@ int main(){
 		map.data.push_back(0);
 	}
 
-	//Make a barrier
+	//Make a barrier (Test Case 1)
+	/*
 	for (int i = 2; i < 19; i++){
 		map.data[18*map.info.width+i] = 10;
 		map.data[map.info.width*i + 18] = 10;
 	}
+	*/
+
+	//Test Case 2
+	for (int i = 2; i < 8; i++){
+		map.data[map.info.width*i + 7] = 10;
+	}
+
+	for (int i = 9; i < 18; i++){
+		map.data[map.info.width*i + 7] = 10;
+	}
+
+	for (int i = 1; i < 5; i++){
+		map.data[map.info.width*i + 14] = 10;
+	}
+
+	for (int i = 7; i < 20; i++){
+		map.data[map.info.width*i + 14] = 10;
+	}
 
 	//Initial and final position
 	geometry_msgs::Pose2D curr_pos;
-	curr_pos.x = 2;
-	curr_pos.y = 2;
+	curr_pos.x = 1;
+	curr_pos.y = 8;
 	curr_pos.theta = 0;
 	geometry_msgs::Pose2D target_pos;
-	target_pos.x = 20;
-	target_pos.y = 20;
+	target_pos.x = 18;
+	target_pos.y = 18;
 	target_pos.theta = 0;
 	cout << "In main" << endl;
 	geometry_msgs::Point waypoint = get_next_waypoint(map, curr_pos, target_pos);
