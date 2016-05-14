@@ -41,17 +41,23 @@ geometry_msgs::Pose2D g_end;
 
 void mapCallback(const nav_msgs::OccupancyGrid::ConstPtr& msg)
 {
-	g_map = *(msg);
+	g_map.header = msg->header;
+	g_map.info = msg->info;
+	g_map.data = msg->data;
 }
 
 void poseStartCallback(const geometry_msgs::Pose2D::ConstPtr& msg)
 {
-	g_start = *(msg);
+	g_start.x = msg->x;
+	g_start.y = msg->y;
+	g_start.theta = msg->theta;
 }
 
 void poseEndCallback(const geometry_msgs::Pose2D::ConstPtr& msg)
 {
-	g_end = *(msg);
+	g_end.x = msg->x;
+	g_end.y = msg->y;
+	g_end.theta = msg->theta;
 }
 
 
@@ -190,7 +196,7 @@ void printNodeList(vector<node_t*>& node_list, string name)
 	cout << "Printing list: " << name << endl;
 	for (int j = 0; j < node_list.size(); j ++)
 	{
-		cout << "Node at: " << printNode(node_list[j]) << " with f: " << node_list[j]->f  << " and parent: " << printNode(node_list[j]->parent)<< endl;
+		cout << "Node at: " << printNode(node_list[j]) << " with f: " << node_list[j]->f  << " and parent: " << printNode(node_list[j]->parent) << endl;
 	}
 
 }
@@ -234,25 +240,26 @@ void printArray(int** map, int width, int height){
  * @param node_list		the list containing the all the nodes between start_point and end_point
  * @param start_point 	the node we are starting at
  * @param end_point 	the node we are ending at
- * @return 				a vector containing the node list in reverse order:= [end_point,..., start_point)
+ * @return 				a vector containing the node list in reverse order:= [end_point,..., start_point]
  */
 vector<node_t*> traceback(vector<node_t*>& node_list, node_t *start_point, node_t *end_point){ 
 	int i = 0;
 	vector<node_t*> trace;
-	node_t *terminal;
+	node_t *current_node;
 	do{
-		terminal = node_list[i];
+		current_node = node_list[i];
 		i++;
-	} while (!((terminal->x == end_point->x) && (terminal->y == end_point->y)));
+	} while (!((current_node->x == end_point->x) && (current_node->y == end_point->y)));
 	//cout << "Found proper node: " << printNode(terminal) << endl;
-	trace.push_back(terminal);
-	node_t *current_node = terminal->parent;
-	do{
+	trace.push_back(current_node);
+	while (!((current_node->x == start_point->x) && (current_node->y == start_point->y)))
+	{
 		//cout << "Child: " << printNode(current_node) << endl;
-		trace.push_back(current_node);
 		current_node = current_node->parent;
+		trace.push_back(current_node);
+
 		//cout << "Parent: " << printNode(current_node) << endl;	
-	} while (!((current_node->x == start_point->x) && (current_node->y == start_point->y)));
+	}
 	return trace;
 }
 
@@ -368,16 +375,24 @@ geometry_msgs::Point get_next_waypoint(	nav_msgs::OccupancyGrid map,
 	end: 
 	//printNodeList(open_list, "Open list");
 	//printNodeList(closed_list, "Closed list");
-	printArray(new_map, width, height);
+	//printArray(new_map, width, height);
 	vector<node_t*> trace = traceback(closed_list, starting_point, end_goal);
-	printNodeList(trace, "Trace list");
-
+	//printNodeList(trace, "Trace list");
 	//Constructs the point given
 	geometry_msgs::Point waypoint;
-	waypoint.x = trace[trace.size() - 1]->x;
-	waypoint.y = trace[trace.size() - 1]->y;
-	waypoint.z = 0;
 
+	//If the only item is the end point i.e. current position == target position
+	if (trace.size() == 1){
+		waypoint.x = trace[0]->x;
+		waypoint.y = trace[0]->y;
+	} else {
+		//Take the second last element, the one after initial point
+		waypoint.x = trace[trace.size() - 2]->x;
+		waypoint.y = trace[trace.size() - 2]->y;
+	}
+
+	waypoint.z = 0;
+	delete end_goal;
 	//Frees the memory
 	freeList(open_list);
 	freeList(closed_list);
@@ -402,9 +417,33 @@ int main(int argc, char** argv){
 	ros::Publisher pointPub = nh.advertise<geometry_msgs::Point>(point_output_topic, 1);
 	ros::Rate loop_rate(5);
 
+	//initialize in order to avoid segfaults
+	g_start.x = 0;
+	g_start.y = 0;
+	g_start.theta = 0;
+	g_end.x = 0;
+	g_end.y = 0;
+	g_end.theta = 0;
+	geometry_msgs::Pose origin;
+	origin.position.x = 0;
+	origin.position.y = 0;
+	origin.position.z = 0;
+	origin.orientation.x = 0.0;
+	origin.orientation.y = 0.0;
+	origin.orientation.z = 0.0;
+	origin.orientation.w = 0.0;
+	g_map.info.resolution = 0.25;
+	g_map.info.width = 20;
+	g_map.info.height = 20;
+	g_map.info.origin = origin;
+	for (int i = 0; i < 20*20; i++){
+		g_map.data.push_back(0);
+	}
+
 	while (nh.ok()){
 		geometry_msgs::Point waypoint = get_next_waypoint(g_map, g_start, g_end);
 		pointPub.publish(waypoint);
+		loop_rate.sleep();
 		ros::spinOnce();
 	}
 }
