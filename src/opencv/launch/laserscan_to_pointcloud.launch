@@ -1,0 +1,10 @@
+<launch>
+    
+    <!-- Start laser_scan_multi_merger -->
+    <node pkg="opencv" name="laserscan_to_pointcloud"
+    type="laserscan_to_pointcloud" output="screen">
+        <param name="scan_topic" value="/hokuyoscan"/>
+        <param name="cloud_topic" value="/lidar_cloud"/>
+    </node>
+
+</launch>

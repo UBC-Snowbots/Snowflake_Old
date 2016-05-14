@@ -1,0 +1,14 @@
+<launch>
+    <!-- Start the camera -->
+    <include file="$(find opencv)/launch/camera.launch"/>
+
+    <!-- Start color isolation and prespective correction -->
+    <node pkg="opencv" type="ros_vision" name="ros_vision"/>
+
+    <!-- Start image to pointcloud conversion -->
+    <node pkg="opencv" type="image_to_cloud" name="image_to_cloud"/>
+
+    <!-- Start the hokuyo lidar (can be replaced with SICK lidar) -->
+    <include file="$(find drivers)/../launch/just_hokuyo.launch"/>
+
+</launch>

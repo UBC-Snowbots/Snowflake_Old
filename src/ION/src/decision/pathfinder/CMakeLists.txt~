@@ -1,0 +1,5 @@
+add_library(pathfinder Pathfinder.cpp)
+target_link_libraries(pathfinder ${catkin_LIBRARIES})
+
+add_executable(astar AStar.cpp)
+target_link_libraries(astar ${catkin_LIBRARIES})
