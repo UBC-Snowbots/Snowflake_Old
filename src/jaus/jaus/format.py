@@ -122,7 +122,7 @@ class Group(Spec):
 
 class Optional(Group):
     def __init__(self, condition, specs):
-        super(Optional, self).__init__(specs)
+        super().__init__(specs)
         self.condition = condition
     def read(self, buf, attributes={}):
         if self.condition(attributes):
@@ -160,7 +160,7 @@ class NamedSpec(Spec):
 
 class Switch(NamedSpec):
     def __init__(self, name, spec_generator):
-        super(Switch, self).__init__(name)
+        super().__init__(name)
         self.spec_generator = spec_generator
     def read_one(self, buf, attributes):
         specification = self.spec_generator(attributes)
@@ -169,9 +169,18 @@ class Switch(NamedSpec):
         specification = self.spec_generator(attributes)
         buf.append(prop._serialize())
 
+class Instance(NamedSpec):
+    def __init__(self, name, specification):
+        super().__init__(name)
+        self.specification = specification
+    def read_one(self, buf, attributes):
+        return self.specification._instantiate(buf)
+    def write_one(self, buf, prop, _):
+        buf.append(prop._serialize())
+
 class Consume(NamedSpec):
     def __init__(self, name, specification):
-        super(Consume, self).__init__(name)
+        super().__init__(name)
         self.specification = specification
     def read_one(self, buf, attributes):
         result = []
@@ -182,11 +191,26 @@ class Consume(NamedSpec):
         for p in prop:
             buf.append(p._serialize())
 
+class Repeat(NamedSpec):
+    def __init__(self, name, specification, count):
+        super().__init__(name)
+        self.specification = specification
+        self.count = count
+    def read_one(self, buf, attributes):
+        count = self.count
+        if callable(count):
+            count = count(attributes)
+        return [self.specification._instantiate(buf) for i in range(count)]
+    def write_one(self, buf, prop, _):
+        for p in prop:
+            buf.append(p._serialize())
+
 class Int(NamedSpec):
-    def __init__(self, name, bits=0, bytes=0, endianness=None):
-        super(Int, self).__init__(name)
+    def __init__(self, name, bits=0, bytes=0, endianness=None, unsigned=True):
+        super().__init__(name)
         self.bits = bits + bytes*8
         self.endianness = endianness
+        self.unsigned = unsigned
         if endianness not in (None, 'le', 'be'):
             raise ValueError('endianness "{}" is not one of None, '
                     '"le" or "be".'.format(endianness))
@@ -194,11 +218,13 @@ class Int(NamedSpec):
             raise ValueError(
                     'Endianness set on int with non-whole '
                     'number of bytes: {}'.format(self.bits))
+    @property
+    def max(self):
+        return (2**self.bits) - 1
     def _get_type_string(self):
-        if self.endianness is not None:
-            return 'uint{}'.format(self.endianness)
-        else:
-            return 'uint'
+        return '{unsigned}int{endianness}'.format(
+            unsigned='u' if self.unsigned else '',
+            endianness=self.endianness if self.endianness is not None else '')
     def read_one(self, buf, attributes):
         return buf.read('{}:{}'.format(
                 self._get_type_string(), self.bits))
@@ -210,7 +236,7 @@ class Int(NamedSpec):
 
 class Enum(Int):
     def __init__(self, name, enum, *args, **kwargs):
-        super(Enum, self).__init__(name, *args, **kwargs)
+        super().__init__(name, *args, **kwargs)
         self.enum = enum
     def read_one(self, buf, attributes):
         return self.enum(
@@ -220,7 +246,7 @@ class Enum(Int):
 
 class Bytes(NamedSpec):
     def __init__(self, name, length):
-        super(Bytes, self).__init__(name)
+        super().__init__(name)
         self.length = length
     def _get_length(self, attributes):
         length = self.length

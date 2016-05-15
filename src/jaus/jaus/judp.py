@@ -65,8 +65,10 @@ JUDPPacket = _format.specification(
             _format.Enum('broadcast', enum=JUDPPacketBroadcastFlags, bits=2),
             _format.Enum('ack_nack', enum=JUDPPacketACKNACKFlags, bits=2),
             _format.Enum('data_flags', enum=JUDPPacketDataFlags, bits=2),
-            _format.Int('destination_id', bytes=4, endianness='le'),
-            _format.Int('source_id', bytes=4, endianness='le'),
+            _format.Instance('destination_id', _messages.Id),
+            _format.Instance('source_id', _messages.Id),
+            #_format.Int('destination_id', bytes=4, endianness='le'),
+            #_format.Int('source_id', bytes=4, endianness='le'),
             _format.Bytes(
               'contents',
               length=lambda attrs: (
@@ -249,7 +251,7 @@ class Connection:
                     self.protocol.transport.sendto(
                         payload._serialize_to_bytes(),
                         self.address)
-            yield from _asyncio.sleep(0.5)
+            yield from _asyncio.sleep(0)
 
     @_asyncio.coroutine
     def send(self, message, **kwargs):
@@ -319,10 +321,10 @@ class FormatSpecificationProtocol(metaclass=_abc.ABCMeta):
         pass
 
 class JUDPProtocol(FormatSpecificationProtocol):
-    def __init__(self, own_id, message_received_signal):
+    def __init__(self, own_id, message_received):
         super().__init__(specification=JUDPPayload)
         self.connection_map = ConnectionMap(self)
-        self.message_received_signal = message_received_signal
+        self.message_received = message_received
         self.own_id = own_id
     def connection_made(self, transport):
         self.transport = transport
@@ -343,19 +345,17 @@ class JUDPProtocol(FormatSpecificationProtocol):
                     source_id=source_id,
                     address=address)
                 messages = yield from connection.receive_packet(packet)
-                for message in messages:
-                    self.message_received(message, source_id)
+                yield from _asyncio.gather(*[
+                    self.message_received(
+                        message=message,
+                        source_id=source_id)
+                    for message in messages
+                ])
         else:
             _logging.warning(
                 'Received payload with incorrect'
                 ' transport version from %s: %d',
                 str(address), payload.transport_version)
-
-    def message_received(self, message, source_id):
-        responses = self.message_received_signal.send(
-            message_code=message.message_code, message=message, source_id=source_id)
-        for response in responses:
-            _asyncio.async(response)
 
     @_asyncio.coroutine
     def send_message(self, destination_id, *args, **kwargs):
@@ -370,6 +370,9 @@ class JUDPProtocol(FormatSpecificationProtocol):
             source_id=self.own_id,
             **kwargs)
 
-    def connection_lost(self, exc):
-        for connection in self.connection_map.iteritems():
+    def close(self):
+        for connection in self.connection_map.values():
             connection.close()
+
+    def connection_lost(self, exc):
+        self.close()

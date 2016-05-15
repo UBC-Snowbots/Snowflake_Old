@@ -141,22 +141,20 @@ class TestJUDPProtocol(object):
             judp, 'Connection', connection)
         return connection
     @pytest.fixture
-    def message_received_signal(self, monkeypatch):
-        return Mock(name='message_received_signal')
+    def message_received(self, monkeypatch):
+        @asyncio.coroutine
+        def message_received(*args, **kwargs):
+            pass
+        return Mock(name='message_received', wraps=message_received)
     @pytest.fixture
-    def tp(selfconnection, message_received_signal):
+    def tp(selfconnection, message_received):
         return judp.JUDPProtocol(
-            message_received_signal=message_received_signal,
+            message_received=message_received,
             own_id=sentinel.own_id)
 
     @pytest.mark.asyncio
     def test__instance_received__unsupported_transport_version(self,
-            monkeypatch, tp, caplog):
-        message_received = Mock(name='message_received')
-        monkeypatch.setattr(
-            judp.JUDPProtocol,
-            'message_received',
-            message_received)
+            message_received, tp, caplog):
 
         yield from tp.instance_received(
             judp.JUDPPayload(transport_version=3, packets=[]),
@@ -166,12 +164,7 @@ class TestJUDPProtocol(object):
         assert 'incorrect transport version' in caplog.text
 
     @pytest.mark.asyncio
-    def test__instance_received(self, monkeypatch, tp, connection, caplog):
-        message_received = Mock(name='message_received')
-        monkeypatch.setattr(
-            judp.JUDPProtocol,
-            'message_received',
-            message_received)
+    def test__instance_received(self, message_received, tp, connection, caplog):
         packet1 = Mock(
             name='packet1',
             destination_id=tp.own_id,
@@ -213,10 +206,10 @@ class TestJUDPProtocol(object):
         ]
 
         assert message_received.call_args_list == [
-            call(sentinel.message1, packet1.source_id),
-            call(sentinel.message2, packet1.source_id),
-            call(sentinel.message1, packet3.source_id),
-            call(sentinel.message2, packet3.source_id),
+            call(message=sentinel.message1, source_id=packet1.source_id),
+            call(message=sentinel.message2, source_id= packet1.source_id),
+            call(message=sentinel.message1, source_id= packet3.source_id),
+            call(message=sentinel.message2, source_id= packet3.source_id),
         ]
 
         assert 'Ignoring packet sent to sentinel.other_id' in caplog.text
@@ -250,8 +243,10 @@ class TestJUDPPayload:
             message_type=0,
             data_size=16,
             data_flags=judp.JUDPPacketDataFlags.SINGLE_PACKET,
-            destination_id=0x01010101,
-            source_id=0x10101010,
+            destination_id=messages.Id(
+                subsystem=0x0101, node=0x01, component=0x01),
+            source_id=messages.Id(
+                subsystem=0x1010, node=0x10, component=0x10),
             contents=b'\x20\x30',
             sequence_number=2)
         serialized = packet._serialize()
