@@ -80,6 +80,8 @@ def test_tail_element_deletion():
     list_manager.setElement(tail_element)
     list_manager.setElement(middle_element)
 
+    assert(len(list_manager.getElementSet()) == 3)
+
     list_manager.deleteElement(tail_element)
 
     assert(len(list_manager.getElementSet()) == 2)
@@ -160,8 +162,6 @@ def test_circular_list():
     list_second = list_manager.getElement(list_head.nextUID)
     assert(list_second == second_element)
 
-    assert list_second.isLoopStart()
-
     list_third = list_manager.getElement(list_second.nextUID)
     assert(list_third == third_element)
 
@@ -173,70 +173,31 @@ def test_circular_list():
 
     assert( list_manager.getElement(list_fifth.nextUID) == list_second)
   
-def test_circular_deletion():
+
+
+def test_small_loop():
+
     list_manager = ListManager()
 
     first_element = ListElement(1,0,0)
     second_element = ListElement(2,1,0)
-    third_element = ListElement(3,2,0)
-    fourth_element = ListElement(4,3,2)
+    third_element = ListElement(3,2,2)
 
     list_manager.setElement(first_element)
     list_manager.setElement(second_element)
     list_manager.setElement(third_element)
-    list_manager.setElement(fourth_element)
-    
 
-    list_manager.deleteElement(second_element)
+    list_manager.deleteElement(third_element)
 
+    assert len(list_manager.getElementSet()) == 2
     list_head = list_manager.getHead()
     assert(list_head == first_element)
 
     list_second = list_manager.getElement(list_head.nextUID)
-    assert(list_second == third_element)
+    assert(list_second == second_element)
 
-    list_third = list_manager.getElement(list_second.nextUID)
-    assert(list_third == fourth_element)
+    assert(list_second.nextUID == 0)
 
-    list_fourth = list_manager.getElement(list_third.nextUID)
-    assert(list_fourth == third_element)
-
-
-#Tests that elements which point to themselves are rejected
-
-def test_self_circular():
-
-    list_manager = ListManager()
-
-    first_element = ListElement(1,1,1)
-    
-    assert(len(list_manager.getElementSet()) == 0)
-
-
-    first_element = ListElement(1,0,0)
-    second_element = ListElement(2,1,0)
-    third_element = ListElement(3,2,0)
-    fourth_element = ListElement(4,3,2)
-
-    list_manager.setElement(first_element)
-    list_manager.setElement(second_element)
-    list_manager.setElement(third_element)
-    list_manager.setElement(fourth_element)
-
-    list_manager.deleteElement(second_element)
-    list_manager.deleteElement(third_element) #Expect this deletion to fail
-
-    list_head = list_manager.getHead()
-    assert(list_head == first_element)
-
-    list_second = list_manager.getElement(list_head.nextUID)
-    assert(list_second == third_element)
-
-    list_third = list_manager.getElement(list_second.nextUID)
-    assert(list_third == fourth_element)
-
-    list_fourth = list_manager.getElement(list_third.nextUID)
-    assert(list_fourth == third_element)
     
 """"
 Tests multiple requests that should be rejected, such as:

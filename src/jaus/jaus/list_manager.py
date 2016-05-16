@@ -1,7 +1,7 @@
 ﻿
 """
-The list manager is a doubly linked list that can contain a cycle, thus there is a possibility of one node having 
-two previous nodes
+Use python3 -m pytest to test
+
 
 The manager contains the following functions:
 
@@ -15,13 +15,7 @@ getHead: Returns the head of the list, the node which has a previous node with U
 
 getElement: Takes in a UID and returns an element with that UID
 
-
-I don't know exactly how to return a 'RejectElementRequest' so that will need to be implemented
-later, for now I just added a comment
-
-Known errors:
-Deleting an element in 1->2->3->2 does not work if removing the element 3, however
-trying to remove 2 will fail as intended
+If a node is the start of a loop (two nodes point to it), it will reject a delete request
 """
 class ListManager:
     def __init__(self):
@@ -30,38 +24,38 @@ class ListManager:
 
     def setElement(self, element):
         
-        #Do not allow elements with multiple previous nodes to be set, or element with UID 0
-        if(len(element.previousList) > 1 or element.UID == 0):
-            """Return a RejectElementRequest here"""
+        #Do not allow elements with UID 0
+        if(element.UID == 0):
+            raise RejectElementRequest
             return
 
         #"""Case 1 : Element is being added to an empty list"""
         if(len(self.element_set) == 0):
-            if(element.isPrevious(0) and element.nextUID == 0):
+            if(element.previousUID == 0 and element.nextUID == 0):
                self.element_set.add(element)
                return
 
         #This is a check for if the element already exists in the list
         for e in self.element_set:
             if (e.UID == element.UID):
-                """Return a RejectElementRequest here"""
+                raise RejectElementRequest
                 return
 
         #"""Case 2: Element is being added to the beginning of the list"""
-        if(element.isPrevious(0)):
+        if(element.previousUID == 0):
             for e in self.element_set:
-                if(e.isPrevious(0) and element.nextUID == e.UID()): 
+                if(e.previousUID == element.UID and element.nextUID == e.UID()): 
                     e.setPrevious(element.UID)
                     self.element_set.add(element)
-                    break
+                    return
 
         #"""Case 3: Element is being added to the end of the list"""
         elif(element.nextUID == 0):
             for e in self.element_set:
-                if(e.nextUID == 0 and element.isPrevious(e.UID)):
+                if(e.nextUID == 0 and element.previousUID == e.UID):
                     e.setNext(element.UID)
                     self.element_set.add(element)
-                    break
+                    return
 
         #"""Case 4: Element is being added between two existing nodes"""
         else:
@@ -69,101 +63,72 @@ class ListManager:
             nextElement = None
            
             for e in self.element_set:
-                if(element.isPrevious(e.UID)):
+                if(element.previousUID == e.UID):
                     previousElement = e
                 if(element.nextUID == e.UID):
                     nextElement = e
 
             if(previousElement != None and nextElement != None):
-                
-                #Case 4.1: Element is not creating a circular loop
-                if(nextElement.UID == previousElement.nextUID): 
+                if(nextElement.UID == previousElement.nextUID or previousElement.nextUID == 0): 
                     previousElement.setNext(element.UID)
-                    nextElement.addPrevious(element.UID)
-                    nextElement.removePrevious(previousElement.UID)
-                    
+                    nextElement.setPrevious(element.UID)
                     self.element_set.add(element)
+                    return
 
-                #Case 4.2: Element is creating a circular loop
-                elif(previousElement.nextUID == 0):
-                    previousElement.setNext(element.UID)
-                    nextElement.addPrevious(element.UID)
-                    self.element_set.add(element)
+        raise RejectElementRequest ##if any of the cases failed
 
     def deleteElement(self, element):
 
-        #"""Case 1: Element is not in the list"""
+        #Case where element is not in the list
         if element not in self.element_set:
-            """Return a "RejectElementRequest" message here"""
+            raise RejectElementRequest
             return 
 
-        #"""Case 2: There is 1 element in the list"""
+        #Check if there is only 1 element in the list
         if(len(self.element_set) == 1):
             self.element_set.remove(element)
             return
 
         nextElement = None
         previousElement = None
-
-        #"""Case 3: Element to be removed is the head of the list"""
-        if(element.isPrevious(0)):
-            for e in self.element_set:
-                if(element.nextUID == e.UID):
-                    nextElement = e
-
-            if(nextElement == None):
-                print("The code really should never have reached this point...")
-                """Return a "RejectElementRequest" here"""
-                return
-
-            nextElement.removePrevious(element.UID)
+        isLoopStart = False;
+        for e in self.element_set:
+            if(element.nextUID == e.UID):
+                nextElement = e
+            if(element.previousUID == e.UID):
+                previousElement = e
+            if(e.nextUID == element and element.previousUID != e.UID):
+                isLoopStart = True
+        
+        if(isLoopStart):
+            raise RejectElementRequest
+            return
+        if(previousElement == None):
+            nextElement.setPrevious(0)
             self.element_set.remove(element)
-
-        #"""Case 4: Element to be removed is at the end of the list"""
-
-        elif(element.nextUID == 0):
-            for e in self.element_set:
-                if(element.isPrevious(e.UID)):
-                    previousElement = e
-
-            if(previousElement == None):
-                print("The code really should never have reached this point...")
-                """Return a "RejectElementRequest" here"""
-                return
-
+            return
+        elif(nextElement == None):
             previousElement.setNext(0)
             self.element_set.remove(element)
-
-        #"""Case 5: Element to be removed is somewhere in the middle of the list"""
-        else:
-            previousList = []
-            nextElement = None
-
-            for e in self.element_set:
-                if(element.isPrevious(e.UID)):
-                    previousList.append(e)
-                if(element.nextUID == e.UID):
-                    nextElement = e
-            
-            
-            if(nextElement in previousList):
-                """retun RejectElementRequest here"""
-                return
-
-            nextElement.clearPreviousList()
-            for p in previousList:
-                p.setNext(element.nextUID)
-                nextElement.addPrevious(p.UID)
-
-           
+            return
+        elif(nextElement == previousElement):
+            previousElement.nextUID = 0
             self.element_set.remove(element)
+            return
+        else:
+            previousElement.setNext(element.nextUID)
+            nextElement.setPrevious(previousElement.UID)
+            self.element_set.remove(element)
+            return
+
+        raise RejectElementRequest
 
     def getElementSet(self):
         return self.element_set
 
     def getHead(self):
         for e in self.element_set:
-            if(e.isPrevious(0)):
+            if(e.previousUID == 0):
                 return e
         return None  
     
@@ -179,35 +144,20 @@ class ListElement:
     a node can have more than one previous element
     """
     def __init__(self, UID, previousUID, nextUID):
-        self.previousList = [previousUID]
+        self.previousUID = previousUID
         self.UID = UID
         self.nextUID = nextUID
         
     def setNext(self, next):
-        self.nextUID = next
+        if(next == self.UID):
+            self.nextUID = 0
+        else: 
+            self.nextUID = next
 
     def setPrevious(self, previous):
-        self.previousList = [previous]
+        if(previous == self.UID):
+            self.previousUID = 0
+        else:
+            self.previousUID = previous
 
-    def setPreviousList(self, list):
-        self.previousList = list
-
-    def addPrevious(self, previous):
-        self.previousList.append(previous)
-        if(0 in self.previousList):
-            previousList.remove(0)
-
-    def clearPreviousList(self):
-        self.previousList = []
-
-    def isLoopStart(self):
-        return (len(self.previousList) == 2)
-
-    def isPrevious(self, element):
-        return (element in self.previousList)
-
-    def removePrevious(self, id):
-        self.previousList.remove(id)
-        if(len(self.previousList) == 0):
-            self.previousList.append(0)
-    
+ 
