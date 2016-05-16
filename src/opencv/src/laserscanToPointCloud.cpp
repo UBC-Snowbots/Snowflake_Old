@@ -70,6 +70,8 @@ void LaserScanToPointCloud::scanCallBack(const sensor_msgs::LaserScan::ConstPtr&
     cloud.clear();
 
     //Create the cloud and its points
+    ros::Time time_stamp = ros::Time::now();
+    cloud.header.stamp = time_stamp.toNSec()/1e3;
     cloud.header.frame_id = "laser";
     cloud.width = scan->ranges.size();
     cloud.height = 1;

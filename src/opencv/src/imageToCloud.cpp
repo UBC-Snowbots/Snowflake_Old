@@ -75,7 +75,9 @@ void ImageToCloud::imageCallBack(const sensor_msgs::ImageConstPtr& msg, std::str
     cloud.clear();
 
     //Creating the cloud and its points
-    cloud.header.frame_id = "map";
+    ros::Time time_stamp = ros::Time::now();
+    cloud.header.stamp = time_stamp.toNSec()/1e3;
+    cloud.header.frame_id = "laser";
     cloud.width = inputImage.cols * inputImage.rows;
     cloud.height = 1;
     cloud.is_dense = false;

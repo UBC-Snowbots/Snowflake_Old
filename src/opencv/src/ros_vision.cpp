@@ -92,7 +92,7 @@ int main(int argc, char** argv){
     dstPoints.push_back( Point2f(0, 0) );
     
     //Creating the binary filter
-    snowbotsFilter filter(45, 130, 30, 165, 30, 255);
+    snowbotsFilter filter(0, 155, 0, 155, 150, 255);
 
     //Creating the IPM transformer
     IPM ipm(Size(width, height), Size(width,height), origPoints, dstPoints);

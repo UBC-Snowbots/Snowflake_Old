@@ -73,7 +73,10 @@ void PointCloudMerger::pointCloudCallBack(const sensor_msgs::PointCloud2::ConstP
     }
     ROS_INFO("Updated: %s", topic.c_str());
     pcl::concatenatePointCloud (cloud_A, cloud_B, merged_cloud);
-
+   
+    ros::Time time_stamp = ros::Time::now();
+    cloud.header.stamp = time_stamp.toNSec()/1e3;
+    cloud.header.frame_id="laser";
     pointcloud_publisher_.publish(merged_cloud);
 }
 
