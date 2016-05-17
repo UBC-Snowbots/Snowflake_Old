@@ -5,3 +5,11 @@ local_config.json
 /build
 /devel
 /install
+*.png
+*.jpeg
+*.jpg
+*.avi
+*.mov
+*.mp4
+*.m4a
+
