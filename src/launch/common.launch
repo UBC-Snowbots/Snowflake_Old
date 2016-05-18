@@ -6,7 +6,7 @@
 <launch>
 
     #### publish initial base_link -> laser transform ######################
-    <node pkg="tf" type="static_transform_publisher" name="base_link_to_laser" args="0 0 0 0 0 0 /base_link /laser 40"/>
+    <node pkg="tf" type="static_transform_publisher" name="base_link_to_laser" args="0.4 0 0 0 0 0 /base_link /laser 40"/>
 
     
     #### start the laser scan_matcher ##############################
@@ -21,7 +21,7 @@
         <param name="publish_pose" value="true"/>
         <param name="publish_tf" value="true"/>
         <param name="use_vel" value="false"/>
-        <param name="use_cloud_input" value="true"/>        
+        <param name="use_cloud_input" value="false"/>        
    
         <remap from="cloud" to="merged_cloud"/>
    
@@ -35,7 +35,7 @@
         <param name="maxUrange" value="4.0"/>
         <param name="linear_update" value="0.2"/>
         <param name="angularUpdate" value="0.2"/>
-        <param name="delta" value="0.04"/>
+        <param name="delta" value="0.5"/>
         <param name="occ_thresh" value="0.1"/>
         <param name="odom_frame" value="odom"/>
 
@@ -45,7 +45,7 @@
     <node pkg="decision" type="sb_waypoint_creator"
     name="sb_waypoint_creator" output="screen">
 
-        <rosparam param="path">[1, 2, 3, 4]</rosparam>
+        <rosparam param="path">[11, -2]</rosparam>
     
     </node>
 <!--

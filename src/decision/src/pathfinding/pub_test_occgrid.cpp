@@ -46,7 +46,7 @@ int main(int argc, char** argv)
 	for (int i = 0; i < 20*20; i++){
 		map.data.push_back(0);
 	}
-	for (int i = 2; i < 8; i++){
+	for (int i = 0; i < 8; i++){
 		map.data[map.info.width*i + 7] = 10;
 	}
 	for (int i = 9; i < 18; i++){

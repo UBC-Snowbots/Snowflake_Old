@@ -1,0 +1,13 @@
+<?xml version="1.0"?>
+
+<launch>
+
+    <node pkg="decision" type="pathfinding" name="pathfinding" output="screen">
+
+        <remap from="initial_pose" to="pose2D"/>
+        <remap from="final_pose" to="destination"/>
+        <remap from="occupancy_grid" to="map"/>
+
+    </node>
+
+</launch>

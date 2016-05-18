@@ -13,10 +13,10 @@
 
             angle_min: -1.5708 # -M_PI/2
             angle_max: 1.5708 # M_PI/2
-            angle_increment: 0.01 # M_PI/360.0
+            angle_increment: 0.003 # M_PI/360.0
             scan_time: 0.3333
-            range_min: 0
-            range_max: 20
+            range_min: 1
+            range_max: 18
             use_inf: true
 
             # Concurrency level, affects number of pointclouds queued for processing and number of threads used

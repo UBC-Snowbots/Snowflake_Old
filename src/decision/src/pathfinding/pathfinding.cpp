@@ -282,10 +282,18 @@ int getMovementCost(node_t *start, node_t* end){
  * @param  pose the untranslated pose
  * @return      the translated pose
  */
-geometry_msgs::Pose2D poseTranslator(nav_msgs::OccupancyGrid map, geometry_msgs::Pose2D pose){
+geometry_msgs::Pose2D poseRealToMapTranslator(nav_msgs::OccupancyGrid map, geometry_msgs::Pose2D pose){
 	geometry_msgs::Pose2D translated_pose;
-	translated_pose.x = map.info.origin.position.x + pose.x;
-	translated_pose.y = map.info.origin.position.y + pose.y;
+	translated_pose.x = (pose.x - map.info.origin.position.x)/map.info.resolution;
+	translated_pose.y = (pose.y - map.info.origin.position.y)/map.info.resolution;
+	return translated_pose;
+}
+
+
+geometry_msgs::Pose2D poseMapToRealTranslator(nav_msgs::OccupancyGrid map, geometry_msgs::Pose2D pose){
+	geometry_msgs::Pose2D translated_pose;
+	translated_pose.x = pose.x + map.info.origin.position.x;
+	translated_pose.y = pose.y + map.info.origin.position.y;
 	return translated_pose;
 }
 
@@ -309,15 +317,21 @@ geometry_msgs::Point get_next_waypoint(	nav_msgs::OccupancyGrid map,
 	vector<node_t*> closed_list;
 
 	node_t *starting_point = new node_t();
-	geometry_msgs::Pose2D current_trans = poseTranslator(map, current_position);
+	geometry_msgs::Pose2D current_trans = poseRealToMapTranslator(map, current_position);
 	starting_point->x = current_trans.x;
+    ROS_INFO("Starting point x: %f", current_position.x);
+    ROS_INFO("Starting point y:  %f" ,current_position.y);
+    ROS_INFO("Starting point trans x: %f", current_trans.x);
+    ROS_INFO("Starting point trans y:  %f", current_trans.y);
 	starting_point->y = current_trans.y;
 	starting_point->parent = starting_point;
 
 	node_t *end_goal = new node_t();
-	geometry_msgs::Pose2D target_trans = poseTranslator(map, target_position);
+	geometry_msgs::Pose2D target_trans = poseRealToMapTranslator(map, target_position);
 	end_goal->x = target_trans.x;
 	end_goal->y = target_trans.y;
+    ROS_INFO("End point x: %f", target_trans.x);
+    ROS_INFO("End point y:  %f", target_trans.y);
 
 	starting_point->g = 0;
 	starting_point->f = 0;
@@ -411,7 +425,9 @@ geometry_msgs::Point get_next_waypoint(	nav_msgs::OccupancyGrid map,
 		waypoint.x = trace[trace.size() - 2]->x;
 		waypoint.y = trace[trace.size() - 2]->y;
 	}
-
+    
+    waypoint.x = (waypoint.x * map.info.resolution + map.info.origin.position.x);
+    waypoint.y = (waypoint.y * map.info.resolution + map.info.origin.position.y);
 	waypoint.z = 0;
 	delete end_goal;
 	//Frees the memory
@@ -431,7 +447,7 @@ int main(int argc, char** argv){
 
 	ros::init(argc, argv, node_name);
 	ros::NodeHandle nh;
-
+    ROS_INFO("DIDNT DIE YET");
 	ros::Subscriber poseStartSub = nh.subscribe(init_pose_topic, 10, poseStartCallback);
 	ros::Subscriber poseEndSub = nh.subscribe(final_pose_topic, 10, poseEndCallback);
 	ros::Subscriber occGridSub = nh.subscribe(occ_grid_topic, 5, mapCallback);
@@ -460,7 +476,7 @@ int main(int argc, char** argv){
 	for (int i = 0; i < 20*20; i++){
 		g_map.data.push_back(0);
 	}
-
+    ROS_INFO("Got in to the main loop!");
 	while (nh.ok()){
 		geometry_msgs::Point waypoint = get_next_waypoint(g_map, g_start, g_end);
 		pointPub.publish(waypoint);
