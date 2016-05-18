@@ -263,11 +263,30 @@ vector<node_t*> traceback(vector<node_t*>& node_list, node_t *start_point, node_
 	return trace;
 }
 
+/**
+ * Returns the movement cost to an adjacent tile
+ * @param  start the tile we're on 
+ * @param  end   the tile we're moving to
+ * @return       the movement cost
+ */
 int getMovementCost(node_t *start, node_t* end){
 	if (get_man_distance(start, end) > 1){
 		return MOVEMENT_COST_DIAG;
 	} 
 	return MOVEMENT_COST_STR;
+}
+
+/**
+ * Returns the translated pose in the frame of the occupancy grid
+ * @param  map  the occupancy grid
+ * @param  pose the untranslated pose
+ * @return      the translated pose
+ */
+geometry_msgs::Pose2D poseTranslator(nav_msgs::OccupancyGrid map, geometry_msgs::Pose2D pose){
+	geometry_msgs::Pose2D translated_pose;
+	translated_pose.x = map.info.origin.position.x + pose.x;
+	translated_pose.y = map.info.origin.position.y + pose.y;
+	return translated_pose;
 }
 
 
@@ -290,13 +309,15 @@ geometry_msgs::Point get_next_waypoint(	nav_msgs::OccupancyGrid map,
 	vector<node_t*> closed_list;
 
 	node_t *starting_point = new node_t();
-	starting_point->x = current_position.x;
-	starting_point->y = current_position.y;
+	geometry_msgs::Pose2D current_trans = poseTranslator(map, current_position);
+	starting_point->x = current_trans.x;
+	starting_point->y = current_trans.y;
 	starting_point->parent = starting_point;
 
 	node_t *end_goal = new node_t();
-	end_goal->x = target_position.x;
-	end_goal->y = target_position.y;
+	geometry_msgs::Pose2D target_trans = poseTranslator(map, target_position);
+	end_goal->x = target_trans.x;
+	end_goal->y = target_trans.y;
 
 	starting_point->g = 0;
 	starting_point->f = 0;
