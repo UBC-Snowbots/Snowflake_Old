@@ -19,8 +19,10 @@
 //ROS MESSAGES
 #include <geometry_msgs/Point.h>
 #include <geometry_msgs/Pose2D.h>
+#include <geometry_msgs/PoseStamped.h>
 #include <nav_msgs/OccupancyGrid.h>
 #include <nav_msgs/MapMetaData.h>
+#include <nav_msgs/Path.h>
 
 //ROS MAIN LIBS
 #include <ros/ros.h>
@@ -297,6 +299,16 @@ geometry_msgs::Pose2D poseMapToRealTranslator(nav_msgs::OccupancyGrid map, geome
 	return translated_pose;
 }
 
+/**
+ * Want to return both the waypoint and the path
+ */
+struct pathfinding_info {
+public:	
+	geometry_msgs::Point waypoint;
+	nav_msgs::Path path;
+};
+
+
 
 /**
  * Gets the next waypoint to ge to the target position
@@ -305,7 +317,7 @@ geometry_msgs::Pose2D poseMapToRealTranslator(nav_msgs::OccupancyGrid map, geome
  * @param  target_position  the desired (x,y) position
  * @return                  the next (x,y) position we want to be in to get to the target position 
  */
-geometry_msgs::Point get_next_waypoint(	nav_msgs::OccupancyGrid map, 
+pathfinding_info get_next_waypoint(	nav_msgs::OccupancyGrid map, 
 										geometry_msgs::Pose2D current_position, 
 										geometry_msgs::Pose2D target_position)
 {
@@ -414,7 +426,20 @@ geometry_msgs::Point get_next_waypoint(	nav_msgs::OccupancyGrid map,
 	vector<node_t*> trace = traceback(closed_list, starting_point, end_goal);
 	//printNodeList(trace, "Trace list");
 	//Constructs the point given
-	geometry_msgs::Point waypoint;
+	geometry_msgs::Point waypoint;	
+	nav_msgs::Path *path = new nav_msgs::Path();
+	vector<geometry_msgs::PoseStamped> pose_init; 
+
+	//Output the path
+	for (int i = 0; i < trace.size(); i++){
+		geometry_msgs::PoseStamped *position = new geometry_msgs::PoseStamped();
+		position->pose.position.x = trace[trace.size() - 1 - i]->x;
+		position->pose.position.y = trace[trace.size() - 1 - i]->y;
+		position->pose.position.z = 0;
+
+		pose_init.push_back(*position);
+	}
+	path->poses = pose_init;
 
 	//If the only item is the end point i.e. current position == target position
 	if (trace.size() == 1){
@@ -434,7 +459,11 @@ geometry_msgs::Point get_next_waypoint(	nav_msgs::OccupancyGrid map,
 	freeList(open_list);
 	freeList(closed_list);
 
-	return waypoint; 
+	pathfinding_info *path_info = new pathfinding_info();
+	path_info->waypoint = waypoint;
+	path_info->path = *(path);
+
+	return *(path_info);
 }
 
 int main(int argc, char** argv){
@@ -443,7 +472,9 @@ int main(int argc, char** argv){
 	const string final_pose_topic = "final_pose";
 	const string occ_grid_topic = "occupancy_grid";
 	const string point_output_topic = "waypoint";
+	const string path_output_topic = "path";
 	const string node_name = "pathfinding_node";
+
 
 	ros::init(argc, argv, node_name);
 	ros::NodeHandle nh;
@@ -452,6 +483,7 @@ int main(int argc, char** argv){
 	ros::Subscriber poseEndSub = nh.subscribe(final_pose_topic, 10, poseEndCallback);
 	ros::Subscriber occGridSub = nh.subscribe(occ_grid_topic, 5, mapCallback);
 	ros::Publisher pointPub = nh.advertise<geometry_msgs::Point>(point_output_topic, 1);
+	ros::Publisher pathPub = nh.advertise<nav_msgs::Path>(path_output_topic, 1);
 	ros::Rate loop_rate(5);
 
 	//initialize in order to avoid segfaults
@@ -478,8 +510,9 @@ int main(int argc, char** argv){
 	}
     ROS_INFO("Got in to the main loop!");
 	while (nh.ok()){
-		geometry_msgs::Point waypoint = get_next_waypoint(g_map, g_start, g_end);
-		pointPub.publish(waypoint);
+		pathfinding_info path_info = get_next_waypoint(g_map, g_start, g_end);
+		pointPub.publish(path_info.waypoint);
+		pathPub.publish(path_info.path);
 		loop_rate.sleep();
 		ros::spinOnce();
 	}
