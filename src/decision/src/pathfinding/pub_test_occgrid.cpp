@@ -38,7 +38,7 @@ int main(int argc, char** argv)
 	origin.orientation.z = 0.0;
 	origin.orientation.w = 0.0;
 	nav_msgs::OccupancyGrid map;
-	map.info.resolution = 0.25;
+	map.info.resolution = 1;
 	map.info.width = 20;
 	map.info.height = 20;
 	map.info.origin = origin;
