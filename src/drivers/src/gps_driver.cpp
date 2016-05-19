@@ -83,7 +83,8 @@ void data_request(char c, char *buffer){
 	int i = 0;   
   while(read_bit(&read_byte)){
   *(buffer + i)= read_byte;  
-  }  
+  i++;
+	}  
   return;
 }
 

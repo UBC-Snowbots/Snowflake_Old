@@ -72,7 +72,7 @@ void send_compass(sensors_event_t event) {
   Serial.print(","); Serial.print(event.magnetic.x);
   Serial.print(","); Serial.print(event.magnetic.y);
   Serial.print(","); Serial.print(event.magnetic.z);
-  Serial.print(","); Serial.print(headingDegrees);
+  Serial.print(","); Serial.println(headingDegrees);
   //Serial.print(",");
 }
 void gps_setup() {
@@ -97,7 +97,7 @@ void send_gps(boolean data) {
     Serial.print(","); Serial.print(GPS.longitudeDegrees, 4);
     Serial.print(","); Serial.print((int)GPS.fix);
   } else {
-    Serial.print("GPS");
+    Serial.println("GPS");
   }
 }
 // Interrupt is called once a millisecond, looks for any new GPS data, and stores it
