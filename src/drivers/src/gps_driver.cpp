@@ -16,9 +16,11 @@ int main (int argc, char **argv){
     return 1;//Notify Error
   else 
     cout << "Connected to GPS Arduino" << endl;  
+	//usleep(1000);
+	//link_port.clearBuffer();
   while(ros::ok() && link_port.isActive()){
 //    cout << "inside loop" << endl; 
-		char buff[64]="\0"; 
+		char buff[32]="\0"; 
     data_request('D',buff);
 		if(gps_store(buff)){
     gps_msg_create();  
@@ -46,7 +48,7 @@ bool connect_device(std::string device_name){
 //  char buff[32] = "\0"; 
   int i = 0; 
   while (i < 9){
-  char buff[32] = "\0";
+  char buff[64] = "\0";
     /*if(open_port(i){
       data_request
     }*/
@@ -72,15 +74,17 @@ bool connect_device(std::string device_name){
 
 void data_request(char c, char *buffer){
   //clear input buffer and sends confirmation byte to prepare acceptance of message in seriali
-  
-  while(buffer[0] == '\0'){
-  link_port.clearBuffer(); 
+	//link_port.clearBuffer(); 
   stringstream ss; 
   ss << c; 
   link_port.writeData(ss.str(),1);
+	//usleep(200); 
+  while(buffer[0] == '\0'){
+  //link_port.clearBuffer(); 
   link_port.readData(64,buffer);
- 	cout << buffer << endl;
-	//cout << "data_request" << endl;  
+ 	//cout << buffer << endl;
+	//cout << "data_request" << endl;
+	usleep(500);
  } 
   return;
 }
@@ -115,32 +119,46 @@ std::string to_string2(char* c){
   return out.str();
 }
 
+
 bool gps_store(char *buffer){
   //To parse GPS data coming from arduino 
   //Assumed format for data already being parsed from arduino side
-  char *c; 
-  if (buffer[0] == 'G'){
-	  //buffer += 1;
-    c = strtok(buffer+1,",");
-    cout << "C: " << endl; 
-		while (c != NULL){
-      gps_comp_data.latitude = atof(c);
+	char *c;
+	//usleep(100);
+cout << buffer;
+//  strcpy (buffer, "G,49.2622,-123.2483,1,-11.73,-17.82,15.10,252.65");
+  c = strtok(buffer,",");
+  if (c == NULL) return false; 
+	if (c[0] == 'D'){
+    //buffer += 1;
+    c = strtok(NULL,",");
+   // cout << "C: "<< c  << endl;
+    if( c != NULL){
+   // cout << "0";
+    gps_comp_data.latitude = atof(c);
+//cout << "1";
       c = strtok(NULL,",");
       gps_comp_data.longitude = atof(c);
-			c = strtok(NULL,",");
-			gps_comp_data.fix = atoi(c);
-			c = strtok(NULL,",");
-      gps_comp_data.x = atof(c);
+//cout << "2";
+      c = strtok(NULL,",");
+      gps_comp_data.fix = atoi(c);
+//cout << "3";
+      c = strtok(NULL,",");
+       gps_comp_data.x = atof(c);
+//cout << "4";
       c = strtok(NULL,",");
       gps_comp_data.y = atof(c);
-	    c = strtok(NULL,",");
-	    gps_comp_data.z = atof(c);
-	    c = strtok(NULL,",");
-	    gps_comp_data.headingDegrees = atof(c);
-    }
-		return true; 
+//cout << "5";
+      c = strtok(NULL,",");
+      gps_comp_data.z = atof(c);
+//cout << "6";
+      c = strtok(NULL,",");
+      gps_comp_data.headingDegrees = atof(c);
+     //cout << "c not null" << endl;;
+    return true;
   }
-	else 
-		return false;
+  else{ //cout << "fail" << endl;
+    return false;}
+}
 }
 

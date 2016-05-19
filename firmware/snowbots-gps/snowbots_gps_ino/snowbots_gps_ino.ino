@@ -25,26 +25,29 @@ boolean usingInterrupt = false; //keeps track of using interrupt, off by default
 void useInterrupt(boolean);
 
 void setup() {
-  Serial.begin(15200);
+  Serial.begin(115200);
   gps_setup();
   compass_setup();
+  Serial.print("Setup finished");
 }
 
 void loop() {
   gps_check_new_data();
   sensors_event_t event;
   mag.getEvent(&event);
-
   char input = Serial.read();
-  input = 'D';
-  delay(1000);
+  //input = 'D';
+  //delay(1000);
   if (input == 'I') {
     send_gps(false);
   } else if (input == 'D') {
     send_gps(true);
     send_compass(event);
-    Serial.println();
+    //Serial.println();
   } 
+  
+  Serial.flushRX();
+ // Serial.flush();
 }
 void compass_setup() {
   if (!mag.begin())
@@ -70,6 +73,7 @@ void send_compass(sensors_event_t event) {
   Serial.print(","); Serial.print(event.magnetic.y);
   Serial.print(","); Serial.print(event.magnetic.z);
   Serial.print(","); Serial.print(headingDegrees);
+  //Serial.print(",");
 }
 void gps_setup() {
   GPS.begin(9600);
@@ -89,7 +93,7 @@ void gps_check_new_data() {
 void send_gps(boolean data) {
   //G(long),(lat),(fix)
   if (data) {
-    Serial.print("G"); Serial.print(GPS.latitudeDegrees, 4);
+    Serial.print("D,"); Serial.print(GPS.latitudeDegrees, 4);
     Serial.print(","); Serial.print(GPS.longitudeDegrees, 4);
     Serial.print(","); Serial.print((int)GPS.fix);
   } else {
