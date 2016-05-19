@@ -78,15 +78,21 @@ void data_request(char c, char *buffer){
   stringstream ss; 
   ss << c; 
   link_port.writeData(ss.str(),1);
-	//usleep(200); 
-  while(buffer[0] == '\0'){
-  //link_port.clearBuffer(); 
-  link_port.readData(64,buffer);
- 	//cout << buffer << endl;
-	//cout << "data_request" << endl;
-	usleep(500);
- } 
+	//usleep(200);
+	char read_byte;
+	int i = 0;   
+  while(read_bit(&read_byte)){
+  *(buffer + i)= read_byte;  
+  }  
   return;
+}
+
+bool read_bit(char *c){
+//returns true if next bit is char, false if \n
+	char *temp; 
+	link_port.readData(1,temp);	
+	if (*temp == '\n') return false;
+	else return true; 
 }
 
 bool open_port(unsigned int count){
