@@ -82,19 +82,28 @@ void data_request(char c, char *buffer){
 	char read_byte;
 	int i = 0;   
   while(read_bit(&read_byte)){
-  *(buffer + i)= read_byte;  
+  buffer[i]= read_byte;  
   i++;
-	}  
+	} 
+	cout << buffer; 
   return;
 }
 
+
 bool read_bit(char *c){
 //returns true if next bit is char, false if \n
-	char *temp; 
+	char temp[2]="\0"; 
+	while (temp == "\0"){
 	link_port.readData(1,temp);	
-	if (*temp == '\n') return false;
-	else return true; 
+	cout << temp;
+	if (temp[0] == '\n') return false;
+	else{
+		 *c = temp[0];
+		 return true; 
+		}
+	}
 }
+
 
 bool open_port(unsigned int count){
  //Attempts to open Serial Port 
@@ -102,7 +111,7 @@ bool open_port(unsigned int count){
         )))&& count < 9){
   count++;
   }
-  cout << endl; 
+  //cout << endl; 
   if (link_port.connect(BAUD_RATE,(ARDUINO_PORT_NAME + to_string(count)))){
     cout << "Connected on port" << ARDUINO_PORT_NAME << count << endl; 
     return true; 
