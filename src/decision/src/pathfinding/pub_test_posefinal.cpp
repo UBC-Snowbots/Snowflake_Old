@@ -1,6 +1,6 @@
 /**
  * Test Node, publishing
- * Publishes: Pose2D initial
+ * Publishes: Pose2D final
  */
 
 

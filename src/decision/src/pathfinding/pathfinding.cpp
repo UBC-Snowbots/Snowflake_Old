@@ -351,6 +351,7 @@ pathfinding_info get_next_waypoint(	nav_msgs::OccupancyGrid map,
 	starting_point->f = 0;
 	starting_point->h = 0;
 
+	/* Map priting for debug purposes
 	int** new_map = new int *[height];
 	for (int i = 0; i < height; i++){
 		new_map[i] = new int[width];
@@ -361,6 +362,7 @@ pathfinding_info get_next_waypoint(	nav_msgs::OccupancyGrid map,
 			new_map[i][j] = map.data[i*width + j];
 		}
 	}
+	*/
 
 	push(open_list, starting_point);
 	
@@ -429,19 +431,19 @@ pathfinding_info get_next_waypoint(	nav_msgs::OccupancyGrid map,
 	//printNodeList(trace, "Trace list");
 	//Constructs the point given
 	geometry_msgs::Point waypoint;	
-	nav_msgs::Path *path = new nav_msgs::Path();
+	nav_msgs::Path path;
 	vector<geometry_msgs::PoseStamped> pose_init; 
 
 	//Output the path
 	for (int i = 0; i < trace.size(); i++){
-		geometry_msgs::PoseStamped *position = new geometry_msgs::PoseStamped();
-		position->pose.position.x = trace[trace.size() - 1 - i]->x;
-		position->pose.position.y = trace[trace.size() - 1 - i]->y;
-		position->pose.position.z = 0;
+		geometry_msgs::PoseStamped position;
+		position.pose.position.x = trace[trace.size() - 1 - i]->x;
+		position.pose.position.y = trace[trace.size() - 1 - i]->y;
+		position.pose.position.z = 0;
 
-		pose_init.push_back(*position);
+		pose_init.push_back(position);
 	}
-	path->poses = pose_init;
+	path.poses = pose_init;
 
 	//If the only item is the end point i.e. current position == target position
 	if (trace.size() == 1){
@@ -461,11 +463,11 @@ pathfinding_info get_next_waypoint(	nav_msgs::OccupancyGrid map,
 	freeList(open_list);
 	freeList(closed_list);
 
-	pathfinding_info *path_info = new pathfinding_info();
-	path_info->waypoint = waypoint;
-	path_info->path = *(path);
+	pathfinding_info path_info;
+	path_info.waypoint = waypoint;
+	path_info.path = path;
 
-	return *(path_info);
+	return path_info;
 }
 
 int main(int argc, char** argv){
