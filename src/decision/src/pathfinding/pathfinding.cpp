@@ -6,6 +6,8 @@
  *
  * Subscribes to: Pose2D x 2, Occupancy Grid
  * Publishes to: Point waypoint
+ *
+ * TODO: Make node pointer smart pointers, (though I don't think there's memoory leaks as it is now)
  * 
  */
 
@@ -478,7 +480,6 @@ int main(int argc, char** argv){
 
 	ros::init(argc, argv, node_name);
 	ros::NodeHandle nh;
-    ROS_INFO("DIDNT DIE YET");
 	ros::Subscriber poseStartSub = nh.subscribe(init_pose_topic, 10, poseStartCallback);
 	ros::Subscriber poseEndSub = nh.subscribe(final_pose_topic, 10, poseEndCallback);
 	ros::Subscriber occGridSub = nh.subscribe(occ_grid_topic, 5, mapCallback);
@@ -508,7 +509,7 @@ int main(int argc, char** argv){
 	for (int i = 0; i < 20*20; i++){
 		g_map.data.push_back(0);
 	}
-    ROS_INFO("Got in to the main loop!");
+
 	while (nh.ok()){
 		pathfinding_info path_info = get_next_waypoint(g_map, g_start, g_end);
 		pointPub.publish(path_info.waypoint);
