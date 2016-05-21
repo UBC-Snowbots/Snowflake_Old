@@ -5,6 +5,7 @@ local_config.json
 /build
 /devel
 /install
+/nodes
 *.png
 *.jpeg
 *.jpg
