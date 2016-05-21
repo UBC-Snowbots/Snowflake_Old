@@ -4,6 +4,6 @@
 -->
 
     <node pkg="map_server" name="map_server" type="map_server" 
-	args="$(find opencv)/maps/edc_map.yaml" />
+	args="$(find mapping)/maps/edc_map.yaml" />
 
 </launch>

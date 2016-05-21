@@ -58,3 +58,4 @@ add_dependencies(ros_vision opencv)
 add_dependencies(image_to_cloud opencv)
 
 add_dependencies(laserscan_to_pointcloud laser_geometry)
+
