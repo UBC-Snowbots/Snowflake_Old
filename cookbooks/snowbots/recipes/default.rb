@@ -45,7 +45,7 @@ apt_package 'ros-indigo-image-pipeline'
 apt_package 'v4l-utils'
 apt_package 'ros-indigo-cv-camera'
 apt_package 'ros-indigo-tf2-bullet'
-
+apt_package 'ros-indigo-map-server'
 
 python_pip 'docopt'
 
