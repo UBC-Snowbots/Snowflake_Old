@@ -4,7 +4,7 @@
 -->
 
     <node pkg="mapping" name="map_inflater" type="map_inflater">
-        <rosparam param="inflation_factor">0.5</rosparam>
+        <rosparam param="inflation_factor">0.3</rosparam>
     </node>
 
 </launch>
