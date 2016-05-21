@@ -1,9 +1,11 @@
 ﻿import pytest
 
+
 from jaus.list_manager import(
 
     ListManager,
-    ListElement
+    ListElement,
+    RejectElementRequest
 )
 
 #Test that inserting an element into an empty List works as intended
@@ -208,6 +210,7 @@ Tests multiple requests that should be rejected, such as:
 The list will begin (and should end) in the following form:
     17->83->21->4->18->26->21 (circular)
 """
+
 def test_multiple_rejections():
     
     list_manager = ListManager()
@@ -231,11 +234,13 @@ def test_multiple_rejections():
     #Now it's time for the requests which need to be rejected
 
     repeatedElement = ListElement(83,4,18)
-    list_manager.setElement(repeatedElement) #Add element with an ID that already exists
+    with pytest.raises(RejectElementRequest):
+        list_manager.setElement(repeatedElement) #Add element with an ID that already exists
 
 
     secondLoopElement = ListElement(211,4,21)
-    list_manager.setElement(secondLoopElement) #Add a second loop
+    with pytest.raises(RejectElementRequest):
+        list_manager.setElement(secondLoopElement) #Add a second loop
 
 
 
@@ -259,3 +264,5 @@ def test_multiple_rejections():
 
     list_seventh = list_manager.getElement(list_sixth.nextUID)
     assert(list_seventh == third_element)
+
+    
