@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 2.8.3)
 project(mapping)
-
+add_definitions(--std=c++11)
 ## Find catkin macros and libraries
 ## if COMPONENTS list like find_package(catkin REQUIRED COMPONENTS xyz)
 ## is used, also find other catkin packages
@@ -119,7 +119,7 @@ include_directories(
 )
 
 include_directories(
-  ${occupancy_grid_utils-indigo-devel_INCLUDE_DIRS}
+  ${occupancy_grid_utils_INCLUDE_DIRS}
 )
 ## Declare a C++ library
 # add_library(mapping
@@ -132,8 +132,9 @@ include_directories(
 # add_dependencies(mapping ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
 
 ## Declare a C++ executable
-# add_executable(mapping_node src/mapping_node.cpp)
-
+add_executable(occ_grid_combiner src/occupancy_grid_combiner.cpp)
+target_link_libraries(occ_grid_combiner ${catkin_LIBRARIES})
+add_dependencies(occ_grid_combiner occupancy_grid_utils)
 ## Add cmake target dependencies of the executable
 ## same as for the library above
 # add_dependencies(mapping_node ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
