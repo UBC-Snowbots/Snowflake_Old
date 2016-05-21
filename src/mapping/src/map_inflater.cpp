@@ -26,7 +26,7 @@ MapInflater::MapInflater(){
     ros::NodeHandle public_nh;
     ros::NodeHandle private_nh("~");
     inflation_factor = 0.5;
-    private_nh.getParam("inflatation_factor", inflation_factor);
+    private_nh.getParam("inflation_factor", inflation_factor);
     map_sub = public_nh.subscribe("map", 1, &MapInflater::mapCallBack, this);
     string topic = public_nh.resolveName("inflated_map");
     map_pub = public_nh.advertise<nav_msgs::OccupancyGrid>(topic, 1);
@@ -34,7 +34,7 @@ MapInflater::MapInflater(){
 
 void MapInflater::mapCallBack(const nav_msgs::OccupancyGrid::ConstPtr& map){
     nav_msgs::OccupancyGrid::Ptr inflated_map;
-    inflated_map = occupancy_grid_utils::inflateObstacles(*map, 0.5, false);
+    inflated_map = occupancy_grid_utils::inflateObstacles(*map, inflation_factor, false);
     map_pub.publish(inflated_map);
 }
 
