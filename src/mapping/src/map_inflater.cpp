@@ -19,13 +19,17 @@ class MapInflater{
     private:
         ros::Subscriber map_sub;
         ros::Publisher map_pub;
+        float inflation_factor;
 };
 
 MapInflater::MapInflater(){
-    ros::NodeHandle nh;
-    map_sub = nh.subscribe("map", 1, &MapInflater::mapCallBack, this);
-    string topic = nh.resolveName("inflated_map");
-    map_pub = nh.advertise<nav_msgs::OccupancyGrid>(topic, 1);
+    ros::NodeHandle public_nh;
+    ros::NodeHandle private_nh("~");
+    inflation_factor = 0.5;
+    private_nh.getParam("inflatation_factor", inflation_factor);
+    map_sub = public_nh.subscribe("map", 1, &MapInflater::mapCallBack, this);
+    string topic = public_nh.resolveName("inflated_map");
+    map_pub = public_nh.advertise<nav_msgs::OccupancyGrid>(topic, 1);
 }
 
 void MapInflater::mapCallBack(const nav_msgs::OccupancyGrid::ConstPtr& map){
