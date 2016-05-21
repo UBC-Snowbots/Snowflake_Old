@@ -16,7 +16,6 @@
 //stdlibs
 #include <iostream>
 #include <unistd.h>
-#include <iostream>
 
 //PCL
 #include <pcl/io/pcd_io.h>
@@ -30,8 +29,8 @@
 #include <pcl/console/parse.h>
 
 
-using namespace cv; 
-using namespace std; 
+using namespace cv;
+using namespace std;
 
 const int NUM_ELTS_SKIPPED = 2;
 const int MAX_HEIGHT = 20;
@@ -45,11 +44,11 @@ class ImageToCloud {
         void imageCallBack(const sensor_msgs::ImageConstPtr& msg, std::string topic);
     private:
         Mat inputImage = Mat::zeros(480, 640, CV_8UC1);
-	    ros::Publisher pub;
+	      ros::Publisher pub;
         image_transport::Subscriber sub;
 };
 
-ImageToCloud::ImageToCloud(){ 
+ImageToCloud::ImageToCloud(){
 	ros::NodeHandle nh;
     image_transport::ImageTransport it(nh);
     sub = it.subscribe("image", 1, boost::bind(&ImageToCloud::imageCallBack, this, _1, "image"));
@@ -72,7 +71,7 @@ void ImageToCloud::imageCallBack(const sensor_msgs::ImageConstPtr& msg, std::str
         ROS_ERROR("Could not convert from '%s' to 'mono8'.", msg->encoding.c_str());
     }
 
-    pcl::PointCloud<pcl::PointXYZ> cloud;    
+    pcl::PointCloud<pcl::PointXYZ> cloud;
     //Isn't needed? Questionable
     cloud.clear();
 
@@ -95,7 +94,7 @@ void ImageToCloud::imageCallBack(const sensor_msgs::ImageConstPtr& msg, std::str
                     point.z = (float) i/Z_SCALE_FACTOR;
                     cloud.push_back(point);
                 }
-            } 
+            }
         }
     }
 
@@ -112,4 +111,4 @@ int main(int argc, char** argv) {
     ros::spin();
 
     return 0;
-}	
+}
