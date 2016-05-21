@@ -135,6 +135,12 @@ include_directories(
 add_executable(occ_grid_combiner src/occupancy_grid_combiner.cpp)
 target_link_libraries(occ_grid_combiner ${catkin_LIBRARIES})
 add_dependencies(occ_grid_combiner occupancy_grid_utils)
+
+add_executable(map_inflater src/map_inflater.cpp)
+target_link_libraries(map_inflater ${catkin_LIBRARIES})
+add_dependencies(map_inflater occupancy_grid_utils)
+
+
 ## Add cmake target dependencies of the executable
 ## same as for the library above
 # add_dependencies(mapping_node ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
