@@ -6,6 +6,8 @@
  *
  * Subscribes to: Pose2D x 2, Occupancy Grid
  * Publishes to: Point waypoint
+ *
+ * TODO: Make node pointer smart pointers, (though I don't think there's memoory leaks as it is now)
  * 
  */
 
@@ -349,6 +351,7 @@ pathfinding_info get_next_waypoint(	nav_msgs::OccupancyGrid map,
 	starting_point->f = 0;
 	starting_point->h = 0;
 
+	/* Map priting for debug purposes
 	int** new_map = new int *[height];
 	for (int i = 0; i < height; i++){
 		new_map[i] = new int[width];
@@ -359,6 +362,7 @@ pathfinding_info get_next_waypoint(	nav_msgs::OccupancyGrid map,
 			new_map[i][j] = map.data[i*width + j];
 		}
 	}
+	*/
 
 	push(open_list, starting_point);
 	
@@ -427,19 +431,19 @@ pathfinding_info get_next_waypoint(	nav_msgs::OccupancyGrid map,
 	//printNodeList(trace, "Trace list");
 	//Constructs the point given
 	geometry_msgs::Point waypoint;	
-	nav_msgs::Path *path = new nav_msgs::Path();
+	nav_msgs::Path path;
 	vector<geometry_msgs::PoseStamped> pose_init; 
 
 	//Output the path
 	for (int i = 0; i < trace.size(); i++){
-		geometry_msgs::PoseStamped *position = new geometry_msgs::PoseStamped();
-		position->pose.position.x = trace[trace.size() - 1 - i]->x;
-		position->pose.position.y = trace[trace.size() - 1 - i]->y;
-		position->pose.position.z = 0;
+		geometry_msgs::PoseStamped position;
+		position.pose.position.x = trace[trace.size() - 1 - i]->x;
+		position.pose.position.y = trace[trace.size() - 1 - i]->y;
+		position.pose.position.z = 0;
 
-		pose_init.push_back(*position);
+		pose_init.push_back(position);
 	}
-	path->poses = pose_init;
+	path.poses = pose_init;
 
 	//If the only item is the end point i.e. current position == target position
 	if (trace.size() == 1){
@@ -459,11 +463,11 @@ pathfinding_info get_next_waypoint(	nav_msgs::OccupancyGrid map,
 	freeList(open_list);
 	freeList(closed_list);
 
-	pathfinding_info *path_info = new pathfinding_info();
-	path_info->waypoint = waypoint;
-	path_info->path = *(path);
+	pathfinding_info path_info;
+	path_info.waypoint = waypoint;
+	path_info.path = path;
 
-	return *(path_info);
+	return path_info;
 }
 
 int main(int argc, char** argv){
@@ -478,7 +482,6 @@ int main(int argc, char** argv){
 
 	ros::init(argc, argv, node_name);
 	ros::NodeHandle nh;
-    ROS_INFO("DIDNT DIE YET");
 	ros::Subscriber poseStartSub = nh.subscribe(init_pose_topic, 10, poseStartCallback);
 	ros::Subscriber poseEndSub = nh.subscribe(final_pose_topic, 10, poseEndCallback);
 	ros::Subscriber occGridSub = nh.subscribe(occ_grid_topic, 5, mapCallback);
@@ -508,7 +511,7 @@ int main(int argc, char** argv){
 	for (int i = 0; i < 20*20; i++){
 		g_map.data.push_back(0);
 	}
-    ROS_INFO("Got in to the main loop!");
+
 	while (nh.ok()){
 		pathfinding_info path_info = get_next_waypoint(g_map, g_start, g_end);
 		pointPub.publish(path_info.waypoint);
