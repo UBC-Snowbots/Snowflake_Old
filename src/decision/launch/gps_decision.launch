@@ -1,0 +1,13 @@
+<?xml version="1.0"?>
+
+<launch>
+
+    <node pkg="decision" type="gps_decision"
+    name="gps_decision" output="screen">
+
+	<rosparam param="waypoints">[10, 20]</rosparam>
+    	<rosparam param="tolerance">1</rosparam>
+
+    </node>
+
+</launch>

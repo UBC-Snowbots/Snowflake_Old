@@ -5,7 +5,10 @@ local_config.json
 /build
 /devel
 /install
+<<<<<<< HEAD
+=======
 /local-mode-cache
+>>>>>>> 2c192ef8708a29eb7da4028211076c96f4582ca3
 /nodes
 *.png
 *.jpeg

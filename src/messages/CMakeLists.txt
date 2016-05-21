@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 2.8.3)
-project (messages)
+project (sb_messages)
 
 find_package(catkin REQUIRED COMPONENTS
   roscpp
@@ -13,11 +13,11 @@ add_message_files(
 
 generate_messages(
   DEPENDENCIES
-  messages
+  sb_messages
 )
 
 catkin_package(
-  CATKIN_DEPENDS 
+  CATKIN_DEPENDS
   roscpp
   message_runtime
 )

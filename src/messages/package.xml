@@ -1,6 +1,6 @@
 <?xml version="1.0"?>
 <package>
-  <name>messages</name>
+  <name>sb_messages</name>
   <version>0.0.0</version>
   <description>Custom message package</description>
   <maintainer email="yuanv@alumni.ubc.ca">Vincent Yuan</maintainer>
@@ -12,4 +12,3 @@
   <run_depend>roscpp</run_depend>
   <run_depend>message_runtime</run_depend>
 </package>
-      

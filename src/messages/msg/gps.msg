@@ -1,4 +1,4 @@
 #gps_message format
-float64 Lon  #Longitude
-float64 Lat  #Latitude 
-float64 Head #heading from compass
+float64 lon  #Longitude
+float64 lat  #Latitude
+float64 head #heading from compass
