@@ -1,4 +1,4 @@
-import enum as _enum
+﻿import enum as _enum
 import bitstring as _bitstring
 
 import jaus.format as _format
@@ -88,6 +88,21 @@ class MessageCode(_enum.Enum):
     ConfirmControl = 0x000F
     ReportAuthority = 0x4001
     ReportTimeout = 0x4003
+
+    ## List Manager Service
+    #Input Set
+    SetElement = 0x041A
+    DeleteElement = 0x041B
+    QueryElement = 0x241A
+    QueryElementList = 0x241B
+    QueryElementCount = 0x241C
+    #Output Set
+    ConfirmElementRequest = 0x041C
+    RejectElementRequest = 0x041D
+    ReportElement = 0x441A
+    ReportElementList = 0x441B
+    ReportElementCount = 0x441C
+
 
 Message = _format.specification('Message', specs=[
         _format.Enum('message_code', MessageCode, bytes=2, endianness='le'),
