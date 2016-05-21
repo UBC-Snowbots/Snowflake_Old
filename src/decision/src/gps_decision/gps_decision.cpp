@@ -18,9 +18,13 @@ using namespace std;
 // Finds the distancce between two waypoints
 float distanceBetweenWaypoints(sb_messages::gps waypoint1, sb_messages::gps waypoint2){
     double lat1 = waypoint1.lat*M_PI/180;
+    cout << "lat1: " << lat1 << endl;
     double lon1 = waypoint1.lon*M_PI/180;
+    cout << "lon1: " << lat1 << endl;
     double lat2 = waypoint2.lat*M_PI/180;
+    cout << "lat2: " << lat1 << endl;
     double lon2 = waypoint2.lon*M_PI/180;
+    cout << "lon2: " << lat1 << endl;
 
     //Haversine:
     double distance = pow(sin((lat2 - lat1)/2),2) +
@@ -28,6 +32,21 @@ float distanceBetweenWaypoints(sb_messages::gps waypoint1, sb_messages::gps wayp
     distance = 2*atan2(sqrt(distance),sqrt(1-distance));
     distance *= 6371000; //Earth radius in m
     return distance;
+}
+
+float bearingBetweenWaypoints(sb_messages::gps waypoint1, sb_messages::gps waypoint2){
+    double lat1 = waypoint1.lat*M_PI/180;
+    cout << "lat1: " << lat1 << endl;
+    double lon1 = waypoint1.lon*M_PI/180;
+    cout << "lon1: " << lat1 << endl;
+    double lat2 = waypoint2.lat*M_PI/180;
+    cout << "lat2: " << lat1 << endl;
+    double lon2 = waypoint2.lon*M_PI/180;
+    cout << "lon2: " << lat1 << endl;
+    float delta_lon = lon1 - lon2;
+     float x = cos(lat2) * sin(delta_lon);
+     float y = cos(lat1) * sin(lat2) - sin(lat1) * cos(lat2) * cos(delta_lon);
+    return atan2(x, y);
 }
 
 // A class designed to broadcast waypoints sequentially, with the next one being broadcast when the
@@ -115,14 +134,18 @@ void gpsManager::gpsCallBack(const sb_messages::gps::ConstPtr& gps){
 void gpsManager::publishNextWaypoint(){
     sb_messages::gps current_waypoint = waypoints[waypoints.size() - 1];
     // Convert current waypoint to robot's prespective
-    float distance = distanceBetweenWaypoints(origin, present_location);
+    float distance = distanceBetweenWaypoints(origin, current_waypoint);
     cout << "Distance: " << distance << endl;
-    float theta = origin.head;
-    cout << "Theta: " << distance << endl;
-    geometry_msgs::Pose2D present_waypoint_pose;
-    present_waypoint_pose.x = cos(theta) * distance;
-    present_waypoint_pose.y = sin(theta) * distance;
-    present_waypoint_pose.theta = present_location.head + origin.head;
+    float theta = bearingBetweenWaypoints(origin, current_waypoint);
+    cout << "Theta: " << theta << endl;
+    // x and y values from gps presepective
+    float gps_x = cos(theta) * distance;
+    float gps_y = sin(theta) * distance;
+    // Local coordinates determined via a matrix algebra rotation matrix
+    geometry_msgs::Pose2D present_waypoint_pose; // A pose representing the next waypoint to go to
+    present_waypoint_pose.x = cos(origin.head) * gps_x + sin(origin.head) * gps_x;
+    present_waypoint_pose.y = -sin(origin.head) * gps_y + cos(origin.head) * gps_y;
+    present_waypoint_pose.theta = 0;
 // Publish the waypoint
     waypoint_pub.publish(present_waypoint_pose);
 }
