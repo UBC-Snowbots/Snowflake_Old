@@ -14,7 +14,7 @@
 #include "SerialCommunication.h" 
 //constant declerations
 static const string ROS_NODE_NAME = "gps_driver"; 
-static const int ROS_LOOP_RATE = 10; 
+static const int ROS_LOOP_RATE = 1; 
 static const int BAUD_RATE = 115200; 
 static const string SENSOR_OUTPUT_TOPIC = "GPS"; 
 static const string ARDUINO_PORT_NAME = "/dev/ttyACM"; 

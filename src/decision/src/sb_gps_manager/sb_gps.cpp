@@ -37,39 +37,7 @@ void gpsDriverHandler(const ::messages::gps::ConstPtr& gps){
   CurrentPosition.Head = gps->Head; 
  
 }
-void gpsSubHandle(const std_msgs::String::ConstPtr& msg){
-  /* Copied function from old NMEA parser written last year
-   * Input: Message picked up by subscriber 
-   * Output: Void 
-   * Note: DO NOT SHOW FINN; Will clean up and re-write later - (Vincent)*/
-    
-  char a[64]; 
-  char temp[8];
-  int x,y,i = 0, j; 
-  string str = msg->data; 
-  
-  while (str[i] != '\0'){a[i] = str[i]; i++;}
-  if(a[0] != 'B' && a[1] != ','){cout << "no B" << endl; return;}
-  if(a[10] != 'e' && a[24] != 'e'){cout << "no e" << endl; return;}
-  if(a[14] != ',' && a[28] != ','){cout << "no comma" << endl; return;}
-  if(a[33] != '.'){cout << "no compass" << endl; return;} 
-  
-  for(i = 2, j = 0; i < 9 || j < 7; i++,j++){
-    if(a[i]=='.') j--;
-    else temp[j] = a[i];
-  }
-  LastWaypoint.lon = CurrentWaypoint.lon; 
-  CurrentWaypoint.lon = atoi(temp); 
-  
-  for(i = 15, j = 0; i < 10 || j < 8; i++, j++){
-    if (a[i] == '.') j--;
-    else temp[j] = a[i];
-  }
-  LastWaypoint.lat = CurrentWaypoint.lat; 
-  CurrentWaypoint.lat = atoi(temp); 
-  
-  return;
-}
+
 
 double calculate_distance(){
 /*

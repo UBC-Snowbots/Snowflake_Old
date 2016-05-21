@@ -10,7 +10,7 @@ using namespace std;
 int main (int argc, char **argv){
   ros::init(argc, argv, ROS_NODE_NAME);
   ros::NodeHandle nh; 
-  ros::Rate loop_rate(ROS_LOOP_RATE); 
+  ros::Rate loop_rate(10); 
   ros::Publisher gps_publisher = nh.advertise<::messages::gps>(SENSOR_OUTPUT_TOPIC,20); 
   if(!connect_device("GPS"))
     return 1;//Notify Error
@@ -19,15 +19,20 @@ int main (int argc, char **argv){
 	//usleep(1000);
 	//link_port.clearBuffer();
   while(ros::ok() && link_port.isActive()){
-//    cout << "inside loop" << endl; 
-		char buff[32]="\0"; 
-    data_request('D',buff);
-		if(gps_store(buff)){
-    gps_msg_create();  
-		cout << gps_msg << endl;
-		gps_publisher.publish(gps_msg); 
-		}
-	} 
+		    char buff[32] = "\0";
+        data_request('D',buff);
+        std::string g_input = to_string2(buff);
+        cout << buff;
+        if (g_input.find('\n')!=std::string::npos 
+            && g_input.find('D')!=std::string::npos){
+          cout << "GPS: " << buff; 
+          gps_store(buff);
+          cout << "gps.Lon: " << gps_msg.Lon << endl; 
+          cout << "gps.Lat: " << gps_msg.Lat << endl; 
+          cout << "gps.Head: " << gps_msg.Head << endl; 
+        }
+        loop_rate.sleep();
+    } 
   ROS_ERROR("GPS Node Terminated"); 
   return 0;
 }
@@ -45,65 +50,25 @@ return;
 }
 
 bool connect_device(std::string device_name){
-//  char buff[32] = "\0"; 
-  int i = 0; 
-  while (i < 9){
-  char buff[64] = "\0";
-    /*if(open_port(i){
-      data_request
-    }*/
-    if(!open_port(i)){
-      ROS_ERROR("PORT ERROR"); 
-      return false; 
+  int i = 0;
+  while ( i < 9 ){
+  char buff[32] = "\0";
+    if(open_port(i)){
+      data_request('I',buff);
+      std::string s_input = to_string2(buff);
+      while(s_input.find('\n')==std::string::npos){
+          data_request('I',buff);
+          s_input = to_string2(buff);
+      }
+      if(s_input.find(device_name)!=std::string::npos)
+          return true;
     }
-   data_request('I',buff);
-  //  link_port.readData(32,buff);
-     
-//Repeat until read gives value?
-  //  cout << "buff:" << buff << endl;  
-    std::string s_input = to_string2(buff);
-//    cout << "s_input: " << s_input << endl;
-    if(s_input.find(device_name)!=std::string::npos)
-      return true; 
-    else 
-      i++; 
+   i++;
   }
+
   ROS_ERROR("Connected device is not GPS"); 
   return false; 
 } 
-
-void data_request(char c, char *buffer){
-  //clear input buffer and sends confirmation byte to prepare acceptance of message in seriali
-	//link_port.clearBuffer(); 
-  stringstream ss; 
-  ss << c; 
-  link_port.writeData(ss.str(),1);
-	//usleep(200);
-	char read_byte;
-	int i = 0;   
-  while(read_bit(&read_byte)){
-  buffer[i]= read_byte;  
-  i++;
-	} 
-	cout << buffer; 
-  return;
-}
-
-
-bool read_bit(char *c){
-//returns true if next bit is char, false if \n
-	char temp[2]="\0"; 
-	while (temp == "\0"){
-	link_port.readData(1,temp);	
-	cout << temp;
-	if (temp[0] == '\n') return false;
-	else{
-		 *c = temp[0];
-		 return true; 
-		}
-	}
-}
-
 
 bool open_port(unsigned int count){
  //Attempts to open Serial Port 
@@ -114,6 +79,7 @@ bool open_port(unsigned int count){
   //cout << endl; 
   if (link_port.connect(BAUD_RATE,(ARDUINO_PORT_NAME + to_string(count)))){
     cout << "Connected on port" << ARDUINO_PORT_NAME << count << endl; 
+    usleep(5000);
     return true; 
   }
   else{ 
@@ -122,59 +88,56 @@ bool open_port(unsigned int count){
   }  
 }
 
-
-
 std::string to_string(int i){
   ostringstream out;
   out << i; 
   return out.str();
 }
 std::string to_string2(char* c){
+  //used in connect_device
   ostringstream out;    
   out << c;
   return out.str();
 }
 
+void data_request(char c, char *buffer){
+  //clear input buffer and sends confirmation byte to prepare acceptance of message in seriali
+  link_port.clearBuffer(); 
+  stringstream ss; 
+  ss << c; 
+  int i = 0;
+  link_port.writeData(ss.str(),1);
+  while(buffer[0] == '\0'){
+    link_port.readData(32,buffer); 
+  } 
+  cout << buffer << endl;
+  return;
+}
+
+void struct_store(int type, char *val){
+  switch(type){
+    case 1: gps_comp_data.latitude = atof(val); break;
+    case 2: gps_comp_data.longitude = atof(val); break;
+    case 3: gps_comp_data.fix = atoi(val); break;
+    case 4: gps_comp_data.headingDegrees = atof(val); break;
+  }
+}
 
 bool gps_store(char *buffer){
   //To parse GPS data coming from arduino 
   //Assumed format for data already being parsed from arduino side
 	char *c;
-	//usleep(100);
-cout << buffer;
-//  strcpy (buffer, "G,49.2622,-123.2483,1,-11.73,-17.82,15.10,252.65");
+  int i = 1;
   c = strtok(buffer,",");
-  if (c == NULL) return false; 
-	if (c[0] == 'D'){
-    //buffer += 1;
-    c = strtok(NULL,",");
-   // cout << "C: "<< c  << endl;
-    if( c != NULL){
-   // cout << "0";
-    gps_comp_data.latitude = atof(c);
-//cout << "1";
-      c = strtok(NULL,",");
-      gps_comp_data.longitude = atof(c);
-//cout << "2";
-      c = strtok(NULL,",");
-      gps_comp_data.fix = atoi(c);
-//cout << "3";
-      c = strtok(NULL,",");
-       gps_comp_data.x = atof(c);
-//cout << "4";
-      c = strtok(NULL,",");
-      gps_comp_data.y = atof(c);
-//cout << "5";
-      c = strtok(NULL,",");
-      gps_comp_data.z = atof(c);
-//cout << "6";
-      c = strtok(NULL,",");
-      gps_comp_data.headingDegrees = atof(c);
-     //cout << "c not null" << endl;;
-    return true;
+  if(c[0] == 'D'){
+    while (c != NULL){
+        c = strtok(NULL,",");
+        struct_store(i, c); 
+     }
+    return true;    
   }
   else{ //cout << "fail" << endl;
-    return false;}
+      return false;}
 }
-}
+
 

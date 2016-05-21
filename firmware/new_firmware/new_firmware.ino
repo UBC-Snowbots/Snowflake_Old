@@ -22,8 +22,10 @@ void setup() {
   pinMode(3,INPUT);
   pinMode(4,INPUT);
   pinMode(5,INPUT);
-  LeftM.attach(9);
-  RightM.attach(10);
+  LeftMF.attach(9);
+  RightMF.attach(10);
+  LeftMB.attach(11);
+  RightB.attach(12);
   set_off();
 }
 
@@ -123,33 +125,43 @@ void drive(){
  if(lx == 90){
   if(ly == 90){
    if (az == 90){
-     LeftM.write(90);
-     RightM.write(90);
+     LeftMF.write(90);
+     LeftMB.write(90);
+     RightMF.write(90);
+     RightMB.write(90);
    }
    else{
      if(az > 90){
-    LeftM.write(az+LEFT_TURN);
-    RightM.write(az+LEFT_TURN);  
-           Serial.print("left: ");Serial.print(az+10);Serial.print(" right: ");Serial.println(az+10);
+    LeftMF.write(az+LEFT_TURN);
+    LeftMB.write(az+LEFT_TURN);
+    RightMF.write(az+LEFT_TURN);
+    RightMB.write(az+LEFT_TURN);  
+           //Serial.print("left: ");Serial.print(az+10);Serial.print(" right: ");Serial.println(az+10);
          }
      else{
-       LeftM.write(az+RIGHT_TURN);
-       RightM.write(az+RIGHT_TURN);      
-       Serial.print("left: ");Serial.print(az);Serial.print(" right: ");Serial.println(az);
+       LeftMF.write(az+RIGHT_TURN);
+       LeftMB.write(az+RIGHT_TURN);
+       RightMF.write(az+RIGHT_TURN); 
+       RightMB.write(az+RIGHT_TURN);     
+       //Serial.print("left: ");Serial.print(az);Serial.print(" right: ");Serial.println(az);
    }
    }
   }
   else{
    if (ly > 90){
    int y = ly - 90; 
-   LeftM.write(90+y+13);//if 80 //if 100 
-   RightM.write(90-y-7);//needs to be 100 //needs to be 80 
+   LeftMF.write(90+y+13);//if 80 //if 100 
+   LeftMB.write(90+y+13);
+   RightMF.write(90-y-7);
+   RightMB.write(90-y-7);//needs to be 100 //needs to be 80 
    //Serial.print("left: ");Serial.print(90+y);Serial.print(" right: ");Serial.println(90-y);
    }
    else{
    int y = 90-ly;
-   LeftM.write(90-y-7);
-   RightM.write(90+y+11);
+   LeftMF.write(90-y-7);
+   LeftMB.write(90-y-7);
+   RightMF.write(90+y+11);
+   RightMB.write(90+y+11);
      //Serial.print("left: ");Serial.print(90-y);Serial.print(" right: ");Serial.println(90+y);
    }
  }
@@ -160,16 +172,20 @@ void drive(){
    //LeftM.write(90+x+13);//if 80 //if 100 
    //RightM.write(90-x-7);//needs to be 100 //needs to be 80 
       //Serial.print("left: ");Serial.print(90+x);Serial.print(" right: ");Serial.println(90-x);
-  LeftM.write(90);
-  RightM.write(90);
+  LeftMF.write(90);
+  LeftMB.write(90);
+  RightMF.write(90);
+  RightMB.write(90);
    }
    else{
    //int x = lx + 90;  
    //LeftM.write(90-x-7);
    //RightM.write(90+x+11);
        //Serial.print("left: ");Serial.print(90-x);Serial.print(" right: ");Serial.println(90+x);
-   LeftM.write(90);
-   RightM.write(90);
+   LeftMF.write(90);
+   LeftMB.write(90);
+   RightMF.write(90);
+   RightMB.write(90);
 }
  }
 }

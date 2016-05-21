@@ -28,7 +28,7 @@ void setup() {
   Serial.begin(115200);
   gps_setup();
   compass_setup();
-  Serial.print("Setup finished");
+  Serial.println("Setup finished");
 }
 
 void loop() {
@@ -36,18 +36,15 @@ void loop() {
   sensors_event_t event;
   mag.getEvent(&event);
   char input = Serial.read();
-  //input = 'D';
-  //delay(1000);
   if (input == 'I') {
     send_gps(false);
-  } else if (input == 'D') {
+  }
+  if (input == 'D') {
     send_gps(true);
     send_compass(event);
-    //Serial.println();
-  } 
-  
+  }  
   Serial.flushRX();
- // Serial.flush();
+  Serial.flush();
 }
 void compass_setup() {
   if (!mag.begin())
@@ -69,10 +66,11 @@ void send_compass(sensors_event_t event) {
   if (heading > 2 * PI) heading -= 2 * PI;
   float headingDegrees = heading * 180 / M_PI;
   //C(x),(y),(z)
-  Serial.print(","); Serial.print(event.magnetic.x);
-  Serial.print(","); Serial.print(event.magnetic.y);
-  Serial.print(","); Serial.print(event.magnetic.z);
-  Serial.print(","); Serial.println(headingDegrees);
+  //Serial.print(","); Serial.print(event.magnetic.x);
+  //Serial.print(","); Serial.print(event.magnetic.y);
+  //Serial.print(","); Serial.print(event.magnetic.z);
+  //Serial.print("H,"); 
+  Serial.println(headingDegrees);
   //Serial.print(",");
 }
 void gps_setup() {
