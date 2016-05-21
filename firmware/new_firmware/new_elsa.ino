@@ -11,8 +11,7 @@
 #define LEFT_TURN 9
 #define RIGHT_TURN -3
 
-Servo LeftM;//5
-Servo RightM;
+Servo LeftMF, LeftMB, RightMF, RightMB;
 int lx,ly,az = 0;
 int R1,R2,R3,R4,B2,B4,Mode = 0;
 int lx_h,lx_l,az_h,az_l = 0;
@@ -25,7 +24,7 @@ void setup() {
   LeftMF.attach(9);
   RightMF.attach(10);
   LeftMB.attach(11);
-  RightB.attach(12);
+  RightMB.attach(12);
   set_off();
 }
 
