@@ -6,8 +6,6 @@ from jaus.run import install_component
 
 import jaus.messages as messages
 
-import util
-
 @pytest.mark.asyncio
 def test_liveness(connection):
     conn = connection

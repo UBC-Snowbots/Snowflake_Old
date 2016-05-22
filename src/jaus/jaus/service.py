@@ -1,6 +1,7 @@
 import asyncio as _asyncio
 import functools as _functools
 import bitstring as _bitstring
+import logging as _logging
 
 import jaus.messages as _messages
 import jaus.judp as _judp
@@ -33,18 +34,30 @@ class Service(metaclass=ServiceMeta):
         self.component = component
         for message_code in self.message_handlers:
             message_handler = self._get_message_handler(message_code)
+            # allow access_control to manipulate messages before we get them
+            # but only if they're commands
+            # (do not use if your service doesn't inherit from AccessControl)
+            if message_handler.is_command:
+                proxy = component.access_control.make_command_proxy(
+                    message_handler)
+            else:
+                proxy = message_handler
             component.transport.message_received.connect(
-                message_handler,
+                proxy,
                 message_code=message_code)
+            # allow events to call the handler when it needs
             if message_handler.supports_events:
                 component.events.register_event(message_code, message_handler)
     def _get_message_handler(self, message_code):
         return getattr(self, self.message_handlers[message_code])
+    def close(self):
+        pass
 
 class Component(object):
-    def __init__(self, id, services = []):
+    def __init__(self, id, services = [], default_authority=0):
         self.id = id
         self.services = {}
+        self.default_authority = default_authority
 
         for service in services:
             instance = service(component=self)
@@ -55,6 +68,14 @@ class Component(object):
             return self.services[name]
         else:
             raise AttributeError(name)
+
+    def close(self):
+        for s in self.services.values():
+            if not isinstance(s, Transport):
+                s.close()
+            else:
+                transport = s
+        transport.close()
 
 class Transport(Service):
     name='transport'
@@ -75,11 +96,29 @@ class Transport(Service):
         yield from _asyncio.gather(*[
             self.send_message(message=response, destination_id=source_id)
             for response in responses
+            # check for none as sometimes no response should be sent
+            if response is not None
         ])
 
     @_asyncio.coroutine
     def send_message(self, *args, **kwargs):
         yield from self.protocol.send_message(*args, **kwargs)
+
+    def close(self):
+        super().close()
+        self.protocol.close()
+
+def change_watcher(backing, query_codes):
+    @property
+    def prop(self):
+        return getattr(self, backing)
+    @prop.setter
+    def prop(self, val):
+        if val != getattr(self, backing):
+            _asyncio.async(
+                self.component.events.post_change(message_codes=query_codes))
+        setattr(self, backing, val)
+    return prop
 
 class Event:
     def __init__(self, timeout, process, id, destination_id, message, type, periodic_rate, request_id):
@@ -106,6 +145,11 @@ class Events(Service):
         self._next_event_id = 0
         self.event_timeout = 60
 
+    def close(self):
+        super().close()
+        for e in self.events.values():
+            e.stop()
+
     def register_event(self, message_code, handler):
         self.handlers[message_code] = handler
 
@@ -129,9 +173,7 @@ class Events(Service):
     @_asyncio.coroutine
     def _event_timeout(self, event_id):
         event = self.events[event_id]
-        print("Sleeping for {}".format(self.event_timeout))
         yield from _asyncio.sleep(self.event_timeout)
-        print("Wake up, stop event")
         event.process.cancel()
         del self.events[event.id]
         yield from self.component.transport.send_message(
@@ -140,7 +182,6 @@ class Events(Service):
                 request_id=event.request_id,
                 event_id=event.id,
                 confirmed_periodic_rate=event.periodic_rate))
-        print("Send confirmation")
     @_asyncio.coroutine
     def _process_event(self, event_id):
         event = self.events[event_id]
@@ -162,14 +203,13 @@ class Events(Service):
 
     @_asyncio.coroutine
     def post_change(self, message_codes):
-        for event in self.events.values:
+        for event in self.events.values():
             if (event.message.message_code in message_codes
                     and event.type is _messages.EventType.EVERY_CHANGE):
                 yield from self._fire_event(event)
 
     @message_handler(
         _messages.MessageCode.CreateEvent,
-        is_command=True,
         supports_events=False)
     @_asyncio.coroutine
     def on_create_event(self, source_id, message, **kwargs):
@@ -196,7 +236,6 @@ class Events(Service):
 
     @message_handler(
         _messages.MessageCode.UpdateEvent,
-        is_command=True,
         supports_events=False)
     @_asyncio.coroutine
     def on_update_event(self, source_id, message, **kwargs):
@@ -228,7 +267,6 @@ class Events(Service):
 
     @message_handler(
         _messages.MessageCode.CancelEvent,
-        is_command=True,
         supports_events=False)
     @_asyncio.coroutine
     def on_cancel_event(self, message, **kwargs):
@@ -269,9 +307,9 @@ class Events(Service):
             predicate = lambda event: True
 
         report = [
-                report_event(event)
-                for event in self.events.values()
-                if predicate(event)]
+            report_event(event)
+            for event in self.events.values()
+            if predicate(event)]
         return _messages.ReportEventsMessage(
             count=len(report),
             events=report)
@@ -283,6 +321,269 @@ class Events(Service):
     def on_query_event_timeout(self, **kwargs):
         return _messages.ReportEventTimeoutMessage(
             timeout=int(self.event_timeout/60))
+
+class AccessControl(Service):
+    name='access_control'
+
+    # Watchable attributes
+    controlling_component = change_watcher(
+        '_controlling_component',
+        query_codes=(_messages.MessageCode.QueryControl,))
+    authority = change_watcher(
+        '_authority',
+        query_codes=(_messages.MessageCode.QueryAuthority,))
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self._controlling_component = None
+        self._authority = self.component.default_authority
+        self.timeout_routine = _asyncio.async(self._timeout_routine())
+        self.timeout = 5 # seconds
+
+    def close(self):
+        super().close()
+        self.timeout_routine.cancel()
+
+    @property
+    def is_controlled(self):
+        return self.controlling_component is not None
+
+    def has_control(self, component_id):
+        return self.controlling_component == component_id
+
+    @_asyncio.coroutine
+    def _timeout_routine(self):
+        yield from _asyncio.sleep(self.timeout)
+        if self.is_controlled:
+            if not self.control_available:
+                self.reset_timeout()
+                return
+            controlling_component = self.controlling_component
+            _logging.info('Control by component {} timed out'
+                .format(controlling_component))
+            self.controlling_component = None
+            yield from self.component.transport.send_message(
+                destination_id=controlling_component,
+                message=_messages.RejectControlMessage(
+                    response_code=_messages.RejectControlResponseCode.CONTROL_RELEASED))
+
+    def reset_timeout(self):
+        self.timeout_routine.cancel()
+        self.timeout_routine = _asyncio.async(self._timeout_routine())
+
+    def make_command_proxy(self, handler):
+        """Helper to make trivial has-authority-or-ignore-it commands easy to specify."""
+        @_asyncio.coroutine
+        @_functools.wraps(handler)
+        def proxy(source_id, **kwargs):
+            if self.has_control(source_id):
+                return (yield from handler(source_id=source_id, **kwargs))
+            else:
+                # ignore commands with insufficient authority
+                return None
+        return proxy
+
+    @message_handler(
+        _messages.MessageCode.RequestControl,
+        supports_events=False)
+    @_asyncio.coroutine
+    def on_request_control(self, source_id, message, **kwargs):
+        message = message.body
+        if not self.is_controlled:
+            if self.control_available:
+                if self.component.default_authority > message.authority_code:
+                    return _messages.ConfirmControlMessage(
+                        response_code=_messages.ConfirmControlResponseCode.INSUFFICIENT_AUTHORITY)
+                else:
+                    self.controlling_component = source_id
+                    self.authority = message.authority_code
+                    self.reset_timeout()
+                    return _messages.ConfirmControlMessage(
+                        response_code=_messages.ConfirmControlResponseCode.CONTROL_ACCEPTED)
+            else:
+                return _messages.ConfirmControlMessage(
+                    response_code=_messages.ConfirmControlResponseCode.NOT_AVAILABLE)
+        else:
+            if self.control_available:
+                if self.controlling_component == source_id:
+                    if self.component.default_authority > message.authority_code:
+                        # somehow the controller's authority decreased, so we reject them
+                        self.reset_timeout()
+                        self.controlling_component = None
+                        return _messages.RejectControlMessage(
+                            response_code=_messages.RejectControlResponseCode.CONTROL_RELEASED)
+                    else:
+                        # reset control info, same controller
+                        self.authority = message.authority_code
+                        self.reset_timeout()
+                        return _messages.ConfirmControlMessage(
+                            response_code=_messages.ConfirmControlMessage.CONTROL_ACCEPTED)
+                else:
+                    if self.authority < message.authority_code:
+                        # new controller has greater authority than current; switch
+                        self.authority = message.authority_code
+                        yield from self.reject_control(source_id)
+                        return _messages.ConfirmControlMessage(
+                            response_code=_messages.ConfirmControlResponseCode.CONTROL_ACCEPTED)
+                    else:
+                        return _messages.ConfirmControlMessage(
+                            response_code=_messages.ConfirmControlResponseCode.INSUFFICIENT_AUTHORITY)
+            else:
+                return _messages.ConfirmControlMessage(
+                    response_code=_messages.ConfirmControlResponseCode.NOT_AVAILABLE)
+
+    @message_handler(
+        _messages.MessageCode.ReleaseControl,
+        supports_events=False)
+    @_asyncio.coroutine
+    def on_release_control(self, source_id, **kwargs):
+        if not self.is_controlled:
+            return _messages.RejectControlMessage(
+                response_code=_messages.RejectControlResponseCode.CONTROL_RELEASED)
+        else:
+            if self.control_available:
+                if source_id == self.controlling_component:
+                    self.reset_timeout()
+                    self.controlling_component = None
+                    return _messages.RejectControlMessage(
+                        response_code=_messages.RejectControlResponseCode.CONTROL_RELEASED)
+                else:
+                    # if they are not the controlling client, apparently we are suposed
+                    # to just ignore them...?
+                    return None
+            else:
+                return _messages.RejectControlMessage(
+                    response_code=_messages.RejectControlResponseCode.NOT_AVAILABLE)
+
+    @_asyncio.coroutine
+    def reject_control(self, source_id=None):
+        if self.is_controlled:
+            self.reset_timeout()
+            controlling_component = self.controlling_component
+            self.controlling_component = source_id
+            yield from self.component.transport.send_message(
+                destination_id=controlling_component,
+                message=_messages.RejectControlMessage(
+                    response_code=_messages.RejectControlResponseCode.CONTROL_RELEASED))
+
+    @message_handler(
+        _messages.MessageCode.QueryTimeout)
+    @_asyncio.coroutine
+    def on_query_timeout(self, **kwargs):
+        return _messages.ReportTimeoutMessage(
+            timeout=self.timeout)
+
+    @message_handler(
+        _messages.MessageCode.QueryAuthority)
+    @_asyncio.coroutine
+    def on_query_authority(self, **kwargs):
+        return _messages.ReportAuthorityMessage(
+            authority_code=self.authority)
+
+    @message_handler(
+        _messages.MessageCode.QueryControl)
+    @_asyncio.coroutine
+    def on_query_control(self, **kwargs):
+        if self.is_controlled:
+            controlling_component = self.controlling_component
+        else:
+            controlling_component = _messages.Id(0,0,0)
+
+        return _messages.ReportControlMessage(
+            id=controlling_component,
+            authority_code=self.authority)
+
+    @message_handler(
+        _messages.MessageCode.SetAuthority,
+        supports_events=False)
+    @_asyncio.coroutine
+    def on_set_authority(self, source_id, message, **kwargs):
+        message = message.body
+        # manually implement command semantics since currently
+        # services can't depend on themselves
+        if not self.has_control(source_id):
+            return None
+
+        authority_code = message.authority_code
+        if authority_code <= self.authority and authority_code >= self.component.default_authority:
+            self.authority = message.authority_code
+
+    @property
+    def control_available(self):
+        return self.component.management.status in (
+            _messages.ManagementStatus.READY,
+            _messages.ManagementStatus.STANDBY)
+
+class Management(Service):
+    name='management'
+
+    status = change_watcher(
+        '_status',
+        query_codes=(_messages.MessageCode.QueryStatus,))
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self._status = _messages.ManagementStatus.STANDBY
+        self.old_status = None
+        self.id_store = set()
+
+    @message_handler(
+        _messages.MessageCode.Shutdown,
+        is_command=True)
+    @_asyncio.coroutine
+    def on_shutdown(self, **kwargs):
+        yield from self.component.access_control.reject_control()
+        self.status = _messages.ManagementStatus.SHUTDOWN
+
+    @message_handler(
+        _messages.MessageCode.Standby,
+        is_command=True)
+    @_asyncio.coroutine
+    def on_standby(self, **kwargs):
+        if self.status is _messages.ManagementStatus.READY:
+            self.status = _messages.ManagementStatus.STANDBY
+
+    @message_handler(
+        _messages.MessageCode.Resume,
+        is_command=True)
+    @_asyncio.coroutine
+    def on_resume(self, **kwargs):
+        # this is a command, so don't worry about not being controlled
+        if self.status is _messages.ManagementStatus.STANDBY:
+            self.status = _messages.ManagementStatus.READY
+
+    @message_handler(
+        _messages.MessageCode.Reset,
+        is_command=True)
+    @_asyncio.coroutine
+    def on_reset(self, **kwargs):
+        if self.status in (_messages.ManagementStatus.STANDBY, _messages.ManagementStatus.READY):
+            yield from self.component.access_control.reject_control()
+            self.status = _messages.ManagementStatus.STANDBY
+
+    @message_handler(
+        _messages.MessageCode.SetEmergency)
+    @_asyncio.coroutine
+    def on_set_emergency(self, source_id, **kwargs):
+        self.id_store |= source_id
+        if self.status is not _messages.ManagementStatus.EMERGENCY:
+            self.old_status = self.status
+            self.status = _messages.ManagementStatus.EMERGENCY
+
+    @message_handler(
+        _messages.MessageCode.ClearEmergency)
+    @_asyncio.coroutine
+    def on_clear_emergency(self, source_id, **kwargs):
+        self.id_store -= set(source_id)
+        if not self.id_store:
+            self.status = self.old_status
+
+    @message_handler(
+        _messages.MessageCode.QueryStatus)
+    @_asyncio.coroutine
+    def on_query_status(self, **kwargs):
+        return _messages.ReportStatusMessage(
+            status=self.status)
 
 class Liveness(Service):
     name='liveness'
