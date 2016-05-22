@@ -17,7 +17,6 @@ vector<nav_msgs::OccupancyGrid::ConstPtr> grids;
 
 void gridCallback1(const nav_msgs::OccupancyGrid::ConstPtr& msg)
 {
-	ROS_INFO("Callback 1");
 	if (grids.size() >= 2){
 		grids[0] = msg;
 	} else {
@@ -27,7 +26,6 @@ void gridCallback1(const nav_msgs::OccupancyGrid::ConstPtr& msg)
 
 void gridCallback2(const nav_msgs::OccupancyGrid::ConstPtr& msg)
 {
-	ROS_INFO("Callback 1");
 	if (grids.size() >= 2){
 		grids[1] = msg;
 	} else {
@@ -53,9 +51,7 @@ int main(int argc, char** argv)
 	{
 		ROS_INFO("Made it in to the main loop");
 		if (!grids.empty()){
-			ROS_INFO("Merging grids");
 			occGridPub.publish(occupancy_grid_utils::combineGrids(grids));
-			ROS_INFO("Succesfully merged and published grids");
 		}
 		loop_rate.sleep();
 		ros::spinOnce();
