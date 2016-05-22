@@ -3,7 +3,11 @@
     Used to broadcast saved map files
 -->
 
-    <node pkg="map_server" name="map_server" type="map_server" 
-	args="$(find mapping)/maps/edc_map.yaml" />
+    <node pkg="map_server" name="map_server" type="map_server"
+	args="$(find mapping)/maps/edc_map2.yaml" >
+	
+	<remap from="map" to="map1"/>
+
+    </node>
 
 </launch>

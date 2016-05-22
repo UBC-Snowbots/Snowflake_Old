@@ -1,0 +1,13 @@
+<launch>
+<!--
+    Used to broadcast saved map files
+-->
+
+    <node pkg="map_server" name="map_server1" type="map_server"
+	args="$(find mapping)/maps/edc_map3.yaml" >
+	
+	<remap from="map" to="map2"/>	
+
+    </node>
+
+</launch>

@@ -1,4 +1,4 @@
-/** 
+/**
  * A node that combines two occupancy grids together
  * Author: Valerian Ratu
  *
@@ -17,12 +17,22 @@ vector<nav_msgs::OccupancyGrid::ConstPtr> grids;
 
 void gridCallback1(const nav_msgs::OccupancyGrid::ConstPtr& msg)
 {
-	grids[0] = msg;
+	ROS_INFO("Callback 1");
+	if (grids.size() >= 2){
+		grids[0] = msg;
+	} else {
+		grids.push_back(msg);
+	}
 }
 
 void gridCallback2(const nav_msgs::OccupancyGrid::ConstPtr& msg)
 {
-	grids[1] = msg;
+	ROS_INFO("Callback 1");
+	if (grids.size() >= 2){
+		grids[1] = msg;
+	} else {
+		grids.push_back(msg);
+	}
 }
 
 int main(int argc, char** argv)
@@ -41,8 +51,11 @@ int main(int argc, char** argv)
 
 	while (nh.ok())
 	{
+		ROS_INFO("Made it in to the main loop");
 		if (!grids.empty()){
+			ROS_INFO("Merging grids");
 			occGridPub.publish(occupancy_grid_utils::combineGrids(grids));
+			ROS_INFO("Succesfully merged and published grids");
 		}
 		loop_rate.sleep();
 		ros::spinOnce();
