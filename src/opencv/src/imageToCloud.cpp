@@ -33,10 +33,10 @@ using namespace cv;
 using namespace std;
 
 const int NUM_ELTS_SKIPPED = 2;
-const int MAX_HEIGHT = 20;
-const int X_SCALE_FACTOR = 40;
-const int Y_SCALE_FACTOR = 200;
-const int Z_SCALE_FACTOR = 100;
+const int MAX_HEIGHT = 50;
+const int X_SCALE_FACTOR = 70;
+const int Y_SCALE_FACTOR = 290;
+const int Z_SCALE_FACTOR = 50;
 
 class ImageToCloud {
     public:
