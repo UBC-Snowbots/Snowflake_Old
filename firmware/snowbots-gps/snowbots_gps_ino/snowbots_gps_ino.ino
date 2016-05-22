@@ -69,8 +69,8 @@ void send_compass(sensors_event_t event) {
   //Serial.print(","); Serial.print(event.magnetic.x);
   //Serial.print(","); Serial.print(event.magnetic.y);
   //Serial.print(","); Serial.print(event.magnetic.z);
-  //Serial.print("H,"); 
-  Serial.println(headingDegrees);
+  Serial.print(","); 
+  Serial.println(headingDegrees);Serial.print(",");
   //Serial.print(",");
 }
 void gps_setup() {

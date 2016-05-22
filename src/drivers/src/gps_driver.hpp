@@ -12,6 +12,8 @@
 #include <std_msgs/Bool.h> 
 #include "messages/gps.h"
 #include "SerialCommunication.h" 
+
+#define DATA 0
 //constant declerations
 static const string ROS_NODE_NAME = "gps_driver"; 
 static const int ROS_LOOP_RATE = 1; 
@@ -34,7 +36,7 @@ std::string msg;
 std::string to_string(int i); 
 std::string to_string2(char* c);
 bool gps_store(char *buffer); 
-void data_request(char c, char *buffer);
+void data_request(char c, char *buffer, int mode);
 bool connect_device(std::string device_name); 
 bool open_port(unsigned int count);
 void gps_msg_create(void);
