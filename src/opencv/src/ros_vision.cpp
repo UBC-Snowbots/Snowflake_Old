@@ -82,8 +82,8 @@ int main(int argc, char** argv){
     vector<Point2f> origPoints;
     origPoints.push_back( Point2f(0, height));
     origPoints.push_back( Point2f(width, height));
-    origPoints.push_back( Point2f(width/2+100, 200));
-    origPoints.push_back( Point2f(width/2-100, 200));
+    origPoints.push_back( Point2f(width/2+132, 0));
+    origPoints.push_back( Point2f(width/2-132, 0));
 
     vector<Point2f> dstPoints;
     dstPoints.push_back( Point2f(0, height) );
