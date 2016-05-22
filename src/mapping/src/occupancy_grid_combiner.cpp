@@ -49,7 +49,6 @@ int main(int argc, char** argv)
 
 	while (nh.ok())
 	{
-		ROS_INFO("Made it in to the main loop");
 		if (!grids.empty()){
 			occGridPub.publish(occupancy_grid_utils::combineGrids(grids));
 		}
