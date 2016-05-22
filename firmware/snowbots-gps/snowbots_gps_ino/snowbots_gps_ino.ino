@@ -70,13 +70,13 @@ void send_compass(sensors_event_t event) {
   //Serial.print(","); Serial.print(event.magnetic.y);
   //Serial.print(","); Serial.print(event.magnetic.z);
   Serial.print(","); 
-  Serial.println(headingDegrees);Serial.print(",");
+  Serial.print(headingDegrees);Serial.println(",");
   //Serial.print(",");
 }
 void gps_setup() {
   GPS.begin(9600);
   GPS.sendCommand(PMTK_SET_NMEA_OUTPUT_RMCGGA);
-  GPS.sendCommand(PMTK_SET_NMEA_UPDATE_1HZ);
+  GPS.sendCommand(PMTK_SET_NMEA_UPDATE_5HZ);
   //GPS.sendCommand(PGCMD_ANTENNA);
   useInterrupt(true);
   delay(1000);
@@ -91,8 +91,8 @@ void gps_check_new_data() {
 void send_gps(boolean data) {
   //G(long),(lat),(fix)
   if (data) {
-    Serial.print("D,"); Serial.print(GPS.latitudeDegrees, 4);
-    Serial.print(","); Serial.print(GPS.longitudeDegrees, 4);
+    Serial.print("D,"); Serial.print(GPS.latitudeDegrees, 6);
+    Serial.print(","); Serial.print(GPS.longitudeDegrees, 6);
     Serial.print(","); Serial.print((int)GPS.fix);
   } else {
     Serial.println("GPS");

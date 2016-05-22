@@ -19,7 +19,7 @@ int main (int argc, char **argv){
 	//usleep(1000);
 	//link_port.clearBuffer();
   while(ros::ok() && link_port.isActive()){
-		    char buff[32] = "\0";
+		    char buff[64] = "\0";
         data_request('D',buff,DATA);
         std::string g_input = to_string2(buff);
         //cout << buff;
@@ -27,7 +27,8 @@ int main (int argc, char **argv){
             && g_input.find('D')!=std::string::npos){
           gps_store(buff);
           gps_msg_create();
-          cout << gps_msg;
+          cout << setprecision(9) << gps_msg.Lon << endl;
+          cout << setprecision(9) << gps_msg.Lat << endl;
         }
         loop_rate.sleep();
     } 
@@ -54,6 +55,7 @@ bool connect_device(std::string device_name){
     if(open_port(i)){
       data_request('I',buff,1);
       std::string s_input = to_string2(buff);
+      cout << "If you are not notified that GPS is connected, restart node" << endl;
       while(s_input.find('\n')==std::string::npos){
           data_request('I',buff,1);
           s_input = to_string2(buff);
@@ -108,12 +110,12 @@ void data_request(char c, char *buffer, int mode){
   if (mode == 0){
     while(buffer[0] == '\0'){
       link_port.writeData(ss.str(),1);
-      link_port.readData(32,buffer); 
+      link_port.readData(64,buffer); 
     } 
   }
   else{
     while(buffer[0] == '\0' && i < 20){
-      link_port.readData(32,buffer);
+      link_port.readData(64,buffer);
     }
   }
   return;
