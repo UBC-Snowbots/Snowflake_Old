@@ -20,16 +20,14 @@ int main (int argc, char **argv){
 	//link_port.clearBuffer();
   while(ros::ok() && link_port.isActive()){
 		    char buff[32] = "\0";
-        data_request('D',buff);
+        data_request('D',buff,DATA);
         std::string g_input = to_string2(buff);
-        cout << buff;
+        //cout << buff;
         if (g_input.find('\n')!=std::string::npos 
             && g_input.find('D')!=std::string::npos){
-          cout << "GPS: " << buff; 
           gps_store(buff);
-          cout << "gps.Lon: " << gps_msg.Lon << endl; 
-          cout << "gps.Lat: " << gps_msg.Lat << endl; 
-          cout << "gps.Head: " << gps_msg.Head << endl; 
+          gps_msg_create();
+          cout << gps_msg;
         }
         loop_rate.sleep();
     } 
@@ -38,14 +36,14 @@ int main (int argc, char **argv){
 }
 
 void gps_msg_create(void){
+  gps_msg.Head = gps_comp_data.headingDegrees;
 	if (gps_comp_data.fix){
 	gps_msg.Lon = gps_comp_data.longitude;
-	gps_msg.Lat = gps_comp_data.latitude;
-	gps_msg.Head = gps_comp_data.headingDegrees;}
+	gps_msg.Lat = gps_comp_data.latitude;}
 	else {
 	gps_msg.Lon = -1;
 	gps_msg.Lat = -1; 
-	gps_msg.Head = -1;} 
+  } 
 return;
 }
 
@@ -54,10 +52,10 @@ bool connect_device(std::string device_name){
   while ( i < 9 ){
   char buff[32] = "\0";
     if(open_port(i)){
-      data_request('I',buff);
+      data_request('I',buff,1);
       std::string s_input = to_string2(buff);
       while(s_input.find('\n')==std::string::npos){
-          data_request('I',buff);
+          data_request('I',buff,1);
           s_input = to_string2(buff);
       }
       if(s_input.find(device_name)!=std::string::npos)
@@ -100,19 +98,27 @@ std::string to_string2(char* c){
   return out.str();
 }
 
-void data_request(char c, char *buffer){
+void data_request(char c, char *buffer, int mode){
   //clear input buffer and sends confirmation byte to prepare acceptance of message in seriali
   link_port.clearBuffer(); 
   stringstream ss; 
   ss << c; 
   int i = 0;
   link_port.writeData(ss.str(),1);
-  while(buffer[0] == '\0'){
-    link_port.readData(32,buffer); 
-  } 
-  cout << buffer << endl;
+  if (mode == 0){
+    while(buffer[0] == '\0'){
+      link_port.writeData(ss.str(),1);
+      link_port.readData(32,buffer); 
+    } 
+  }
+  else{
+    while(buffer[0] == '\0' && i < 20){
+      link_port.readData(32,buffer);
+    }
+  }
   return;
 }
+
 
 void struct_store(int type, char *val){
   switch(type){
@@ -130,9 +136,12 @@ bool gps_store(char *buffer){
   int i = 1;
   c = strtok(buffer,",");
   if(c[0] == 'D'){
-    while (c != NULL){
+    while (i < 5){
+        if ( c != NULL){
         c = strtok(NULL,",");
         struct_store(i, c); 
+        i++;
+        }
      }
     return true;    
   }
