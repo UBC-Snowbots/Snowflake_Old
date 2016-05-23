@@ -11,9 +11,8 @@ int main (int argc, char** argv){
 	ros::init(argc,argv, ROS_NODE_NAME);
 	ros::NodeHandle nh; 
 	ros::Rate loop_rate(ROS_LOOP_RATE);
-  ros::Publisher sensor_imu_publisher = nh.advertise<sensor_msgs::Imu>
-  ros::Publisher odom_publisher = nh.advertise<sensor_msgs::
-(SENSOR_OUTPUT_TOPIC,20);
+  ros::Publisher sensor_imu_publisher = nh.advertise<sensor_msgs::Imu>("imu", 5);
+  ros::Publisher odom_publisher = nh.advertise<nav_msgs::Odometry>(SENSOR_OUTPUT_TOPIC,20);
   //Attempts at opening the Serial Port
   if(!connect_device("SENS"))
         return 1;//Error signal
@@ -165,7 +164,7 @@ void msg_store(int type, char *data){
   case 4: 
     IMU.angular_velocity.z = val;
   case 5: 
-    odom.twist.twist.lineary = atof(data);
+    odom.twist.twist.linear.y = atof(data);
   case 6: 
     odom.pose.pose.position.y = atof(data);
   

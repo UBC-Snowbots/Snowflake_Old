@@ -11,6 +11,7 @@
 #include <std_msgs/String.h>
 #include "SerialCommunication.h"
 #include <sensor_msgs/Imu.h>
+#include <nav_msgs/Odometry.h>
 
 using namespace std; 
 
@@ -27,7 +28,8 @@ static const double G_TO_ACCEL = 9.80665; //Units: 9.8(m/s^2)/g
 
 //Object Declerations 
 SerialCommunication link_port;
-sensor_msgs::Imu IMU; 
+sensor_msgs::Imu IMU;
+nav_msgs::Odometry odom; 
 std::string to_string2(char* c);
 std::string to_string(int i); 
 bool connect_device(std::string device_name);
