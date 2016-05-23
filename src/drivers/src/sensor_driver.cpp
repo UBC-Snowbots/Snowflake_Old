@@ -11,7 +11,9 @@ int main (int argc, char** argv){
 	ros::init(argc,argv, ROS_NODE_NAME);
 	ros::NodeHandle nh; 
 	ros::Rate loop_rate(ROS_LOOP_RATE);
-  ros::Publisher sensor_imu_publisher = nh.advertise<sensor_msgs::Imu>(SENSOR_OUTPUT_TOPIC,20);
+  ros::Publisher sensor_imu_publisher = nh.advertise<sensor_msgs::Imu>
+  ros::Publisher odom_publisher = nh.advertise<sensor_msgs::
+(SENSOR_OUTPUT_TOPIC,20);
   //Attempts at opening the Serial Port
   if(!connect_device("SENS"))
         return 1;//Error signal
@@ -22,6 +24,7 @@ int main (int argc, char** argv){
   IMU.linear_acceleration_covariance[i] = 0; 
   IMU.angular_velocity_covariance[i]=0;
   IMU.orientation_covariance[i]=0;
+  odom.pose.pose.position.z=0.0;
   }
   
   int x = 0;
@@ -137,6 +140,36 @@ bool Serial_Store(char *buffer,int sensor){
       c = strtok(NULL,",:");
   }
   return true;
+}
+void msg_store(int type, char *data){
+  int val = atoi(data);
+  switch(type){
+  case 1: 
+    val *= ARDUINO_ANALOG_PU; 
+    //conversion from PU (1 to 1024 int) to voltage 
+    val /= ADXL_V_G_PU; //conversion from voltage to gs 
+    val *= G_TO_ACCEL;
+    //conversion from g to m/s^2 as specified in std_msgs/IMU.h 
+    IMU.linear_acceleration.x = val;
+    break;
+  case 2: 
+    val *= ARDUINO_ANALOG_PU;
+    val /= ADXL_V_G_PU; 
+    val *= G_TO_ACCEL; 
+    IMU.linear_acceleration.y = val;
+  case 3: 
+    val *= ARDUINO_ANALOG_PU;
+    val /= ADXL_V_G_PU; 
+    val *= G_TO_ACCEL;
+    IMU.linear_acceleration.z = val;
+  case 4: 
+    IMU.angular_velocity.z = val;
+  case 5: 
+    odom.twist.twist.lineary = atof(data);
+  case 6: 
+    odom.pose.pose.position.y = atof(data);
+  
+  }
 }
 
 void data_request(char c, char*buffer){
