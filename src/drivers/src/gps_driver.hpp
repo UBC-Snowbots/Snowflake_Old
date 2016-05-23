@@ -10,7 +10,7 @@
 #include <ros/ros.h>
 #include <std_msgs/String.h>
 #include <std_msgs/Bool.h> 
-#include "messages/gps.h"
+#include "sb_messages/gps.h"
 #include "SerialCommunication.h" 
 
 #define DATA 0
@@ -27,7 +27,7 @@ struct gps_comp_data {
   float x, y, z, headingDegrees;
 } gps_comp_data;
 
-::messages::gps gps_msg; 
+sb_messages::gps gps_msg; 
 
 //Objects 
 SerialCommunication link_port; 
