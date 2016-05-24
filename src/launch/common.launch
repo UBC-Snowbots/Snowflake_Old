@@ -24,7 +24,7 @@
         <param name="use_cloud_input" value="false"/>        
    
         <remap from="cloud" to="merged_cloud"/>
-   
+        <remap from="scan" to="hokuyoscan"/>   
     </node>
 
     #### start slam_gmapping ######################################
@@ -35,9 +35,10 @@
         <param name="maxUrange" value="4.0"/>
         <param name="linear_update" value="0.2"/>
         <param name="angularUpdate" value="0.2"/>
-        <param name="delta" value="0.1"/>
+        <param name="delta" value="0.5"/>
         <param name="occ_thresh" value="0.1"/>
         <param name="odom_frame" value="odom"/>
+        <remap from="scan" to="hokuyoscan"/>   
 
     </node>
 

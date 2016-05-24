@@ -432,15 +432,16 @@ pathfinding_info get_next_waypoint(	nav_msgs::OccupancyGrid map,
 	//Constructs the point given
 	geometry_msgs::Point waypoint;	
 	nav_msgs::Path path;
+    path.header.frame_id = "map";
 	vector<geometry_msgs::PoseStamped> pose_init; 
 
 	//Output the path
 	for (int i = 0; i < trace.size(); i++){
 		geometry_msgs::PoseStamped position;
-		position.pose.position.x = trace[trace.size() - 1 - i]->x;
-		position.pose.position.y = trace[trace.size() - 1 - i]->y;
+		position.pose.position.x = (trace[trace.size() - 1 - i]->x)*map.info.resolution + map.info.origin.position.x;
+		position.pose.position.y = (trace[trace.size() - 1 - i]->y)*map.info.resolution + map.info.origin.position.y;
 		position.pose.position.z = 0;
-
+        position.header.frame_id = "map";
 		pose_init.push_back(position);
 	}
 	path.poses = pose_init;

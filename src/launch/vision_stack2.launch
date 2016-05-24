@@ -1,0 +1,8 @@
+<launch>
+    <!-- Start laserscan_to_pointcloud -->
+    <include file="$(find opencv)/launch/laserscan_to_pointcloud.launch"/>
+
+    <!-- Start pointcloud_merger -->
+    <include file="$(find opencv)/launch/pointcloud_merger.launch"/>
+
+</launch>
