@@ -163,14 +163,14 @@ bool updateList(vector<node_t*>& node_list, node_t *node, node_t *parent_node)
 	for (int i = 0; i < node_list.size(); i++)
 	{
 		if ((node_list[i]->x == node->x) && (node_list[i]->y == node->y)){
-			if (node_list[i]->f > node->f)
+			if (node_list[i]->g > node->g)
 			{
 				node_t* deprecated_node = node_list[i];
 				node_list[i] = node;
 				delete deprecated_node;
 				node_list[i]->parent = parent_node;
 				//cout << "In update list: Child " << printNode(node) << "Parent " << printNode(parent_node) << endl;
-				push_heap(node_list.begin(), node_list.end(), compare());
+				make_heap(node_list.begin(), node_list.end(), compare());
 				return true;
 			}
 		}
@@ -187,7 +187,7 @@ bool updateList(vector<node_t*>& node_list, node_t *node, node_t *parent_node)
  */
 int get_man_distance(node_t *start_point, node_t *end_point)
 {
-	return (abs(start_point->x-end_point->x) + abs(start_point->y-end_point->y));
+	return (abs(start_point->x-end_point->x) + abs(start_point->y-end_point->y)) * 10;
 }
 
 /**
@@ -247,22 +247,30 @@ void printArray(int** map, int width, int height){
  * @return 				a vector containing the node list in reverse order:= [end_point,..., start_point]
  */
 vector<node_t*> traceback(vector<node_t*>& node_list, node_t *start_point, node_t *end_point){ 
-	int i = 0;
 	vector<node_t*> trace;
+	bool isFound = false;
+	if (node_list.empty()){
+		return trace;
+	}
 	node_t *current_node;
-	do{
+	for (int i = 0; i < node_list.size(); i++){
 		current_node = node_list[i];
-		i++;
-	} while (!((current_node->x == end_point->x) && (current_node->y == end_point->y)));
+		if ((current_node->x == end_point->x) && (current_node->y == end_point->y)){
+			isFound = true;
+			break;
+		}
+	}
 	//cout << "Found proper node: " << printNode(terminal) << endl;
-	trace.push_back(current_node);
-	while (!((current_node->x == start_point->x) && (current_node->y == start_point->y)))
-	{
-		//cout << "Child: " << printNode(current_node) << endl;
-		current_node = current_node->parent;
+	if (isFound){
 		trace.push_back(current_node);
+		while (!((current_node->x == start_point->x) && (current_node->y == start_point->y)))
+		{
+			//cout << "Child: " << printNode(current_node) << endl;
+			current_node = current_node->parent;
+			trace.push_back(current_node);
 
-		//cout << "Parent: " << printNode(current_node) << endl;	
+			//cout << "Parent: " << printNode(current_node) << endl;	
+		}
 	}
 	return trace;
 }
@@ -351,7 +359,7 @@ pathfinding_info get_next_waypoint(	nav_msgs::OccupancyGrid map,
 	starting_point->f = 0;
 	starting_point->h = 0;
 
-	/* Map priting for debug purposes
+	//Map priting for debug purposes
 	int** new_map = new int *[height];
 	for (int i = 0; i < height; i++){
 		new_map[i] = new int[width];
@@ -359,10 +367,9 @@ pathfinding_info get_next_waypoint(	nav_msgs::OccupancyGrid map,
 
 	for (int i = 0; i < height; i++){
 		for (int j = 0; j < width; j++){
-			new_map[i][j] = map.data[i*width + j];
+			new_map[i][j] = (int)  map.data[i*width + j];
 		}
 	}
-	*/
 
 	push(open_list, starting_point);
 	
@@ -370,6 +377,7 @@ pathfinding_info get_next_waypoint(	nav_msgs::OccupancyGrid map,
 	while (!open_list.empty())
 	{
 		node_t *curr_node = pop(open_list);
+		new_map[curr_node->y][curr_node->x] = 5;
 		push(closed_list, curr_node);
 
 		//Iterate through all neighbouring nodes and analyze all valid ones
@@ -389,14 +397,18 @@ pathfinding_info get_next_waypoint(	nav_msgs::OccupancyGrid map,
 					continue;
 				}
 				//Skip if there's an object here
-				if ((int) map.data[y*width + x] > OCCUPANCY_THRESHOLD) {
-					//cout << "Occupancy at (" << x << "," << y << ") with: " << (int) map.data[x*width + y] << endl;
+				if (((int) map.data[y*width + x] > OCCUPANCY_THRESHOLD) || ((int) map.data[y*width + x] == -1))  {
+					//cout << "Occupancy at (" << x << "," << y << ") with: " << (int) map.data[y*width + x] << endl;
 					continue;
 				}
 				node_t *child = new node_t();
 				child->x = x;
 				child->y = y;
 
+				//Skip closed list
+				if (findNodeInList(closed_list, child)){
+					continue;
+				}
 				child->g = curr_node->g + getMovementCost(curr_node, child);
 
 				child->h = get_man_distance(child, end_goal);
@@ -422,51 +434,65 @@ pathfinding_info get_next_waypoint(	nav_msgs::OccupancyGrid map,
 		}
 		
 	}
+	
+	end:
+	cout << "Num of analyzed nodes: " << open_list.size() + closed_list.size() << endl;
 
-	end: 
-	//printNodeList(open_list, "Open list");
-	//printNodeList(closed_list, "Closed list");
-	//printArray(new_map, width, height);
-	vector<node_t*> trace = traceback(closed_list, starting_point, end_goal);
-	//printNodeList(trace, "Trace list");
-	//Constructs the point given
-	geometry_msgs::Point waypoint;	
+	//Returning pathfinding information
+	pathfinding_info path_info;
 	nav_msgs::Path path;
-    path.header.frame_id = "map";
-	vector<geometry_msgs::PoseStamped> pose_init; 
-
-	//Output the path
-	for (int i = 0; i < trace.size(); i++){
-		geometry_msgs::PoseStamped position;
-		position.pose.position.x = (trace[trace.size() - 1 - i]->x)*map.info.resolution + map.info.origin.position.x;
-		position.pose.position.y = (trace[trace.size() - 1 - i]->y)*map.info.resolution + map.info.origin.position.y;
-		position.pose.position.z = 0;
-        position.header.frame_id = "map";
-		pose_init.push_back(position);
+	geometry_msgs::Point waypoint;
+	cout << "Before traceback" << endl;	
+	vector<node_t*> trace = traceback(closed_list, starting_point, end_goal);
+	cout << "After traceback" << endl;
+	//waypoint creation
+	if (trace.empty() || open_list.empty()){
+		//There is no path to the goal
+		//Current behaviour: stay at location
+		waypoint.x = starting_point->x;
+		waypoint.y = starting_point->y;
+		cout << "Trace empty" << endl;
+	} else{
+		//A path exists
+		if (trace.size() == 1){ //If we are already at the location return it (no movement)
+			waypoint.x = trace[0]->x;
+			waypoint.y = trace[0]->y;
+		} else { //Move to the next location we want to be
+			waypoint.x = trace[trace.size() - 2]->x;
+			waypoint.y = trace[trace.size() - 2]->y;
+		}
+		cout << "Trace non-empty: "<< trace.size() << endl;
 	}
-	path.poses = pose_init;
-
-	//If the only item is the end point i.e. current position == target position
-	if (trace.size() == 1){
-		waypoint.x = trace[0]->x;
-		waypoint.y = trace[0]->y;
-	} else {
-		//Take the second last element, the one after initial point
-		waypoint.x = trace[trace.size() - 2]->x;
-		waypoint.y = trace[trace.size() - 2]->y;
-	}
-    
+	
+	//Aligning with the real world
+	waypoint.z = 0;
     waypoint.x = (waypoint.x * map.info.resolution + map.info.origin.position.x);
     waypoint.y = (waypoint.y * map.info.resolution + map.info.origin.position.y);
-	waypoint.z = 0;
-	delete end_goal;
-	//Frees the memory
-	freeList(open_list);
-	freeList(closed_list);
 
-	pathfinding_info path_info;
+
+	//path creation
+	vector<geometry_msgs::PoseStamped> pose_init; 
+	if (!trace.empty()){
+		for (int i = 0; i < trace.size(); i++){
+			geometry_msgs::PoseStamped position;
+			position.pose.position.x = (trace[trace.size() - 1 - i]->x)*map.info.resolution + map.info.origin.position.x;
+			position.pose.position.y = (trace[trace.size() - 1 - i]->y)*map.info.resolution + map.info.origin.position.y;
+			position.pose.position.z = 0;
+			position.header.frame_id = "map";
+			pose_init.push_back(position);
+		}
+	}
+	path.poses = pose_init;
+    path.header.frame_id = "map";
+
+	//Finalizing struct contents
 	path_info.waypoint = waypoint;
 	path_info.path = path;
+ 
+	//Frees the memory
+	delete end_goal;
+	freeList(open_list);
+	freeList(closed_list);
 
 	return path_info;
 }
@@ -488,7 +514,7 @@ int main(int argc, char** argv){
 	ros::Subscriber occGridSub = nh.subscribe(occ_grid_topic, 5, mapCallback);
 	ros::Publisher pointPub = nh.advertise<geometry_msgs::Point>(point_output_topic, 1);
 	ros::Publisher pathPub = nh.advertise<nav_msgs::Path>(path_output_topic, 1);
-	ros::Rate loop_rate(5);
+	ros::Rate loop_rate(1);
 
 	//initialize in order to avoid segfaults
 	g_start.x = 0;
@@ -523,8 +549,6 @@ int main(int argc, char** argv){
 }
 
 
-
-
 /*
 int main(){
 	//Creating occupancy grid
@@ -557,13 +581,13 @@ int main(){
 		map.data[map.info.width*i + 18] = 10;
 	}
 	
-
+	
 	//Test Case 2
-	for (int i = 2; i < 8; i++){
+	for (int i = 0; i < 8; i++){
 		map.data[map.info.width*i + 7] = 10;
 	}
 
-	for (int i = 9; i < 18; i++){
+	for (int i = 9; i < 20; i++){
 		map.data[map.info.width*i + 7] = 10;
 	}
 
@@ -574,20 +598,23 @@ int main(){
 	for (int i = 7; i < 20; i++){
 		map.data[map.info.width*i + 14] = 10;
 	}
-
+	
 	//Initial and final position
 	geometry_msgs::Pose2D curr_pos;
 	curr_pos.x = 1;
-	curr_pos.y = 8;
+	curr_pos.y = 1;
 	curr_pos.theta = 0;
 	geometry_msgs::Pose2D target_pos;
-	target_pos.x = 18;
-	target_pos.y = 18;
+	target_pos.x = 4.75;
+	target_pos.y = 4.75;
 	target_pos.theta = 0;
 	cout << "In main" << endl;
-	geometry_msgs::Point waypoint = get_next_waypoint(map, curr_pos, target_pos);
-	cout << "X returned: " << waypoint.x << endl;
-	cout << "Y returned: " << waypoint.y << endl;
+	pathfinding_info info = get_next_waypoint(map, curr_pos, target_pos);
+	cout << "X returned: " << info.waypoint.x << endl;
+	cout << "Y returned: " << info.waypoint.y  << endl;
+	for (int i = 0; i < info.path.poses.size(); i++){
+		cout << "(" << info.path.poses[i].pose.position.x << "," << info.path.poses[i].pose.position.y << ")-";
+	}
 	return 0;
 }
 */
