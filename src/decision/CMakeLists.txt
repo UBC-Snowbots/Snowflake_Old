@@ -16,7 +16,6 @@ find_package(catkin REQUIRED COMPONENTS
     std_msgs
     tf
     tf2
-    sb_messages
 )
 
 generate_messages(DEPENDENCIES 
@@ -32,7 +31,7 @@ include(Catch)
 add_definitions(--std=c++11)
 
 catkin_package(
-  CATKIN_DEPENDS std_msgs sb_messages roscpp tf geometry_msgs message_runtime
+  CATKIN_DEPENDS std_msgs roscpp tf geometry_msgs message_runtime
 )
 
 find_package(Armadillo REQUIRED)

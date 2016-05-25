@@ -3,9 +3,8 @@
     Used to inflate the map
 -->
 
-    <node pkg="mapping" name="map_inflater" type="map_inflater"
-     output="screen">
-        <rosparam param="inflation_factor">0.3</rosparam>
+    <node pkg="mapping" name="map_inflater" type="map_inflater">
+        <rosparam param="inflation_factor">0.1</rosparam>
     </node>
 
 </launch>
