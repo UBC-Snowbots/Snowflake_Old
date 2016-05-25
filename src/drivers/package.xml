@@ -14,7 +14,7 @@
   <depend>std_msgs</depend>
   <depend>nav_msgs</depend>
   <depend>sensor_msgs</depend>
-  <depend>messages</depend>
+  <depend>sb_messages</depend>
   <depend>tf</depend>
   <depend>geometry_msgs</depend>
   <build_depend>message_generation</build_depend>

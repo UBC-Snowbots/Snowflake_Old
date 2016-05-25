@@ -1,4 +1,4 @@
-/** 
+/**
  * Pathfinding prototype
  * Needs: OccupancyGrid, Pose2D initial_location, Pose2D final_location
  * Returns: A point (x,y) that brings you one step closer from initial to final location
@@ -8,7 +8,7 @@
  * Publishes to: Point waypoint
  *
  * TODO: Make node pointer smart pointers, (though I don't think there's memoory leaks as it is now)
- * 
+ *
  */
 
 
@@ -70,7 +70,7 @@ void poseEndCallback(const geometry_msgs::Pose2D::ConstPtr& msg)
  */
 struct node_t {
 
-public: 
+public:
 	//Location on the grid
 	int x;
 	int y;
@@ -232,7 +232,7 @@ void printArray(int** map, int width, int height){
 		cout << i << ": " << "\t";
 		for (int j = 0; j < width; j++){
 			cout << map[i][j] << "\t";
-			
+
 		}
 		cout << endl;
 	}
@@ -246,7 +246,7 @@ void printArray(int** map, int width, int height){
  * @param end_point 	the node we are ending at
  * @return 				a vector containing the node list in reverse order:= [end_point,..., start_point]
  */
-vector<node_t*> traceback(vector<node_t*>& node_list, node_t *start_point, node_t *end_point){ 
+vector<node_t*> traceback(vector<node_t*>& node_list, node_t *start_point, node_t *end_point){
 	vector<node_t*> trace;
 	bool isFound = false;
 	if (node_list.empty()){
@@ -269,7 +269,7 @@ vector<node_t*> traceback(vector<node_t*>& node_list, node_t *start_point, node_
 			current_node = current_node->parent;
 			trace.push_back(current_node);
 
-			//cout << "Parent: " << printNode(current_node) << endl;	
+			//cout << "Parent: " << printNode(current_node) << endl;
 		}
 	}
 	return trace;
@@ -277,14 +277,14 @@ vector<node_t*> traceback(vector<node_t*>& node_list, node_t *start_point, node_
 
 /**
  * Returns the movement cost to an adjacent tile
- * @param  start the tile we're on 
+ * @param  start the tile we're on
  * @param  end   the tile we're moving to
  * @return       the movement cost
  */
 int getMovementCost(node_t *start, node_t* end){
 	if (get_man_distance(start, end) > 1){
 		return MOVEMENT_COST_DIAG;
-	} 
+	}
 	return MOVEMENT_COST_STR;
 }
 
@@ -313,11 +313,86 @@ geometry_msgs::Pose2D poseMapToRealTranslator(nav_msgs::OccupancyGrid map, geome
  * Want to return both the waypoint and the path
  */
 struct pathfinding_info {
-public:	
+public:
 	geometry_msgs::Point waypoint;
 	nav_msgs::Path path;
 };
 
+
+/**
+	Checks if there is a line of sight between two nodes
+	@param map
+	@param node_a - the first node
+	@param node_b - the second node
+	@return a boolean representing whether or not there is line of sight between the two nodes
+**/
+bool lineOfSight(nav_msgs::OccupancyGrid map, node_t *node_a, node_t *node_b){
+	int width = map.info.width;
+
+	int x0 = node_a->x;
+	int y0 = node_a->y;
+	int x1 = node_b->x;
+	int y1 = node_b->y;
+	int dy = y0 - y1;
+	int dx = x0 - x1;
+	int sy = 0;
+	int sx = 0;
+	int f = 0;
+	if (dy < 0){
+		dy = -dy;
+		sy = -1;
+	} else {
+		sy = 1;
+	}
+	if (dx < 0){
+		dx = -dx;
+		sx = -1;
+	} else {
+		sx = 1;
+	}
+	if (dx > dy){
+		while (x0 != x1){
+			f = f + dy;
+			int x = x0 + ((sx - 1)/2);
+			int y = y0 + ((sy - 1)/2);
+			if (f >= dx){
+				if ((int) map.data[y*width + x] > OCCUPANCY_THRESHOLD){
+					return false;
+				}
+				y0 = y0 + sy;
+				f = f - dx;
+			} else if ((f != 0) && ((int) map.data[y*width + x] > OCCUPANCY_THRESHOLD)){
+				return false;
+			} else if ((dy == 0) &&
+						((int) map.data[y0*width + x] > OCCUPANCY_THRESHOLD) &&
+						((int) map.data[(y0-1)*width + x] > OCCUPANCY_THRESHOLD)){
+				return false;
+			}
+			x0 = x0 + sx;
+		}
+	} else {
+		while (y0 != y1){
+			f = f + dx;
+			int x = x0 + ((sx - 1)/2);
+			int y = y0 + ((sy - 1)/2);
+			if (f >= dy){
+				if ((int) map.data[y*width + x] > OCCUPANCY_THRESHOLD){
+					return false;
+				}
+				x0 = x0 + sx;
+				f = f - dy;
+			} else if ((f != 0) && ((int) map.data[y*width + x] > OCCUPANCY_THRESHOLD)){
+				return false;
+			} else if ((dx == 0) &&
+						((int) map.data[y*width + x0] > OCCUPANCY_THRESHOLD) &&
+						((int) map.data[y*width + (x0-1)] > OCCUPANCY_THRESHOLD)){
+				return false;
+			}
+			y0 = y0 + sy;
+		}
+	}
+	return true;
+}
 
 
 /**
@@ -325,10 +400,10 @@ public:
  * @param  map              an occupancy grid containing the map
  * @param  current_position the current (x,y) position
  * @param  target_position  the desired (x,y) position
- * @return                  the next (x,y) position we want to be in to get to the target position 
+ * @return                  the next (x,y) position we want to be in to get to the target position
  */
-pathfinding_info get_next_waypoint(	nav_msgs::OccupancyGrid map, 
-										geometry_msgs::Pose2D current_position, 
+pathfinding_info get_next_waypoint(	nav_msgs::OccupancyGrid map,
+										geometry_msgs::Pose2D current_position,
 										geometry_msgs::Pose2D target_position)
 {
 
@@ -341,12 +416,12 @@ pathfinding_info get_next_waypoint(	nav_msgs::OccupancyGrid map,
 	node_t *starting_point = new node_t();
 	geometry_msgs::Pose2D current_trans = poseRealToMapTranslator(map, current_position);
 	starting_point->x = current_trans.x;
+	starting_point->y = current_trans.y;
+	starting_point->parent = starting_point;
     ROS_INFO("Starting point x: %f", current_position.x);
     ROS_INFO("Starting point y:  %f" ,current_position.y);
     ROS_INFO("Starting point trans x: %f", current_trans.x);
     ROS_INFO("Starting point trans y:  %f", current_trans.y);
-	starting_point->y = current_trans.y;
-	starting_point->parent = starting_point;
 
 	node_t *end_goal = new node_t();
 	geometry_msgs::Pose2D target_trans = poseRealToMapTranslator(map, target_position);
@@ -372,7 +447,7 @@ pathfinding_info get_next_waypoint(	nav_msgs::OccupancyGrid map,
 	}
 
 	push(open_list, starting_point);
-	
+
 	//A star
 	while (!open_list.empty())
 	{
@@ -385,7 +460,7 @@ pathfinding_info get_next_waypoint(	nav_msgs::OccupancyGrid map,
 			if ((x < 0) || (x >= map.info.width)){
 				//cout << "x: " << x << "didn't pass param" << endl;
 				continue;
-			} 
+			}
 			for (int y = curr_node->y - 1; y <= curr_node->y + 1; y++){
 				if ((y < 0) || (y >= map.info.height)){
 					//cout << "y: " << y << " didn't pass param" << endl;
@@ -409,10 +484,6 @@ pathfinding_info get_next_waypoint(	nav_msgs::OccupancyGrid map,
 				if (findNodeInList(closed_list, child)){
 					continue;
 				}
-				child->g = curr_node->g + getMovementCost(curr_node, child);
-
-				child->h = get_man_distance(child, end_goal);
-				child->f = child->g + child->h;
 				//Goto is disgusting but we're in a heavily nested loop
 				if ((end_goal->x == x) && (end_goal->y == y)){
 					//cout << "Have reached end goal with (" << x << "," << y << ")" << endl;
@@ -426,15 +497,29 @@ pathfinding_info get_next_waypoint(	nav_msgs::OccupancyGrid map,
 				//} else if(findNodeInList(closed_list, child)) {
 					//updateList(closed_list, child, curr_node);
 				} else {
-					child->parent = curr_node;
+					// Check if there is a better path to from the child to the parent of the current node
+					// effectively skipping the 'curr_node'
+												// Check to make sure that we are not at the first node (has no parent)
+					if (curr_node->parent != curr_node){
+						if (lineOfSight(map, curr_node->parent, child)){
+							child->parent = curr_node->parent;
+							child->g = curr_node->parent->g +
+										getMovementCost(curr_node->parent, child);
+						}
+					} else {
+						child->parent = curr_node;
+						child->g = curr_node->g + getMovementCost(curr_node, child);
+					}
+					child->h = get_man_distance(child, end_goal);
+					child->f = child->g + child->h;
 					//cout << "Pushing open list: Child " << printNode(child) << "Parent " << printNode(curr_node) << endl;
 					push(open_list, child);
 				}
 			}
 		}
-		
+
 	}
-	
+
 	end:
 	cout << "Num of analyzed nodes: " << open_list.size() + closed_list.size() << endl;
 
@@ -442,7 +527,7 @@ pathfinding_info get_next_waypoint(	nav_msgs::OccupancyGrid map,
 	pathfinding_info path_info;
 	nav_msgs::Path path;
 	geometry_msgs::Point waypoint;
-	cout << "Before traceback" << endl;	
+	cout << "Before traceback" << endl;
 	vector<node_t*> trace = traceback(closed_list, starting_point, end_goal);
 	cout << "After traceback" << endl;
 	//waypoint creation
@@ -463,7 +548,7 @@ pathfinding_info get_next_waypoint(	nav_msgs::OccupancyGrid map,
 		}
 		cout << "Trace non-empty: "<< trace.size() << endl;
 	}
-	
+
 	//Aligning with the real world
 	waypoint.z = 0;
     waypoint.x = (waypoint.x * map.info.resolution + map.info.origin.position.x);
@@ -471,7 +556,7 @@ pathfinding_info get_next_waypoint(	nav_msgs::OccupancyGrid map,
 
 
 	//path creation
-	vector<geometry_msgs::PoseStamped> pose_init; 
+	vector<geometry_msgs::PoseStamped> pose_init;
 	if (!trace.empty()){
 		for (int i = 0; i < trace.size(); i++){
 			geometry_msgs::PoseStamped position;
@@ -488,7 +573,7 @@ pathfinding_info get_next_waypoint(	nav_msgs::OccupancyGrid map,
 	//Finalizing struct contents
 	path_info.waypoint = waypoint;
 	path_info.path = path;
- 
+
 	//Frees the memory
 	delete end_goal;
 	freeList(open_list);
@@ -575,13 +660,13 @@ int main(){
 	}
 
 	//Make a barrier (Test Case 1)
-	
+
 	for (int i = 2; i < 19; i++){
 		map.data[18*map.info.width+i] = 10;
 		map.data[map.info.width*i + 18] = 10;
 	}
-	
-	
+
+
 	//Test Case 2
 	for (int i = 0; i < 8; i++){
 		map.data[map.info.width*i + 7] = 10;
@@ -598,7 +683,7 @@ int main(){
 	for (int i = 7; i < 20; i++){
 		map.data[map.info.width*i + 14] = 10;
 	}
-	
+
 	//Initial and final position
 	geometry_msgs::Pose2D curr_pos;
 	curr_pos.x = 1;

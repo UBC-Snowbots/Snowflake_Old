@@ -10,7 +10,7 @@ find_package(catkin REQUIRED COMPONENTS
     sensor_msgs
     std_msgs
     tf
-    messages
+    sb_messages
     tf2)
 add_message_files(
   FILES
@@ -28,7 +28,7 @@ include(Catch)
 add_definitions(--std=c++11)
 
 catkin_package(
-  CATKIN_DEPENDS std_msgs messages roscpp tf geometry_msgs message_runtime
+  CATKIN_DEPENDS std_msgs sb_messages roscpp tf geometry_msgs message_runtime
 )
 
 include_directories(
