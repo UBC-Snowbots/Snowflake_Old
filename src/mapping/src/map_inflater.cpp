@@ -36,6 +36,7 @@ void MapInflater::mapCallBack(const nav_msgs::OccupancyGrid::ConstPtr& map){
     nav_msgs::OccupancyGrid::Ptr inflated_map;
     inflated_map = occupancy_grid_utils::inflateObstacles(*map, inflation_factor, false);
     map_pub.publish(inflated_map);
+    ROS_INFO("Inflated a map!");
 }
 
 

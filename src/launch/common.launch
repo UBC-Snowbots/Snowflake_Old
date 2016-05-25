@@ -33,9 +33,9 @@
 
         <param name="map_update_interval" value="0.5"/>
         <param name="maxUrange" value="4.0"/>
-        <param name="linear_update" value="0.2"/>
+        <param name="linear_update" value="0.1"/>
         <param name="angularUpdate" value="0.2"/>
-        <param name="delta" value="0.5"/>
+        <param name="delta" value="0.2"/>
         <param name="occ_thresh" value="0.1"/>
         <param name="odom_frame" value="odom"/>
         <remap from="scan" to="hokuyoscan"/>   

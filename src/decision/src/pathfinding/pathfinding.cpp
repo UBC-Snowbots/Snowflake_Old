@@ -397,7 +397,7 @@ pathfinding_info get_next_waypoint(	nav_msgs::OccupancyGrid map,
 					continue;
 				}
 				//Skip if there's an object here
-				if (((int) map.data[y*width + x] > OCCUPANCY_THRESHOLD) || ((int) map.data[y*width + x] == -1))  {
+				if (((int) map.data[y*width + x] > OCCUPANCY_THRESHOLD)/* || ((int) map.data[y*width + x] == -1)*/)  {
 					//cout << "Occupancy at (" << x << "," << y << ") with: " << (int) map.data[y*width + x] << endl;
 					continue;
 				}

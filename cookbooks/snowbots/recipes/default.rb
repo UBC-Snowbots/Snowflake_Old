@@ -45,6 +45,12 @@ apt_package 'ros-indigo-image-pipeline'
 apt_package 'v4l-utils'
 apt_package 'ros-indigo-cv-camera'
 apt_package 'ros-indigo-map-server'
+apt_package 'ros-indigo-image-transport'
+apt_package 'ros-indigo-image-transport-plugins'
+apt_package 'ros-indigo-pcl-ros'
+apt_package 'ros-indigo-libg2o'
+apt_package 'ros-indigo-uvc-camera'
+apt_package 'freeglut3-dev'
 
 package 'ros-indigo-tf2-bullet' do
     action 'install'
