@@ -499,7 +499,8 @@ pathfinding_info get_next_waypoint(	nav_msgs::OccupancyGrid map,
 				} else {
 					// Check if there is a better path to from the child to the parent of the current node
 					// effectively skipping the 'curr_node'
-					if (curr_node->parent != curr_node->parent){
+												// Check to make sure that we are not at the first node (has no parent)
+					if (curr_node->parent != curr_node){
 						if (lineOfSight(map, curr_node->parent, child)){
 							child->parent = curr_node->parent;
 							child->g = curr_node->parent->g +
