@@ -2,17 +2,17 @@
 */
 #include <Encoder.h>
 
-static const double wheel_factor = 10;//need to calculate
+static const double wheel_factor = 1.068;//need to calculate
 Encoder knobLeft(2, 4);
-Encoder knobRight(7, 8);
+Encoder knobRight(5,6);
 int az;
 int pinPowerDown = 13;  // digital pin for Power Down mode
 int off = 0;
 // LOW = Normal, HIGH = Power down
 int x, y, z, x_offset, y_offset, z_offset;
 float v=0, d=0;
-long positionLeft  = -999;
-long positionRight = -999;
+long positionLeft  = 1; //-990
+long positionRight = 1;
 
 void setup()
 {
@@ -27,9 +27,10 @@ void setup()
 
 void loop()
 {
- send_gyro();
- send_accel(); 
- send_odom();
+ //send_gyro();
+ //send_accel(); 
+ //send_odom();
+ send_odom2();
  delay(100);
 }
 
@@ -59,13 +60,40 @@ void send_odom(){
   newRight = knobRight.read();
   if (newLeft != positionLeft || newRight != positionRight) {
     avg = ((positionLeft - newLeft)+(positionRight - newRight))/2;
-    d = avg*wheel_factor;
+    d += avg*wheel_factor;
     positionLeft = newLeft;
     positionRight = newRight;
   }
+  else{
+    avg = 0;
+  }
   Serial.print( " D: "); //meters
-  Serial.print(d);
-  d += v/0.1;
+  Serial.print(d - wheel_factor);
+  v = avg*wheel_factor;
   Serial.print( " V: ");
   Serial.println(v); //meters/s 
 }
+
+void send_odom2() {
+  long newLeft, newRight;
+  newLeft = knobLeft.read();
+  newRight = knobRight.read();
+  if (newLeft != positionLeft || newRight != positionRight) {
+    Serial.print("Left = ");
+    Serial.print(newLeft);
+    Serial.print(", Right = ");
+    Serial.print(newRight);
+    Serial.println();
+    positionLeft = newLeft;
+    positionRight = newRight;
+  }
+  // if a character is sent from the serial monitor,
+  // reset both back to zero.
+  if (Serial.available()) {
+    Serial.read();
+    Serial.println("Reset both knobs to zero");
+    knobLeft.write(0);
+    knobRight.write(0);
+  }
+}
+
