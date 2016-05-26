@@ -341,19 +341,19 @@ pathfinding_info get_next_waypoint(	nav_msgs::OccupancyGrid map,
 	node_t *starting_point = new node_t();
 	geometry_msgs::Pose2D current_trans = poseRealToMapTranslator(map, current_position);
 	starting_point->x = current_trans.x;
+	starting_point->y = current_trans.y;
+	starting_point->parent = starting_point;
     ROS_INFO("Starting point x: %f", current_position.x);
     ROS_INFO("Starting point y:  %f" ,current_position.y);
     ROS_INFO("Starting point trans x: %f", current_trans.x);
     ROS_INFO("Starting point trans y:  %f", current_trans.y);
-	starting_point->y = current_trans.y;
-	starting_point->parent = starting_point;
 
 	node_t *end_goal = new node_t();
 	geometry_msgs::Pose2D target_trans = poseRealToMapTranslator(map, target_position);
 	end_goal->x = target_trans.x;
 	end_goal->y = target_trans.y;
-    ROS_INFO("End point x: %f", target_trans.x);
-    ROS_INFO("End point y:  %f", target_trans.y);
+    ROS_INFO("End point x: %f", target_position.x);
+    ROS_INFO("End point y:  %f", target_position.y);
 
 	starting_point->g = 0;
 	starting_point->f = 0;
@@ -397,7 +397,7 @@ pathfinding_info get_next_waypoint(	nav_msgs::OccupancyGrid map,
 					continue;
 				}
 				//Skip if there's an object here
-				if (((int) map.data[y*width + x] > OCCUPANCY_THRESHOLD) || ((int) map.data[y*width + x] == -1))  {
+				if (((int) map.data[y*width + x] > OCCUPANCY_THRESHOLD))  {
 					//cout << "Occupancy at (" << x << "," << y << ") with: " << (int) map.data[y*width + x] << endl;
 					continue;
 				}
@@ -435,8 +435,7 @@ pathfinding_info get_next_waypoint(	nav_msgs::OccupancyGrid map,
 			}
 		}
 		
-	}
-	
+	}	
 	end:
 	cout << "Num of analyzed nodes: " << open_list.size() + closed_list.size() << endl;
 
@@ -446,6 +445,7 @@ pathfinding_info get_next_waypoint(	nav_msgs::OccupancyGrid map,
 	geometry_msgs::Point waypoint;
 	vector<node_t*> trace = traceback(closed_list, starting_point, end_goal);
 	//waypoint creation
+    cout << "Trace size: " << trace.size() << " Open List Size: " << open_list.size() << endl;
 	if (trace.empty() || open_list.empty()){
 		//There is no path to the goal
 		//Current behaviour: iterate through area around until first empty spot
@@ -464,7 +464,8 @@ pathfinding_info get_next_waypoint(	nav_msgs::OccupancyGrid map,
 		}
 
 		deadlock_end:
-		cout << "Robot stuck/No path found, emergency escape" << endl;		
+		cout << "Robot stuck/No path found, emergency escape" << endl;
+       
 	} else{
 		//A path exists
 		if (trace.size() == 1){ //If we are already at the location return it (no movement)
@@ -481,7 +482,7 @@ pathfinding_info get_next_waypoint(	nav_msgs::OccupancyGrid map,
 	waypoint.z = 0;
     waypoint.x = (waypoint.x * map.info.resolution + map.info.origin.position.x);
     waypoint.y = (waypoint.y * map.info.resolution + map.info.origin.position.y);
-
+    ROS_INFO("Waypoint: (%f, %f)", waypoint.x, waypoint.y);
 
 	//path creation
 	vector<geometry_msgs::PoseStamped> pose_init; 
