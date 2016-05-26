@@ -26,16 +26,23 @@ int main (int argc, char** argv){
   odom.pose.pose.position.z=0.0;
   }
   
-  int x = 0;
   while(ros::ok() && link_port.isActive()){
     //ROS Loop - All procedures repeated are done here
-    char buff1[32];
-    char buff2[32];
-    data_request('A',buff1);
-    data_request('G',buff2);
-    if(Serial_Store(buff2,3) && Serial_Store(buff1,0))
-        sensor_imu_publisher.publish(IMU);
-          //if the messages read are good, publish them, else do nothing 
+    char buff1[32] = "\0";
+    char buff2[32] = "\0";
+    data_request('A',buff1,DATA);
+    loop_rate.sleep();
+    data_request('G',buff2,DATA);
+    std::string A_input = to_string2(buff1);
+    std::string G_input = to_string2(buff2);
+    if(A_input.find('\n')!=std::string::npos && A_input.find('X')!=std::string::npos
+      && G_input.find('\n')!=std::string::npos && G_input.find('X')!=std::string::npos){
+      if(Serial_Store(buff2,3) && Serial_Store(buff1,0)){
+          sensor_imu_publisher.publish(IMU);
+          odom_publisher.publish(odom);
+        }   
+    }
+    loop_rate.sleep();
   }
   
   ROS_ERROR("Sensor Input Node Terminated"); 
@@ -45,12 +52,16 @@ bool connect_device(std::string device_name){
     int i = 0;
     while (i < 9){
     char buff[32]="\0";
-      if(!open_port(i)){
+    if(!open_port(i)){
         ROS_ERROR("PORT ERROR");
         return false;
-       }
-    data_request('I',buff);
-    std::string s_input = to_string2(buff);
+    }
+    data_request('I',buff,1);
+    std::string s_input;
+    do{
+     data_request('I',buff,1);
+     s_input = to_string2(buff);
+    } while (s_input.find('\n')==std::string::npos);
     if(s_input.find(device_name)!=std::string::npos)
         return true;
     else
@@ -135,6 +146,8 @@ bool Serial_Store(char *buffer,int sensor){
       IMU_write((3+sensor),atoi(c));
       return true;
     }
+    else
+      return false;
    
       c = strtok(NULL,",:");
   }
@@ -171,15 +184,25 @@ void msg_store(int type, char *data){
   }
 }
 
-void data_request(char c, char*buffer){
+void data_request(char c, char*buffer, int mode){
   //clears input buffer and sends confirmation byte to prepare acceptance of message in serial
-  while(buffer[0] == '\0'){
-  link_port.clearBuffer();
+  link_port.clearBuffer(); 
   stringstream ss; 
   ss << c; 
-  link_port.writeData(ss.str(),1); 
-  link_port.readData(32,buffer);
+  int i = 0;
+  link_port.writeData(ss.str(),1);
+  if (mode == 0){
+    while(buffer[0] == '\0'){
+      link_port.writeData(ss.str(),1);
+      link_port.readData(64,buffer); 
+    } 
   }
+  else{
+    while(buffer[0] == '\0' && i < 50){
+      link_port.readData(64,buffer);
+    }
+  }
+  return;
  }
 
 

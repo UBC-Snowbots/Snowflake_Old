@@ -115,7 +115,7 @@ void data_request(char c, char *buffer, int mode){
     } 
   }
   else{
-    while(buffer[0] == '\0' && i < 20){
+    while(buffer[0] == '\0' && i < 50){
       link_port.readData(64,buffer);
     }
   }

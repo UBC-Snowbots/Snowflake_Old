@@ -13,11 +13,13 @@
 #include <sensor_msgs/Imu.h>
 #include <nav_msgs/Odometry.h>
 
+#define DATA 0 
+
 using namespace std; 
 
 //Constant declerations 
 static const string ROS_NODE_NAME = "sensor_driver";
-static const int ROS_LOOP_RATE = 10; //units of Hz, default should be 200
+static const int ROS_LOOP_RATE = 200; //units of Hz, default should be 200
 //Loop rate slowed due to lag in serial, can try increasing 
 static const int BAUD_RATE = 115200; 
 static const string IMU_TOPIC = "IMU"; 
@@ -37,4 +39,4 @@ bool connect_device(std::string device_name);
 bool open_port(unsigned int count);
 void IMU_write(int c, double val);
 bool Serial_Store(char *buffer, int sensor);
-void data_request(char c, char *buffer); 
+void data_request(char c, char *buffer, int mode); 
