@@ -6,7 +6,7 @@
 
         <remap from="initial_pose" to="pose2D"/>
         <remap from="final_pose" to="destination"/>
-        <remap from="occupancy_grid" to="inflated_map"/>
+        <remap from="occupancy_grid" to="map"/>
 
     </node>
 

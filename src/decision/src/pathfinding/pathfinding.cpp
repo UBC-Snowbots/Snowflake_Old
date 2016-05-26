@@ -319,6 +319,89 @@ public:
 };
 
 
+/**
+
+    Checks if there is a line of sight between two nodes
+
+    @param map
+
+    @param node_a - the first node
+
+    @param node_b - the second node
+
+    @return a boolean representing whether or not there is line of sight between the two nodes
+
+**/
+
+bool lineOfSight(nav_msgs::OccupancyGrid map, node_t *node_a, node_t *node_b){
+    int width = map.info.width;
+
+    int x0 = node_a->x;
+    int y0 = node_a->y;
+    int x1 = node_b->x;
+    int y1 = node_b->y;
+    int dy = y1 - y0;
+    int dx = x1 - x0;
+    int sx = 0;
+    int sy = 0;
+    int f = 0;
+    if (dy < 0){
+        dy = -dy;
+        sy = -1;
+    } else {
+        sy = 1;
+    }
+    if (dx < 0){
+        dx = -dx;
+        sx = -1;
+    } else {
+        sx = 1;
+    }
+    if (dx > dy){
+        while (x0 != x1){
+            f = f + dy;
+            int x = x0 + ((sx - 1)/2);
+            int y = y0 + ((sy - 1)/2);
+            
+            if (f >= dx){
+                if ((int) map.data[y*width + x] > OCCUPANCY_THRESHOLD){
+                    return false;
+                }
+                y0 = y0 + sy;
+                f = f - dx;
+            } else if ((f != 0) && 
+                ((int) map.data[y*width + x] > OCCUPANCY_THRESHOLD)){
+                return false;
+            } else if ((dy == 0) &&
+                        ((int) map.data[y0*width + x] > OCCUPANCY_THRESHOLD) &&
+                        ((int) map.data[(y0-1)*width + x] > OCCUPANCY_THRESHOLD)){
+                return false;
+            }
+            x0 = x0 + sx;
+        }
+    } else {
+        while (y0 != y1){
+            f = f + dx;
+            int x = x0 + ((sx - 1)/2);
+            int y = y0 + ((sy - 1)/2);
+            if (f >= dy){
+                if ((int) map.data[y*width + x] > OCCUPANCY_THRESHOLD){
+                    return false;
+                }
+                x0 = x0 + sx;
+                f = f - dy;
+            } else if ((f != 0) && ((int) map.data[y*width + x] > OCCUPANCY_THRESHOLD)){
+                return false;
+            } else if ((dx == 0) &&
+                        ((int) map.data[y*width + x0] > OCCUPANCY_THRESHOLD) &&
+                        ((int) map.data[y*width + (x0-1)] > OCCUPANCY_THRESHOLD)){
+                return false;
+            }
+            y0 = y0 + sy;
+        }
+    }
+    return true;
+}
 
 /**
  * Gets the next waypoint to ge to the target position
@@ -409,10 +492,6 @@ pathfinding_info get_next_waypoint(	nav_msgs::OccupancyGrid map,
 				if (findNodeInList(closed_list, child)){
 					continue;
 				}
-				child->g = curr_node->g + getMovementCost(curr_node, child);
-
-				child->h = get_man_distance(child, end_goal);
-				child->f = child->g + child->h;
 				//Goto is disgusting but we're in a heavily nested loop
 				if ((end_goal->x == x) && (end_goal->y == y)){
 					//cout << "Have reached end goal with (" << x << "," << y << ")" << endl;
@@ -428,8 +507,21 @@ pathfinding_info get_next_waypoint(	nav_msgs::OccupancyGrid map,
 				//} else if(findNodeInList(closed_list, child)) {
 					//updateList(closed_list, child, curr_node);
 				} else {
-					child->parent = curr_node;
-					//cout << "Pushing open list: Child " << printNode(child) << "Parent " << printNode(curr_node) << endl;
+					if (curr_node->parent != curr_node){
+                        //cout << "Running los" << endl;
+                        if (lineOfSight(map, curr_node->parent, child)){
+                            child->parent = curr_node->parent;
+                            // TODO: Modify getMovementCost to allow for varying dx, dy
+                            child->g = curr_node->parent->g +
+                                        getMovementCost(curr_node->parent, child);
+                        }
+                    } else {
+                        child->parent = curr_node;
+                        child->g = curr_node->g + getMovementCost(curr_node, child);
+                    }
+                    child->h = get_man_distance(child, end_goal);
+                    child->f = child->g + child->h;
+                    //cout << "Pushing open list: Child " << printNode(child) << "Parent " << printNode(curr_node) << endl;
 					push(open_list, child);
 				}
 			}
