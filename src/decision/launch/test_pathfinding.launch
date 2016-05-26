@@ -1,0 +1,16 @@
+<?xml version="1.0"?>
+
+<launch>
+
+
+	<node pkg="decision" type="pub_map"  name="pub_map" output="screen">
+	</node>
+
+	<node pkg="decision" type="pub_final_point"	name="pub_final_point" output="screen">
+	</node>
+
+	<node pkg="decision" type="pub_init_point"  name="pub_init_point" output="screen">
+	</node>
+
+</launch>
+

@@ -422,7 +422,9 @@ pathfinding_info get_next_waypoint(	nav_msgs::OccupancyGrid map,
 				}
 
 				if (findNodeInList(open_list, child)){
-					updateList(open_list, child, curr_node);
+					if(!updateList(open_list, child, curr_node)){
+						delete child;
+					}
 				//} else if(findNodeInList(closed_list, child)) {
 					//updateList(closed_list, child, curr_node);
 				} else {
@@ -442,16 +444,27 @@ pathfinding_info get_next_waypoint(	nav_msgs::OccupancyGrid map,
 	pathfinding_info path_info;
 	nav_msgs::Path path;
 	geometry_msgs::Point waypoint;
-	cout << "Before traceback" << endl;	
 	vector<node_t*> trace = traceback(closed_list, starting_point, end_goal);
-	cout << "After traceback" << endl;
 	//waypoint creation
 	if (trace.empty() || open_list.empty()){
 		//There is no path to the goal
-		//Current behaviour: stay at location
-		waypoint.x = starting_point->x;
-		waypoint.y = starting_point->y;
-		cout << "Trace empty" << endl;
+		//Current behaviour: iterate through area around until first empty spot
+		for (int i = 1; i < width; i++){
+			for (int curr_x = starting_point->x - i; curr_x <= starting_point->x + i; curr_x++){
+				if ((curr_x < 0) || (curr_x > width)) continue;
+				for (int curr_y = starting_point->y - i; curr_y <= starting_point->y; curr_y++){
+					if ((curr_y < 0) || (curr_y > height)) continue;
+					if ((int) map.data[curr_y*width + curr_x] <= OCCUPANCY_THRESHOLD){
+						waypoint.x = curr_x;
+						waypoint.y = curr_y;
+						goto deadlock_end;
+					}
+				}
+			}
+		}
+
+		deadlock_end:
+		cout << "Robot stuck/No path found, emergency escape" << endl;		
 	} else{
 		//A path exists
 		if (trace.size() == 1){ //If we are already at the location return it (no movement)
@@ -547,7 +560,6 @@ int main(int argc, char** argv){
 		ros::spinOnce();
 	}
 }
-
 
 /*
 int main(){
