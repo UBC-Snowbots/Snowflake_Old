@@ -38,5 +38,6 @@ std::string to_string(int i);
 bool connect_device(std::string device_name);
 bool open_port(unsigned int count);
 void IMU_write(int c, double val);
-bool Serial_Store(char *buffer, int sensor);
+bool Serial_Store(char *buffer);
 void data_request(char c, char *buffer, int mode); 
+void msg_store(int type, char *data);

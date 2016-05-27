@@ -29,15 +29,12 @@ int main (int argc, char** argv){
   while(ros::ok() && link_port.isActive()){
     //ROS Loop - All procedures repeated are done here
     char buff1[32] = "\0";
-    char buff2[32] = "\0";
-    data_request('A',buff1,DATA);
+    data_request('D',buff1,DATA);
     loop_rate.sleep();
-    data_request('G',buff2,DATA);
     std::string A_input = to_string2(buff1);
-    std::string G_input = to_string2(buff2);
-    if(A_input.find('\n')!=std::string::npos && A_input.find('X')!=std::string::npos
-      && G_input.find('\n')!=std::string::npos && G_input.find('X')!=std::string::npos){
-      if(Serial_Store(buff2,3) && Serial_Store(buff1,0)){
+    if(A_input.find('\n')!=std::string::npos && A_input.find('X')!=std::string::npos){  
+      //cout << buff1;
+      if(Serial_Store(buff1)){ //&& Serial_Store(buff1,0)){
           sensor_imu_publisher.publish(IMU);
           odom_publisher.publish(odom);
         }   
@@ -90,61 +87,44 @@ std::string to_string2(char *c){
   out << c; 
   return out.str();
 }
-void IMU_write(int c, double val){
-  //Takes in value val and writes to IMU.msg depending on situation 
-   switch (c){
-  case 1: 
-    val *= ARDUINO_ANALOG_PU; 
-    //conversion from PU (1 to 1024 int) to voltage 
-    val /= ADXL_V_G_PU; //conversion from voltage to gs 
-    val *= G_TO_ACCEL;
-    //conversion from g to m/s^2 as specified in std_msgs/IMU.h 
-    IMU.linear_acceleration.x = val;
-    break;
-  case 2:
-    val *= ARDUINO_ANALOG_PU;
-    val /= ADXL_V_G_PU; 
-    val *= G_TO_ACCEL; 
-    IMU.linear_acceleration.y = val;
-    break; 
-  case 3: 
-    val *= ARDUINO_ANALOG_PU;
-    val /= ADXL_V_G_PU; 
-    val *= G_TO_ACCEL;
-    IMU.linear_acceleration.z = val;
-    break;
-  case 4: 
-    IMU.angular_velocity.x = val; 
-    break;
-  case 5:  
-    IMU.angular_velocity.y = val;
-    break; 
-  case 6:  
-    IMU.angular_velocity.z = val; 
-    break; 
-  }
-}
 
-bool Serial_Store(char *buffer,int sensor){
+bool Serial_Store(char *buffer){
   //Parses the buffer characters and stores them into the respective IMU position 
   //When strtok is passed a NULL pointer, it checks the previous succeful truncation location
   //sensor = 0 for accelerometer, sensor = 3 for gyro, sensor = 3 undetermined
 //  if (sensor > 1) return false;
+  //cout << "buffer: " << buffer;  
   char *c;  //temp char that stores the char to convert to integer
-  c = strtok(buffer,",:");
+  c = strtok(buffer,", :");
   while (c != NULL){
+   // cout << "in buffer: " << buffer << endl;
+    //cout << "c : " << c << endl;
     if (c[0] == 'X'){ //Looks for linear_accel_x 
       c = strtok(NULL,",:");
-      IMU_write((1+sensor),atoi(c));     
+      //cout << "1: " << c << endl;
+      msg_store(1,c);     
     }
     else if (c[0] == 'Y'){ //Looks for linear_accel_y
       c = strtok(NULL,",:");
-      IMU_write((2+sensor),atoi(c));
+      //cout << "Y" << endl;
+      msg_store(2,c);
     }
     else if (c[0] == 'Z'){ //Looks for linear_accel_y
       c = strtok(NULL,",:");
-      IMU_write((3+sensor),atoi(c));
+      msg_store(3,c);
+    }
+    else if (c[0] == 'A'){
+      c = strtok(NULL,",:");
+      msg_store(4,c);
       return true;
+    }
+    else if (c[0] == 'L'){
+      c = strtok(NULL,",:");  
+      //store msg  
+    }
+    else if (c[0] == 'R'){
+      c = strtok(NULL,",:");    
+      //store msgwa
     }
     else
       return false;
@@ -154,7 +134,7 @@ bool Serial_Store(char *buffer,int sensor){
   return true;
 }
 void msg_store(int type, char *data){
-  int val = atoi(data);
+  double val = atoi(data);
   switch(type){
   case 1: 
     val *= ARDUINO_ANALOG_PU; 
@@ -163,6 +143,7 @@ void msg_store(int type, char *data){
     val *= G_TO_ACCEL;
     //conversion from g to m/s^2 as specified in std_msgs/IMU.h 
     IMU.linear_acceleration.x = val;
+    //cout << IMU.linear_acceleration << endl;
     break;
   case 2: 
     val *= ARDUINO_ANALOG_PU;
@@ -180,26 +161,25 @@ void msg_store(int type, char *data){
     odom.twist.twist.linear.y = atof(data);
   case 6: 
     odom.pose.pose.position.y = atof(data);
-  
   }
 }
 
 void data_request(char c, char*buffer, int mode){
   //clears input buffer and sends confirmation byte to prepare acceptance of message in serial
-  link_port.clearBuffer(); 
+  //link_port.clearBuffer(); 
   stringstream ss; 
   ss << c; 
   int i = 0;
   link_port.writeData(ss.str(),1);
-  if (mode == 0){
+  if (mode == 1){
     while(buffer[0] == '\0'){
       link_port.writeData(ss.str(),1);
-      link_port.readData(64,buffer); 
+      link_port.readData(32,buffer); 
     } 
   }
   else{
-    while(buffer[0] == '\0' && i < 50){
-      link_port.readData(64,buffer);
+    while(buffer[0] == '\0' && i < 20){
+      link_port.readData(32,buffer);
     }
   }
   return;
