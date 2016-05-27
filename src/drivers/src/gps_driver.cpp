@@ -27,9 +27,9 @@ int main (int argc, char **argv){
             && g_input.find('D')!=std::string::npos){
           gps_store(buff);
           gps_msg_create();
-         // cout << setprecision(9) << gps_msg.Lon << endl;
-         // cout << setprecision(9) << gps_msg.Lat << endl;
-        gps_publisher.publish(gps_msg);
+         // cout << setprecision(9) << gps_msg.lon << endl;
+          //cout << setprecision(9) << gps_msg.lat << endl;
+            gps_publisher.publish(gps_msg);
             }
         loop_rate.sleep();
     } 
