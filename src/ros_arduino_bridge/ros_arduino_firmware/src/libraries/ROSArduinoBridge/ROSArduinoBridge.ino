@@ -57,10 +57,10 @@
    //#define POLOLU_MC33926
 
    /* The RoboGaia encoder shield */
-   #define ROBOGAIA
+   //#define ROBOGAIA
    
    /* Encoders directly attached to Arduino board */
-   //#define ARDUINO_ENC_COUNTER
+   #define ARDUINO_ENC_COUNTER
 #endif
 
 //#define USE_SERVOS  // Enable use of PWM servos as defined in servos.h
