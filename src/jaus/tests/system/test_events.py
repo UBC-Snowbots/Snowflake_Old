@@ -5,14 +5,12 @@ from util import slow
 
 import jaus.messages as _messages
 
-@slow
 @pytest.mark.asyncio
 def test__report_event_timeout(connection):
     yield from connection.send_message(_messages.QueryEventTimeoutMessage())
     reply = yield from connection.receive_messages()
     assert reply == [_messages.ReportEventTimeoutMessage(timeout=1)]
 
-@slow
 @pytest.mark.asyncio
 def test__report_events__no_events(connection):
     yield from connection.send_message(_messages.QueryEventsMessage(
@@ -69,7 +67,6 @@ def teardown_event(connection, event_id, request_id, rate=5):
         event_id=event_id,
         rate=rate)
 
-@slow
 @pytest.mark.asyncio
 def test__report_events__one_event(connection):
     event_id = yield from setup_event(

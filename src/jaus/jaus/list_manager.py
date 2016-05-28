@@ -26,7 +26,7 @@ class ListManager:
         
         #Do not allow elements with UID 0
         if(element.UID == 0):
-            raise RejectElementRequest
+            raise RejectElementRequest("Element has a UID of 0")
             return
 
         #"""Case 1 : Element is being added to an empty list"""
@@ -38,7 +38,7 @@ class ListManager:
         #This is a check for if the element already exists in the list
         for e in self.element_set:
             if (e.UID == element.UID):
-                raise RejectElementRequest
+                raise RejectElementRequest("Element already exists in the list")
                 return
 
         #"""Case 2: Element is being added to the beginning of the list"""
@@ -75,13 +75,13 @@ class ListManager:
                     self.element_set.add(element)
                     return
 
-        raise RejectElementRequest ##if any of the cases failed
+        raise RejectElementRequest("Element cannot be added to the list") ##if any of the cases failed
 
     def deleteElement(self, element):
 
         #Case where element is not in the list
         if element not in self.element_set:
-            raise RejectElementRequest
+            raise RejectElementRequest("Element is not in the list")
             return 
 
         #Check if there is only 1 element in the list
@@ -101,7 +101,7 @@ class ListManager:
                 isLoopStart = True
         
         if(isLoopStart):
-            raise RejectElementRequest
+            raise RejectElementRequest("Element is the start of a loop, cannot be removed")
             return
         if(previousElement == None):
             nextElement.setPrevious(0)
@@ -121,7 +121,7 @@ class ListManager:
             self.element_set.remove(element)
             return
 
-        raise RejectElementRequest
+        raise RejectElementRequest("Element could not be removed")
 
     def getElementSet(self):
         return self.element_set
@@ -161,3 +161,5 @@ class ListElement:
             self.previousUID = previous
 
  
+class RejectElementRequest(Exception):
+    pass

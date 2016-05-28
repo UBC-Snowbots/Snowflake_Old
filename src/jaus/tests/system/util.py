@@ -3,6 +3,7 @@ import asyncio
 import collections
 import bitstring
 import inspect
+import logging
 
 import jaus.judp as judp
 import jaus.messages as messages
@@ -21,6 +22,8 @@ class UDPProtocol:
     @asyncio.coroutine
     def send(self, data, destination):
         self.transport.sendto(data, destination)
+    def connection_lost(self, exc):
+        logging.debug('Testing connection lost {}'.format(exc))
 
 class JUDPConnection:
     def __init__(self, protocol, remote_addr, component_id,
@@ -50,6 +53,12 @@ class JUDPConnection:
 
     @asyncio.coroutine
     def send_message(self, message, **kwargs):
+        logging.info('Test transport {} sending {} to {}/{}'
+            .format(
+                self.id,
+                message,
+                self.remote_addr,
+                self.destination_id))
         packets = judp.make_packets(
             message,
             self.sequence_number,
@@ -92,9 +101,13 @@ class JUDPConnection:
                     continue
                 mr.add_packet(packet)
             new_messages = mr.pop_messages()
-            print(
-                "Test transport received {} from {}"
-                .format(new_messages, self.remote_addr))
+            logging.info(
+                "Test transport {} received {} from {}/{}"
+                .format(
+                    self.id,
+                    new_messages,
+                    self.remote_addr,
+                    packet.source_id))
             if types is not None:
                 for msg in new_messages:
                     if msg.message_code in types:
@@ -106,7 +119,7 @@ class JUDPConnection:
         return messages
 
 @asyncio.coroutine
-def connect_test_udp(event_loop, port, destination_id):
+def connect_test_udp(event_loop, port, destination_id, test_id):
     protocol = UDPProtocol()
     local_addr = ('127.0.0.1', port)
     remote_addr = ('127.0.0.1', 3794)
@@ -116,7 +129,7 @@ def connect_test_udp(event_loop, port, destination_id):
     return JUDPConnection(
         protocol,
         remote_addr,
-        messages.Id(subsystem=0x1010, node=0x10, component=0x10),
+        test_id,
         destination_id)
 
 slow = pytest.mark.skipif(

@@ -1,13 +1,13 @@
-import enum as _enum
+﻿import enum as _enum
 import bitstring as _bitstring
 
 import jaus.format as _format
 
 _specs = {}
 
-def define_message(name, specs):
+def define_message(name, specs, defaults={}):
     code = getattr(MessageCode, name)
-    specification = _format.specification(name, specs)
+    specification = _format.specification(name, specs, defaults)
     globals()[name] = specification
     _specs[code] = specification
 
@@ -89,6 +89,32 @@ class MessageCode(_enum.Enum):
     ReportAuthority = 0x4001
     ReportTimeout = 0x4003
 
+    ## Management
+
+    Shutdown = 0x0002
+    Standby = 0x0003
+    Resume = 0x0004
+    Reset = 0x0005
+    SetEmergency = 0x0006
+    ClearEmergency = 0x0007
+    QueryStatus = 0x2002
+
+    ReportStatus = 0x4002
+
+    ## List Manager Service
+    #Input Set
+    SetElement = 0x041A
+    DeleteElement = 0x041B
+    QueryElement = 0x241A
+    QueryElementList = 0x241B
+    QueryElementCount = 0x241C
+    #Output Set
+    ConfirmElementRequest = 0x041C
+    RejectElementRequest = 0x041D
+    ReportElement = 0x441A
+    ReportElementList = 0x441B
+    ReportElementCount = 0x441C
+
 Message = _format.specification('Message', specs=[
         _format.Enum('message_code', MessageCode, bytes=2, endianness='le'),
         _format.Switch('body', lambda attrs: _specs[attrs['message_code']]),
@@ -164,7 +190,12 @@ define_message('QueryEvents', [
     _format.Optional(lambda attrs: attrs['variant'] is QueryEventsVariant.ALL_EVENTS, [
         _format.Int('all_events', bytes=1),
     ]),
-])
+], defaults={
+    'message_code': None,
+    'event_type': None,
+    'event_id': None,
+    'all_events': lambda attrs: 0 if attrs['variant'] is QueryEventsVariant.ALL_EVENTS else None,
+})
 define_message('QueryEventTimeout', [])
 define_message('ConfirmEventRequest', [
     _format.Int('request_id', bytes=1),
@@ -192,7 +223,10 @@ define_message('RejectEventRequest', [
     _format.Optional(lambda attrs: attrs['presence_vector'] != 0, [
         _format.Bytes('error_message', length=80),
     ])
-])
+], defaults={
+    'presence_vector': lambda attrs: 1 if attrs['error_message'] is not None else 0,
+    'error_message': None,
+})
 
 ReportEvent = _format.specification('ReportEvent', [
     _format.Enum('event_type', enum=EventType, bytes=1),
@@ -202,7 +236,7 @@ ReportEvent = _format.specification('ReportEvent', [
 define_message('ReportEvents', [
     _format.Int('count', bytes=1),
     _format.Repeat('events', ReportEvent, count=lambda attrs: attrs['count']),
-])
+], defaults={'count': lambda attrs: len(attrs['events'])})
 define_message('Event', [
     _format.Int('event_id', bytes=1),
     _format.Int('sequence_number', bytes=1),
@@ -239,7 +273,7 @@ define_message('ReportControl', [
 ])
 class RejectControlResponseCode(_enum.Enum):
     CONTROL_RELEASED = 0
-    CONTROL_NOT_AVAILABLE = 1
+    NOT_AVAILABLE = 1
 define_message('RejectControl', [
     _format.Enum('response_code', enum=RejectControlResponseCode, bytes=1),
 ])
@@ -256,3 +290,31 @@ define_message('ReportAuthority', [
 define_message('ReportTimeout', [
     _format.Int('timeout', bytes=1),
 ])
+
+### Management
+
+define_message('Shutdown', [])
+define_message('Standby', [])
+define_message('Resume', [])
+define_message('Reset', [])
+class EmergencyCode(_enum.Enum):
+    STOP = 1
+define_message('SetEmergency', [
+    _format.Enum('emergency_code', enum=EmergencyCode, bytes=1),
+])
+define_message('ClearEmergency', [
+    _format.Enum('emergency_code', enum=EmergencyCode, bytes=1),
+])
+define_message('QueryStatus', [])
+
+class ManagementStatus(_enum.Enum):
+    INIT = 0
+    READY = 1
+    STANDBY = 2
+    SHUTDOWN = 3
+    FAILURE = 4
+    EMERGENCY = 5
+define_message('ReportStatus', [
+    _format.Enum('status', enum=ManagementStatus, bytes=1),
+    _format.Int('reserved', bytes=4, endianness='le'),
+], defaults={'reserved': 0})

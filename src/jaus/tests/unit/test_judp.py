@@ -223,16 +223,22 @@ class TestJUDPProtocol(object):
         connection_instance.send.return_value = do_nothing()
 
         with pytest.raises(ValueError):
-            yield from tp.send_message(sentinel.unknown_id)
+            yield from tp.send_message(
+                sentinel.unknown_id,
+                message=sentinel.message)
 
         tp.connection_map.add_connection(
             sentinel.known_id, sentinel.address)
 
-        yield from tp.send_message(sentinel.known_id, foo='bar')
+        yield from tp.send_message(
+            sentinel.known_id,
+            message=sentinel.message,
+            foo='bar')
 
         assert connection_instance.send.call_args_list == [
             call(
                 foo='bar',
+                message=sentinel.message,
                 destination_id=sentinel.known_id,
                 source_id=sentinel.own_id)
         ]

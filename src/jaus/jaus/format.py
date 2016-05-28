@@ -1,6 +1,7 @@
 import abc as _abc
 import bitstring as _bitstring
 import collections as _collections
+import logging as _logging
 
 def defaultnamedtuple(name, fields, defaults):
     """Generate a defaultnamedtuple.
@@ -118,7 +119,13 @@ class Group(Spec):
 
     def write(self, buf, attributes):
         for spec in self.specs:
-            spec.write(buf, attributes)
+            try:
+                spec.write(buf, attributes)
+            except Exception as e:
+                _logging.error(
+                    'Encountered {} at {} with {}'.format(
+                        e, spec.name, attributes))
+                raise
 
 class Optional(Group):
     def __init__(self, condition, specs):

@@ -345,6 +345,10 @@ class JUDPProtocol(FormatSpecificationProtocol):
                     source_id=source_id,
                     address=address)
                 messages = yield from connection.receive_packet(packet)
+                for message in messages:
+                    _logging.info(
+                        'Received message {} from {}/{}'
+                        .format(message, address, source_id))
                 yield from _asyncio.gather(*[
                     self.message_received(
                         message=message,
@@ -358,16 +362,22 @@ class JUDPProtocol(FormatSpecificationProtocol):
                 str(address), payload.transport_version)
 
     @_asyncio.coroutine
-    def send_message(self, destination_id, *args, **kwargs):
+    def send_message(self, destination_id, message, *args, **kwargs):
         try:
             connection = self.connection_map[destination_id]
         except KeyError:
             raise ValueError(
                 'No record of {}'.format(destination_id))
+        _logging.info('Send message {} to {}/{}'
+            .format(
+                message,
+                connection.address,
+                destination_id))
         yield from connection.send(
             *args,
             destination_id=destination_id,
             source_id=self.own_id,
+            message=message,
             **kwargs)
 
     def close(self):
