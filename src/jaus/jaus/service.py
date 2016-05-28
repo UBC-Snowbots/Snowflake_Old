@@ -291,3 +291,44 @@ class Liveness(Service):
     @_asyncio.coroutine
     def on_query_heartbeat(self, **kwargs):
         return _messages.ReportHeartbeatPulseMessage()
+
+class Discovery(Service):
+    name='discovery'
+    @message_handler(
+        _messages.MessageCode.QueryIdentification,
+        is_command=True,
+        supports_events=False)
+    @_asyncio.coroutine
+    def RegisterServices(self, message, URI, majorVersionNumber, minorVersionNumber): # message that allows component to register its capabilities with a discovery service. 
+        message = message.body
+        if(id == 1):
+            # Node manager, can provide any number of services in addition to core msg supp.
+
+
+    @message_handler(_messages.MessageCode.QueryIdentification)
+    @_asyncio.coroutine
+    def on_query_identification():
+        message = message.body
+
+    @message_handler(_messages.MessageCode.QueryConfiguration)
+    @_asyncio.coroutine
+    def on_query_configuration():
+
+    @message_handler(_messages.MessageCode.QuerySubsystemList)
+    @_asyncio.coroutine
+    def on_query_subsystem_list():
+
+    @message_handler(_messages.MessageCode.QueryServices)
+    @_asyncio.coroutine
+    def on_query_services():
+
+    @message_handler(_messages.MessageCode.QueryServiceList)
+    @_asyncio.coroutine
+    def on_query_service_list():
+    
+    
+    # basically there are two things to take consideration of,
+    # input data via register actions
+    # return answers from queries, even
+    # Store all info of register actions into a table or map.
+    # Handlers of event class contains info to get info, have dict, set get vals.
