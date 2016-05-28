@@ -565,7 +565,7 @@ class Management(Service):
         _messages.MessageCode.SetEmergency)
     @_asyncio.coroutine
     def on_set_emergency(self, source_id, **kwargs):
-        self.id_store |= source_id
+        self.id_store |= set(source_id)
         if self.status is not _messages.ManagementStatus.EMERGENCY:
             self.old_status = self.status
             self.status = _messages.ManagementStatus.EMERGENCY
