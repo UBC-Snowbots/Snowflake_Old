@@ -605,7 +605,6 @@ class Discovery(Service):
         if(id == 1):
             # Node manager, can provide any number of services in addition to core msg supp.
 
-
     @message_handler(_messages.MessageCode.QueryIdentification)
     @_asyncio.coroutine
     def on_query_identification():
@@ -614,19 +613,23 @@ class Discovery(Service):
     @message_handler(_messages.MessageCode.QueryConfiguration)
     @_asyncio.coroutine
     def on_query_configuration():
+        pass
 
     @message_handler(_messages.MessageCode.QuerySubsystemList)
     @_asyncio.coroutine
     def on_query_subsystem_list():
+        pass
 
     @message_handler(_messages.MessageCode.QueryServices)
     @_asyncio.coroutine
     def on_query_services():
+        pass
 
     @message_handler(_messages.MessageCode.QueryServiceList)
     @_asyncio.coroutine
     def on_query_service_list():
-    
+        pass
+
     
     # basically there are two things to take consideration of,
     # input data via register actions
