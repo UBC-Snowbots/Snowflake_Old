@@ -19,16 +19,16 @@ base_frame: base_link
 # === Robot drivetrain parameters
 wheel_diameter: 0.3
 wheel_track: 0.81
-encoder_resolution: 300
-#gear_reduction: 1.0
-#motors_reversed: True
+encoder_resolution: 1000
+gear_reduction: 1.0
+motors_reversed: True
 
 # === PID parameters
-#Kp: 10
-#Kd: 12
-#Ki: 0
-#Ko: 50
-#accel_limit: 1.0
+Kp: 10
+Kd: 12
+Ki: 0
+Ko: 50
+accel_limit: 1.0
 
 # === Sensor definitions.  Examples only - edit for your robot.
 #     Sensor type can be one of the follow (case sensitive!):
