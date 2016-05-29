@@ -13,10 +13,30 @@ int main (int argc, char **argv){
   ros::Rate loop_rate(10); 
   ros::Publisher gps_publisher = nh.advertise<sb_messages::gps>(SENSOR_OUTPUT_TOPIC,20);
   ros::Publisher odom_publisher = nh.advertise<nav_msgs::Odometry>(ODOM_TOPIC,20); 
-  if(!connect_device("GPS"))
+  //autoconnect under development
+  /*if(!connect_device("GPS"))
     return 1;//Notify Error
   else 
     cout << "Connected to GPS Arduino" << endl;  
+*/
+  ros::NodeHandle private_nh("~");
+  string port = "/dev/ttyACM";
+  private_nh.param("port", port);
+    for (int i = 0; ; i++)
+	{
+	    stringstream ss;
+	    ss << i;
+	    if (link_port.connect(BAUD_RATE,(port + ss.str())))
+	    {
+	        cout << "connected on port " << port << i << endl;
+	        break;
+	    }  else if (i > 15) {
+	        cout << "unable to find a device," << endl
+		        << "did you remember to set usb permissions?" << endl
+			<< "sudo chmod a+rw /dev/ttyACM*" << endl;
+	        return 0;
+	    }
+	}
 	//usleep(1000);
 	//link_port.clearBuffer();
   while(ros::ok() && link_port.isActive()){

@@ -14,10 +14,30 @@ int main (int argc, char** argv){
   ros::Publisher sensor_imu_publisher = nh.advertise<sensor_msgs::Imu>(IMU_TOPIC, 5);
   ros::Publisher odom_publisher = nh.advertise<nav_msgs::Odometry>(ODOM_TOPIC,20);
   //Attempts at opening the Serial Port
-  if(!connect_device("SENS"))
+  /*if(!connect_device("SENS"))
         return 1;//Error signal
   else
         cout << "Connected to Accelerometer, Gyroscope" << endl;
+
+  */
+  ros::NodeHandle private_nh("~");
+  string port = "/dev/ttyACM";
+  private_nh.param("port", port);
+    for (int i = 0; ; i++)
+	{
+	    stringstream ss;
+	    ss << i;
+	    if (link_port.connect(BAUD_RATE,(port + ss.str())))
+	    {
+	        cout << "connected on port " << port << i << endl;
+	        break;
+	    }  else if (i > 15) {
+	        cout << "unable to find a device," << endl
+		        << "did you remember to set usb permissions?" << endl
+			<< "sudo chmod a+rw /dev/ttyACM0" << endl;
+	        return 0;
+	    }
+	}
   //Temporary Function for Setting covariance values 
   for (int i = 0; i < 9; i++){
   IMU.linear_acceleration_covariance[i] = 0; 
