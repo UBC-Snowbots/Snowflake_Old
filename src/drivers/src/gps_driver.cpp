@@ -11,7 +11,8 @@ int main (int argc, char **argv){
   ros::init(argc, argv, ROS_NODE_NAME);
   ros::NodeHandle nh; 
   ros::Rate loop_rate(10); 
-  ros::Publisher gps_publisher = nh.advertise<sb_messages::gps>(SENSOR_OUTPUT_TOPIC,20); 
+  ros::Publisher gps_publisher = nh.advertise<sb_messages::gps>(SENSOR_OUTPUT_TOPIC,20);
+  ros::Publisher odom_publisher = nh.advertise<nav_msgs::Odometry>(ODOM_TOPIC,20); 
   if(!connect_device("GPS"))
     return 1;//Notify Error
   else 
@@ -29,8 +30,9 @@ int main (int argc, char **argv){
           gps_msg_create();
          // cout << setprecision(9) << gps_msg.lon << endl;
           //cout << setprecision(9) << gps_msg.lat << endl;
-            gps_publisher.publish(gps_msg);
-            }
+          gps_publisher.publish(gps_msg);
+          odom_publisher.publish(odom);
+         }
         loop_rate.sleep();
     } 
   ROS_ERROR("GPS Node Terminated"); 
@@ -39,6 +41,9 @@ int main (int argc, char **argv){
 
 void gps_msg_create(void){
   gps_msg.head = gps_comp_data.headingDegrees;
+  double theta = gps_comp_data.headingDegrees/360*2*M_PI;
+  odom.pose.pose.orientation.z = sin(theta/2);
+  odom.pose.pose.orientation.w = cos(theta/2);
 	if (gps_comp_data.fix){
 	gps_msg.lon = gps_comp_data.longitude;
 	gps_msg.lat = gps_comp_data.latitude;}

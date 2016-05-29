@@ -12,6 +12,8 @@
 #include <std_msgs/Bool.h> 
 #include "sb_messages/gps.h"
 #include "SerialCommunication.h" 
+#include <nav_msgs/Odometry.h>
+#include <math.h>
 
 #define DATA 0
 //constant declerations
@@ -20,6 +22,7 @@ static const int ROS_LOOP_RATE = 1;
 static const int BAUD_RATE = 115200; 
 static const string SENSOR_OUTPUT_TOPIC = "GPS"; 
 static const string ARDUINO_PORT_NAME = "/dev/ttyACM"; 
+static const string ODOM_TOPIC = "ODOM"; 
 
 struct gps_comp_data {
   float latitude, longitude;
@@ -28,6 +31,7 @@ struct gps_comp_data {
 } gps_comp_data;
 
 sb_messages::gps gps_msg; 
+nav_msgs::Odometry odom; 
 
 //Objects 
 SerialCommunication link_port; 
