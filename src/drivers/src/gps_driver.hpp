@@ -22,7 +22,7 @@ static const int ROS_LOOP_RATE = 1;
 static const int BAUD_RATE = 115200; 
 static const string SENSOR_OUTPUT_TOPIC = "GPS"; 
 static const string ARDUINO_PORT_NAME = "/dev/ttyACM"; 
-static const string ODOM_TOPIC = "ODOM"; 
+static const string ODOM_TOPIC = "GPS_ODOM"; 
 
 struct gps_comp_data {
   float latitude, longitude;
