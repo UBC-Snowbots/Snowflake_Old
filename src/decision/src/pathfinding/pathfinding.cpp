@@ -25,6 +25,7 @@
 #include <nav_msgs/OccupancyGrid.h>
 #include <nav_msgs/MapMetaData.h>
 #include <nav_msgs/Path.h>
+#include <nav_msgs/Odometry.h>
 
 //ROS MAIN LIBS
 #include <ros/ros.h>
@@ -50,11 +51,11 @@ void mapCallback(const nav_msgs::OccupancyGrid::ConstPtr& msg)
 	g_map.data = msg->data;
 }
 
-void poseStartCallback(const geometry_msgs::Pose2D::ConstPtr& msg)
+void poseStartCallback(const nav_msgs::Odometry::ConstPtr& msg)
 {
-	g_start.x = msg->x;
-	g_start.y = msg->y;
-	g_start.theta = msg->theta;
+	g_start.x = msg->pose.pose.position.x;
+	g_start.y = msg->pose.pose.position.y;
+	g_start.theta = 0;
 }
 
 void poseEndCallback(const geometry_msgs::Pose2D::ConstPtr& msg)
