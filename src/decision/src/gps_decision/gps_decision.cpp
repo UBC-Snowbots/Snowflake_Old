@@ -16,7 +16,7 @@
 using namespace std;
 
 // Finds the distancce between two waypoints
-float distanceBetweenWaypoints(sb_messages::gps waypoint1, sb_messages::gps waypoint2){
+double distanceBetweenWaypoints(sb_messages::gps waypoint1, sb_messages::gps waypoint2){
     double lat1 = waypoint1.lat*M_PI/180;
     cout << "lat1: " << lat1 << endl;
     double lon1 = waypoint1.lon*M_PI/180;
@@ -34,7 +34,7 @@ float distanceBetweenWaypoints(sb_messages::gps waypoint1, sb_messages::gps wayp
     return distance;
 }
 
-float bearingBetweenWaypoints(sb_messages::gps waypoint1, sb_messages::gps waypoint2){
+double bearingBetweenWaypoints(sb_messages::gps waypoint1, sb_messages::gps waypoint2){
     double lat1 = waypoint1.lat*M_PI/180;
     cout << "lat1: " << lat1 << endl;
     double lon1 = waypoint1.lon*M_PI/180;
@@ -43,10 +43,10 @@ float bearingBetweenWaypoints(sb_messages::gps waypoint1, sb_messages::gps waypo
     cout << "lat2: " << lat1 << endl;
     double lon2 = waypoint2.lon*M_PI/180;
     cout << "lon2: " << lat1 << endl;
-    float delta_lon = lon1 - lon2;
-     float x = cos(lat2) * sin(delta_lon);
-     float y = cos(lat1) * sin(lat2) - sin(lat1) * cos(lat2) * cos(delta_lon);
-    return atan2(x, y);
+    double delta_lon = lon1 - lon2;
+    double y = sin(delta_lon) * cos(lat2);
+    double x = cos(lat1) * sin(lat2) - sin(lat1) * cos(lat2) * cos(delta_lon);
+    return atan2(y, x);
 }
 
 // A class designed to broadcast waypoints sequentially, with the next one being broadcast when the
@@ -57,7 +57,7 @@ class gpsManager {
         void gpsCallBack(const sb_messages::gps::ConstPtr& gps);
     private:
         void publishNextWaypoint();
-        float distanceToNextWayPoint();
+        double distanceToNextWayPoint();
         void parseWayPoints();
         void printWaypoints();
                     // Where the robot started
@@ -67,12 +67,12 @@ class gpsManager {
                     //  The  list of all waypoints to go to, in reverse order
         vector<sb_messages::gps> waypoints;
                     //  The tolerance for being at a waypoint
-        float tolerance;
+        double tolerance;
         ros::Publisher waypoint_pub;
         ros::Subscriber gps_sub;
         //  If true, a gps message has been received, otherwise no gps messages have been received
         bool gps_message_recieved;
-        vector<float> waypoints_raw;
+        vector<double> waypoints_raw;
 };
 
 gpsManager::gpsManager(){
@@ -134,13 +134,13 @@ void gpsManager::gpsCallBack(const sb_messages::gps::ConstPtr& gps){
 void gpsManager::publishNextWaypoint(){
     sb_messages::gps current_waypoint = waypoints[waypoints.size() - 1];
     // Convert current waypoint to robot's prespective
-    float distance = distanceBetweenWaypoints(origin, current_waypoint);
+    double distance = distanceBetweenWaypoints(origin, current_waypoint);
     cout << "Distance: " << distance << endl;
-    float theta = bearingBetweenWaypoints(origin, current_waypoint);
+    double theta = bearingBetweenWaypoints(origin, current_waypoint);
     cout << "Theta: " << theta << endl;
     // x and y values from gps presepective
-    float gps_x = cos(theta) * distance;
-    float gps_y = sin(theta) * distance;
+    double gps_x = cos(theta) * distance;
+    double gps_y = sin(theta) * distance;
     // Local coordinates determined via a matrix algebra rotation matrix
     geometry_msgs::Pose2D present_waypoint_pose; // A pose representing the next waypoint to go to
     present_waypoint_pose.x = cos(origin.head) * gps_x + sin(origin.head) * gps_x;
@@ -150,7 +150,7 @@ void gpsManager::publishNextWaypoint(){
     waypoint_pub.publish(present_waypoint_pose);
 }
 
-float gpsManager::distanceToNextWayPoint(){
+double gpsManager::distanceToNextWayPoint(){
     sb_messages::gps current_waypoint = waypoints[waypoints.size() - 1];
     return distanceBetweenWaypoints(present_location, current_waypoint);
 }

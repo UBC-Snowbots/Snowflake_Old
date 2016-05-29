@@ -5,7 +5,7 @@
     <node pkg="decision" type="gps_decision"
     name="gps_decision" output="screen">
 
-	<rosparam param="waypoints">[49.2625389099, -123.248565674]</rosparam>
+	<rosparam param="waypoints">[49.262550354, -123.248680115]</rosparam>
     <rosparam param="tolerance">1</rosparam>
     
     <remap from="gps_topic" to="GPS"/>
