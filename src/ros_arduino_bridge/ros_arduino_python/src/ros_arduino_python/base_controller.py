@@ -68,7 +68,7 @@ class BaseController:
         self.t_delta = rospy.Duration(1.0 / self.rate)
         self.t_next = now + self.t_delta
 
-        # internal data        
+        # Internal data        
         self.enc_left = None            # encoder readings
         self.enc_right = None
         self.x = 0                      # position in xy plane
@@ -80,14 +80,14 @@ class BaseController:
         self.v_des_right = 0
         self.last_cmd_vel = now
 
-        # subscriptions
+        # Subscriptions
         rospy.Subscriber("cmd_vel", Twist, self.cmdVelCallback)
         
         # Clear any old odometry info
         self.arduino.reset_encoders()
         
         # Set up the odometry broadcaster
-        self.odomPub = rospy.Publisher('odom', Odometry)
+        self.odomPub = rospy.Publisher('odom', Odometry, queue_size=5)
         self.odomBroadcaster = TransformBroadcaster()
         
         rospy.loginfo("Started base controller for a base of " + str(self.wheel_track) + "m wide with " + str(self.encoder_resolution) + " ticks per rev")
@@ -131,7 +131,7 @@ class BaseController:
             self.then = now
             dt = dt.to_sec()
             
-            # calculate odometry
+            # Calculate odometry
             if self.enc_left == None:
                 dright = 0
                 dleft = 0

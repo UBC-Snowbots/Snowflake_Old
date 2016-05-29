@@ -1,6 +1,6 @@
 Overview
 --------
-This branch (hydro-devel) is intended for ROS Hydro and above, and uses the Catkin buildsystem. It may also be compatible with ROS Groovy.
+This branch (indigo-devel) is intended for ROS Indigo and above, and uses the Catkin buildsystem. It may also be compatible with ROS Hydro.
 
 This ROS stack includes an Arduino library (called ROSArduinoBridge) and a collection of ROS packages for controlling an Arduino-based robot using standard ROS messages and services.  The stack does **not** depend on ROS Serial.
 
@@ -13,7 +13,6 @@ Features of the stack include:
 * Can control digital outputs (e.g. turn a switch or LED on and off)
 
 * Support for PWM servos
-
 * Configurable base controller if using the required hardware
 
 The stack includes a base controller for a differential drive
@@ -50,8 +49,11 @@ or
 
     $ sudo easy_install -U pyserial
 
+**Arduino IDE 1.6.6 or Higher:**
+Note that the preprocessing of conditional #include statements is broken in earlier versions of the Arduino IDE.  To ensure that the ROS Arduino Bridge firmware compiles correctly, be sure to install version 1.6.6 or higher of the Arduino IDE.  You can download the IDE from https://www.arduino.cc/en/Main/Software.
 
-The stack should work with any Arduino-compatible controller for reading sensors and controlling PWM servos.  However, to use the base controller, you will need a supported motor controller and encoder hardware as described above. If you do not have this hardware, you can still try the package for reading sensors and controlling servos.  See the NOTES section at the end of this document for instructions on how to do this.
+**Hardware:**
+The firmware should work with any Arduino-compatible controller for reading sensors and controlling PWM servos.  However, to use the base controller, you will need a supported motor controller and encoder hardware as described above. If you do not have this hardware, you can still try the package for reading sensors and controlling servos.  See the NOTES section at the end of this document for instructions on how to do this.
 
 To use the base controller you must also install the appropriate libraries for your motor controller and encoders.  For the Pololu VNH5019 Dual Motor Shield, the library can be found at:
 
@@ -148,19 +150,16 @@ Choose one of the supported motor controllers by uncommenting its #define statem
 
 Choose a supported encoder library by by uncommenting its #define statement and commenting out any others.  At the moment, only the Robogaia Mega Encoder shield is supported and it is chosen by default.
 
-If you want to control PWM servos attached to your controller, change
-the two lines that look like this:
-
-<pre>
-//#define USE_SERVOS
-#undef USE_SERVOS
-</pre>
-
-to this:
+If you want to control PWM servos attached to your controller, look for the line:
 
 <pre>
 #define USE_SERVOS
-//#undef USE_SERVOS
+</pre>
+
+and make sure it is not commented out like this:
+
+<pre>
+//#define USE_SERVOS
 </pre>
 
 You must then edit the include file servos.h and change the N_SERVOS
@@ -470,21 +469,19 @@ follow the instructions below so that you can still use your
 Arduino-compatible controller to read sensors and control PWM servos.
 
 First, you need to edit the ROSArduinoBridge sketch. At the top of
-the file, change the two lines that look like this:
+the file comment out the line:
 
 <pre>
 #define USE_BASE
-//#undef USE_BASE
 </pre>
 
-to this:
+so that it looks like this:
 
 <pre>
 //#define USE_BASE
-#undef USE_BASE
 </pre>
 
-**NOTE:** You also need to comment out the line that looks like this in the file encoder_driver.ino:
+**NOTE:** If you are using a version of the Arduino IDE previous to 1.6.6, you also need to comment out the line that looks like this in the file encoder_driver.ino:
 
     #include "MegaEncoderCounter.h"
 

@@ -59,11 +59,11 @@ class ArduinoROS():
         self.cmd_vel = Twist()
   
         # A cmd_vel publisher so we can stop the robot when shutting down
-        self.cmd_vel_pub = rospy.Publisher('cmd_vel', Twist)
+        self.cmd_vel_pub = rospy.Publisher('cmd_vel', Twist, queue_size=5)
         
         # The SensorState publisher periodically publishes the values of all sensors on
         # a single topic.
-        self.sensorStatePub = rospy.Publisher('~sensor_state', SensorState)
+        self.sensorStatePub = rospy.Publisher('~sensor_state', SensorState, queue_size=5)
         
         # A service to position a PWM servo
         rospy.Service('~servo_write', ServoWrite, self.ServoWriteHandler)
@@ -76,11 +76,17 @@ class ArduinoROS():
         
         # A service to turn a digital sensor on or off
         rospy.Service('~digital_write', DigitalWrite, self.DigitalWriteHandler)
-       
-	# A service to set pwm values for the pins
-	rospy.Service('~analog_write', AnalogWrite, self.AnalogWriteHandler)
+        
+        # A service to read the value of a digital sensor
+        rospy.Service('~digital_read', DigitalRead, self.DigitalReadHandler) 
 
-	# Initialize the controlller
+        # A service to set pwm values for the pins
+        rospy.Service('~analog_write', AnalogWrite, self.AnalogWriteHandler)
+        
+        # A service to read the value of an analog sensor
+        rospy.Service('~analog_read', AnalogRead, self.AnalogReadHandler)
+
+        # Initialize the controlller
         self.controller = Arduino(self.port, self.baud, self.timeout)
         
         # Make the connection
@@ -123,7 +129,7 @@ class ArduinoROS():
 #                    self.sensors[len(self.sensors)]['output_pin'] = params['output_pin']
 
             self.mySensors.append(sensor)
-            rospy.loginfo(name + " " + str(params))
+            rospy.loginfo(name + " " + str(params) + " published on topic " + rospy.get_name() + "/sensor/" + name)
               
         # Initialize the base controller if used
         if self.use_base_controller:
@@ -166,8 +172,8 @@ class ArduinoROS():
         return ServoWriteResponse()
     
     def ServoReadHandler(self, req):
-        self.controller.servo_read(req.id)
-        return ServoReadResponse()
+        pos = self.controller.servo_read(req.id)
+        return ServoReadResponse(pos)
     
     def DigitalSetDirectionHandler(self, req):
         self.controller.pin_mode(req.pin, req.direction)
@@ -176,10 +182,18 @@ class ArduinoROS():
     def DigitalWriteHandler(self, req):
         self.controller.digital_write(req.pin, req.value)
         return DigitalWriteResponse()
+    
+    def DigitalReadHandler(self, req):
+        value = self.controller.digital_read(req.pin)
+        return DigitalReadResponse(value)
               
     def AnalogWriteHandler(self, req):
         self.controller.analog_write(req.pin, req.value)
         return AnalogWriteResponse()
+    
+    def AnalogReadHandler(self, req):
+        value = self.controller.analog_read(req.pin)
+        return AnalogReadResponse(value)
  
     def shutdown(self):
         # Stop the robot
