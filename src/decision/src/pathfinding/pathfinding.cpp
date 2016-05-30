@@ -372,6 +372,12 @@ pathfinding_info get_next_waypoint(	nav_msgs::OccupancyGrid map,
 		}
 	}
 
+    //Check if the initial position is the final position, then dont need to run algorithm
+    if ((starting_point->x == end_goal->x) && (starting_point->y == end_goal->y)){
+        push(closed_list, starting_point);
+        goto end;
+    }   
+
 	push(open_list, starting_point);
 	
 	//A star
@@ -380,7 +386,8 @@ pathfinding_info get_next_waypoint(	nav_msgs::OccupancyGrid map,
 		node_t *curr_node = pop(open_list);
 		new_map[curr_node->y][curr_node->x] = 5;
 		push(closed_list, curr_node);
-
+        
+        
 		//Iterate through all neighbouring nodes and analyze all valid ones
 		for (int x = curr_node->x - 1; x <= curr_node->x + 1; x++){
 			if ((x < 0) || (x >= map.info.width)){
