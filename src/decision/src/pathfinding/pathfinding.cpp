@@ -505,7 +505,6 @@ pathfinding_info get_next_waypoint(	nav_msgs::OccupancyGrid map,
 	path_info.path = path;
  
 	//Frees the memory
-	delete end_goal;
 	freeList(open_list);
 	freeList(closed_list);
 
