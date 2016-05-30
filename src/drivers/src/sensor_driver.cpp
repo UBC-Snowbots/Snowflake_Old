@@ -22,7 +22,8 @@ int main (int argc, char** argv){
   */
   ros::NodeHandle private_nh("~");
   string port = "/dev/ttyACM0";
-  private_nh.param("port", port);
+  if (!private_nh.getParam("port", port))
+      cout << "No parameter read, using default" << endl;
   if(!link_port.connect(BAUD_RATE,port)){
 cout << "Unable to connect to a device on " << port << endl 
         << "Did you remember to set the correct port as a param? You should go do that" << endl;
@@ -51,6 +52,8 @@ cout << "Unable to connect to a device on " << port << endl
         }   
     }
     loop_rate.sleep();
+    cout << IMU << endl;
+    cout << odom << endl;
   }
   
   ROS_ERROR("Sensor Input Node Terminated"); 
