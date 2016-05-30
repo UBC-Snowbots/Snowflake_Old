@@ -2,6 +2,8 @@
 #include <geometry_msgs/Twist.h>
 #include <geometry_msgs/Pose2D.h>
 #include <std_msgs/Bool.h>
+#include <nav_msgs/Odometry.h>
+#include <math.h>
 
 #include <MoveStraightLine.hpp>
 
@@ -45,12 +47,13 @@ int main(int argc, char **argv){
 
 	bool have_pose = false, have_destination = false; // flag to wait on first pose update
 
-	ros::Subscriber pose2d = public_nh.subscribe<geometry_msgs::Pose2D>("pose2D", 10, boost::function<void(geometry_msgs::Pose2D)>([&](geometry_msgs::Pose2D pose){
+	ros::Subscriber pose2d = public_nh.subscribe<nav_msgs::Odometry>("odom", 10, boost::function<void(nav_msgs::Odometry)>([&](nav_msgs::Odometry odom){
 		have_pose = true;
 
 		State currentState;
-		currentState.position = arma::vec{pose.x, -pose.y};
-		currentState.direction = direction_vector_from_north(-pose.theta);
+		currentState.position = arma::vec{odom.pose.pose.position.x, -odom.pose.pose.position.y};
+		//TODO: Make sure the angle is actually correct
+		currentState.direction = direction_vector_from_north(- 2 * asin(odom.pose.pose.orientation.z));
 		mover.setCurrentState(currentState);
 	}));
 
