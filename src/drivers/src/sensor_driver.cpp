@@ -42,8 +42,10 @@ cout << "Unable to connect to a device on " << port << endl
     //ROS Loop - All procedures repeated are done here
     char buff1[32] = "\0";
     data_request('D',buff1,DATA);
+    cout << "data request sent...";
     loop_rate.sleep();
     std::string A_input = to_string2(buff1);
+    cout << "buffer read and converted to string...";
     if(A_input.find('\n')!=std::string::npos && A_input.find('X')!=std::string::npos){  
       //cout << buff1;
       if(Serial_Store(buff1)){ //&& Serial_Store(buff1,0)){
@@ -51,6 +53,8 @@ cout << "Unable to connect to a device on " << port << endl
           odom_publisher.publish(odom);
         }   
     }
+    else 
+      cout << "Data received but skipped from incompleteness" << endl;
     loop_rate.sleep();
     cout << IMU << endl;
     cout << odom << endl;
