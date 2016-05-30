@@ -9,6 +9,8 @@ find_package(catkin REQUIRED COMPONENTS
   rospy
   std_msgs
   occupancy_grid_utils
+  geometry_msgs
+  nav_msgs
 )
 
 ## System dependencies are found with CMake's conventions
@@ -70,6 +72,11 @@ find_package(catkin REQUIRED COMPONENTS
 #   DEPENDENCIES
 #   std_msgs
 # )
+generate_messages(DEPENDENCIES 
+    std_msgs
+    nav_msgs
+    geometry_msgs
+)
 
 ################################################
 ## Declare ROS dynamic reconfigure parameters ##
@@ -135,6 +142,14 @@ include_directories(
 add_executable(occ_grid_combiner src/occupancy_grid_combiner.cpp)
 target_link_libraries(occ_grid_combiner ${catkin_LIBRARIES})
 add_dependencies(occ_grid_combiner occupancy_grid_utils)
+
+add_executable(test_occ_pub_1 src/test_occ_pub_1.cpp)
+target_link_libraries(test_occ_pub_1 ${catkin_LIBRARIES})
+
+add_executable(test_occ_pub_2 src/test_occ_pub_2.cpp)
+target_link_libraries(test_occ_pub_2 ${catkin_LIBRARIES})
+
+
 
 add_executable(map_inflater src/map_inflater.cpp)
 target_link_libraries(map_inflater ${catkin_LIBRARIES})

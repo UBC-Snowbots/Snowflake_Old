@@ -33,6 +33,16 @@ void gridCallback2(const nav_msgs::OccupancyGrid::ConstPtr& msg)
 	}
 }
 
+void printGrid(const nav_msgs::OccupancyGrid::ConstPtr& grid_ptr){
+	nav_msgs::OccupancyGrid grid = *(grid_ptr);
+	for (int i = 0; i < grid.info.height; i++){
+		for (int j = 0; j < grid.info.width; j++){
+			cout << (int) grid.data[i*grid.info.width + j] << " ";
+		}
+		cout << endl;
+	}
+}
+
 int main(int argc, char** argv)
 {
 	string node_name = "occ_grid_combiner";
@@ -49,7 +59,8 @@ int main(int argc, char** argv)
 
 	while (nh.ok())
 	{
-		if (!grids.empty()){
+
+		if (grids.size() >= 2){
 			occGridPub.publish(occupancy_grid_utils::combineGrids(grids));
 		}
 		loop_rate.sleep();
