@@ -21,14 +21,14 @@ int main (int argc, char** argv){
 
   */
   ros::NodeHandle private_nh("~");
-  string port = "/dev/ttyACM0";
+  string port = "/dev/ttyACM0"; 
   if (!private_nh.getParam("port", port))
       cout << "No parameter read, using default" << endl;
   if(!link_port.connect(BAUD_RATE,port)){
 cout << "Unable to connect to a device on " << port << endl 
         << "Did you remember to set the correct port as a param? You should go do that" << endl;
     return 1;
-}
+}else
   cout << "Connected on: " << port << endl;
   //Temporary Function for Setting covariance values 
   for (int i = 0; i < 9; i++){
@@ -38,10 +38,11 @@ cout << "Unable to connect to a device on " << port << endl
   odom.pose.pose.position.z=0.0;
   }
   
+  cout << "entering loop" << endl;
   while(ros::ok() && link_port.isActive()){
     //ROS Loop - All procedures repeated are done here
     char buff1[32] = "\0";
-    data_request('D',buff1,DATA);
+    data_request('D',buff1,0);
     cout << "data request sent...";
     loop_rate.sleep();
     std::string A_input = to_string2(buff1);
@@ -187,7 +188,7 @@ void data_request(char c, char*buffer, int mode){
   //link_port.clearBuffer(); 
   stringstream ss; 
   ss << c; 
-  int i = 0;
+  int i = 0;  
   link_port.writeData(ss.str(),1);
   if (mode == 1){
     while(buffer[0] == '\0'){
