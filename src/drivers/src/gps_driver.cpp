@@ -22,7 +22,12 @@ int main (int argc, char **argv){
   ros::NodeHandle private_nh("~");
   string port = "/dev/ttyACM0";
   private_nh.param("port", port);
-
+  if(!link_port.connect(BAUD_RATE,port)){
+cout << "Unable to connect to a device on " << port << endl 
+        << "Did you remember to set the correct port as a param? You should go do that" << endl;
+    return 1;
+}
+    
 /*
     for (int i = 0; ; i++)
 	{
@@ -40,12 +45,6 @@ int main (int argc, char **argv){
 	    }
 	}
 */
-  if (link_port.connect(BAUD_RATE, port)){
-    cout << "Connected on port " << port << endl;
-  } else {
-    cout << "Unable to connect to a device on " << port << endl 
-        << "Did you remember to set the correct port as a param? You should go do that" << endl;
-  }
 	//usleep(1000);
 	//link_port.clearBuffer();
   while(ros::ok() && link_port.isActive()){

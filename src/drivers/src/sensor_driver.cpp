@@ -21,23 +21,13 @@ int main (int argc, char** argv){
 
   */
   ros::NodeHandle private_nh("~");
-  string port = "/dev/ttyACM";
+  string port = "/dev/ttyACM0";
   private_nh.param("port", port);
-    for (int i = 0; ; i++)
-	{
-	    stringstream ss;
-	    ss << i;
-	    if (link_port.connect(BAUD_RATE,(port + ss.str())))
-	    {
-	        cout << "connected on port " << port << i << endl;
-	        break;
-	    }  else if (i > 15) {
-	        cout << "unable to find a device," << endl
-		        << "did you remember to set usb permissions?" << endl
-			<< "sudo chmod a+rw /dev/ttyACM0" << endl;
-	        return 0;
-	    }
-	}
+  if(!link_port.connect(BAUD_RATE,port)){
+cout << "Unable to connect to a device on " << port << endl 
+        << "Did you remember to set the correct port as a param? You should go do that" << endl;
+    return 1;
+}
   //Temporary Function for Setting covariance values 
   for (int i = 0; i < 9; i++){
   IMU.linear_acceleration_covariance[i] = 0; 
