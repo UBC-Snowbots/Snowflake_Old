@@ -10,6 +10,7 @@ using namespace std;
 int main (int argc, char **argv){
   ros::init(argc, argv, ROS_NODE_NAME);
   ros::NodeHandle nh; 
+  ros::NodeHandle private_nh("~");
   ros::Rate loop_rate(10); 
   ros::Publisher gps_publisher = nh.advertise<sb_messages::gps>(SENSOR_OUTPUT_TOPIC,20);
   ros::Publisher odom_publisher = nh.advertise<nav_msgs::Odometry>(ODOM_TOPIC,20); 
@@ -20,7 +21,7 @@ int main (int argc, char **argv){
     cout << "Connected to GPS Arduino" << endl;  
 */
   string port = "/dev/ttyACM0";
-  if (!ros::param::get("port", port))
+  if (!private_nh.getParam("port", port))
     cout << "Param not found, defaulting to default param" << endl;
   else
     cout << "Param read: "<< port << endl;
