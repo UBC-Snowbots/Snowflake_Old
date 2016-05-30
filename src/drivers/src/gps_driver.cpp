@@ -27,6 +27,8 @@ cout << "Unable to connect to a device on " << port << endl
         << "Did you remember to set the correct port as a param? You should go do that" << endl;
     return 1;
 }
+  else
+    cout << "Connected to: " << port << endl;
     
 /*
     for (int i = 0; ; i++)

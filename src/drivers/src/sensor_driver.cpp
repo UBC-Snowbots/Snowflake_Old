@@ -28,6 +28,7 @@ cout << "Unable to connect to a device on " << port << endl
         << "Did you remember to set the correct port as a param? You should go do that" << endl;
     return 1;
 }
+  cout << "Connected on: " << port << endl;
   //Temporary Function for Setting covariance values 
   for (int i = 0; i < 9; i++){
   IMU.linear_acceleration_covariance[i] = 0; 
