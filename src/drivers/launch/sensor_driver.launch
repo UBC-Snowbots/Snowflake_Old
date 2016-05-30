@@ -1,0 +1,12 @@
+<?xml version="1.0"?>
+
+<launch>
+
+    <node pkg="drivers" type="sb_sensor_driver"
+    name="sensor_driver" output="screen">
+
+    <rosparam param="port">"/dev/ttyACM3"</rosparam>
+    
+    </node>
+
+</launch>

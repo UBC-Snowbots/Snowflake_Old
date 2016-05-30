@@ -20,8 +20,10 @@ int main (int argc, char **argv){
     cout << "Connected to GPS Arduino" << endl;  
 */
   ros::NodeHandle private_nh("~");
-  string port = "/dev/ttyACM";
+  string port = "/dev/ttyACM0";
   private_nh.param("port", port);
+
+/*
     for (int i = 0; ; i++)
 	{
 	    stringstream ss;
@@ -37,6 +39,13 @@ int main (int argc, char **argv){
 	        return 0;
 	    }
 	}
+*/
+  if (link_port.connect(BAUD_RATE, port)){
+    cout << "Connected on port " << port << endl;
+  } else {
+    cout << "Unable to connect to a device on " << port << endl 
+        << "Did you remember to set the correct port as a param? You should go do that" << endl;
+  }
 	//usleep(1000);
 	//link_port.clearBuffer();
   while(ros::ok() && link_port.isActive()){

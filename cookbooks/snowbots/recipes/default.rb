@@ -46,6 +46,7 @@ apt_package 'v4l-utils'
 apt_package 'ros-indigo-cv-camera'
 apt_package 'ros-indigo-map-server'
 apt_package 'python-serial'
+apt_package 'ros-indigo-robot-localization'
 
 package 'ros-indigo-tf2-bullet' do
     action 'install'

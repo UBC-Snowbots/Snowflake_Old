@@ -1,0 +1,12 @@
+<?xml version="1.0"?>
+
+<launch>
+
+    <node pkg="drivers" type="sb_gps_driver"
+    name="gps_driver" output="screen">
+
+    <rosparam param="port">"/dev/ttyACM1"</rosparam>
+    
+    </node>
+
+</launch>
