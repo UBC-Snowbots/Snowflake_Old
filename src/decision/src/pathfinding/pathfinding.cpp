@@ -408,10 +408,10 @@ pathfinding_info get_next_waypoint(	nav_msgs::OccupancyGrid map,
 
 				//Skip closed list
 				if (findNodeInList(closed_list, child)){
+					delete child;
 					continue;
 				}
 				child->g = curr_node->g + getMovementCost(curr_node, child);
-
 				child->h = get_man_distance(child, end_goal);
 				child->f = child->g + child->h;
 				//Goto is disgusting but we're in a heavily nested loop
@@ -447,7 +447,8 @@ pathfinding_info get_next_waypoint(	nav_msgs::OccupancyGrid map,
 	vector<node_t*> trace = traceback(closed_list, starting_point, end_goal);
 	//waypoint creation
     cout << "Trace size: " << trace.size() << " Open List Size: " << open_list.size() << endl;
-	if (trace.empty() || open_list.empty()){
+	
+	if (trace.empty() && open_list.empty()){
 		//There is no path to the goal
 		//Current behaviour: iterate through area around until first empty spot
 		for (int i = 1; i < width; i++){
@@ -467,7 +468,7 @@ pathfinding_info get_next_waypoint(	nav_msgs::OccupancyGrid map,
 		deadlock_end:
 		cout << "Robot stuck/No path found, emergency escape" << endl;
        
-	} else{
+	} else { 
 		//A path exists
 		if (trace.size() == 1){ //If we are already at the location return it (no movement)
 			waypoint.x = trace[0]->x;
