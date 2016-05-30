@@ -12,7 +12,6 @@
 #include <geometry_msgs/Pose2D.h>
 #include <nav_msgs/OccupancyGrid.h>
 #include <nav_msgs/MapMetaData.h>
-
 #include <ros/ros.h>
 
 using namespace std;
@@ -29,10 +28,10 @@ int main(int argc, char** argv)
 	ros::Rate loop_rate(1);
 
 	//Create pose
-	geometry_msgs::Pose2D point;
+	geometry_msgs::Pose2D  point;
 	point.x = 18;
 	point.y = 18;
-	point.theta = 0;
+
 
 	while(nh.ok()){
 		pointPub.publish(point);

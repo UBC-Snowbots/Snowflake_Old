@@ -6,22 +6,22 @@
 
 #include <stdio.h>
 #include <string>
-#include <fstream>
 
 //ROS MESSAGES
 #include <geometry_msgs/Point.h>
 #include <geometry_msgs/Pose2D.h>
 #include <nav_msgs/OccupancyGrid.h>
 #include <nav_msgs/MapMetaData.h>
+#include <nav_msgs/Odometry.h>
 
 #include <ros/ros.h>
 
 using namespace std;
-geometry_msgs::Pose2D curr_pos;
+nav_msgs::Odometry odom_pos;
 
 void pointCallback(const geometry_msgs::Point::ConstPtr& msg){
-	curr_pos.x = msg->x;
-	curr_pos.y = msg->y;
+	odom_pos.pose.pose.position.x = msg->x;
+	odom_pos.pose.pose.position.y = msg->y;
 }
 
 int main(int argc, char** argv)
@@ -33,26 +33,22 @@ int main(int argc, char** argv)
 	ros::init(argc, argv, node_name);
 	ros::NodeHandle nh;
 
-	ros::Publisher pointPub = nh.advertise<geometry_msgs::Pose2D>(topic_name, 1);
+	ros::Publisher pointPub = nh.advertise<nav_msgs::Odometry>(topic_name, 1);
 	ros::Subscriber pointSub = nh.subscribe(sub_topic, 5, pointCallback);
 	ros::Rate loop_rate(1);
 
 	cout << "In main" << endl;
 	//Create pose
 
-	curr_pos.x = 1;
-	curr_pos.y = 8;
-	curr_pos.theta = 0;
+	odom_pos.pose.pose.position.x = 0;
+	odom_pos.pose.pose.position.y = 0;
 
-	ofstream file;
-	file.open("/home/valerian/test.txt", ios_base::app);
 
 
 
 	while(nh.ok()){
-		pointPub.publish(curr_pos);
-		file << "(" << curr_pos.x << "," << curr_pos.y << ")" << endl;
-		cout << "(" << curr_pos.x << "," << curr_pos.y << ")" << endl;
+		cout << "(" << odom_pos.pose.pose.position.x  << "," << odom_pos.pose.pose.position.y << ")" << endl;
+		pointPub.publish(odom_pos);
 		loop_rate.sleep();
 		ros::spinOnce();
 	}
