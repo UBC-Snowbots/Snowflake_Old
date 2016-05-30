@@ -211,9 +211,11 @@ void printNodeList(vector<node_t*>& node_list, string name)
  * @param node_list the list containing nodes
  */
 void freeList(vector<node_t*>& node_list){
-	for (int i = 0; i < node_list.size(); i++){
-		delete node_list[i];
-	}
+	if (!node_list.empty()){
+        for (int i = 0; i < node_list.size(); i++){
+            delete node_list[i];
+        }
+    }
 }
 
 /**
