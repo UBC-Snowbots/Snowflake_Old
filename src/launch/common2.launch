@@ -1,0 +1,59 @@
+<!--
+    This launch file contains things that should be common to
+    all launches of the ENTIRE system.
+-->
+
+<launch>
+
+     #### publish initial base_link -> laser transform ######################
+    <node pkg="tf" type="static_transform_publisher" 
+    name="base_link_to_laser" args="0.4 0 0 0 0 0 /base_link /laser 40"/>
+
+    #### start slam_gmapping ######################################
+    <node pkg = "gmapping" type="slam_gmapping"
+    name="slam_gmapping" output="screen">
+
+        <param name="map_update_interval" value="0.5"/>
+        <param name="maxUrange" value="4.0"/>
+        <param name="linear_update" value="0.2"/>
+        <param name="angularUpdate" value="0.2"/>
+        <param name="delta" value="0.5"/>
+        <param name="occ_thresh" value="0.1"/>
+        <param name="odom_frame" value="odom"/>
+        <param name="map_frame" value="map"/>
+        <param name="minimum_score" value="600"/>
+
+    </node>
+
+    <!-- Start encoders -->
+    <include file="$(find ros_arduino_python)/launch/arduino.launch"/>
+
+    <!-- Start ukf_localization -->
+    <include file="$(find drivers)/../launch/ukf_localization.launch"/>
+
+<!--
+    <include file="$(find decision)/launch/gps_decision.launch"/>
+-->
+
+    <!-- Start map_inflater -->
+    <include file="$(find mapping)/launch/map_inflater.launch"/> 
+
+     #### start waypoint_creator ####################################
+    <node pkg="decision" type="sb_waypoint_creator"
+    name="sb_waypoint_creator" output="screen">
+
+        <rosparam param="path">[9, 4]</rosparam>
+        
+        <remap from="destination" to="waypoint"/>
+    </node>
+    
+    #### start move_straight_line ##################################
+    <node pkg="decision" type="move_straight_line"
+    name="move_straight_line" output="screen"/>
+	
+<!--
+	#### start driver_node ########################################
+	<node pkg="drivers" type="sb_driver_elsa"
+	name="sb_driver_elsa" output="screen"/>
+-->
+</launch>

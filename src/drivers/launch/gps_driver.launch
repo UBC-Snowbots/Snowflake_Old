@@ -5,7 +5,7 @@
     <node pkg="drivers" type="sb_gps_driver"
     name="gps_driver" output="screen">
 
-    <rosparam param="port">"/dev/ttyACM1"</rosparam>
+    <rosparam param="port">"/dev/ttyACM0"</rosparam>
     
     </node>
 
