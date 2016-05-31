@@ -14,4 +14,4 @@ local_config.json
 *.mov
 *.mp4
 *.m4a
-
+*.log
