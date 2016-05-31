@@ -42,9 +42,8 @@
 using namespace std;
 
 nav_msgs::OccupancyGrid g_map;
-geometry_msgs::Pose2D g_start;
+geometry_msgs::PoseStamped g_start;
 geometry_msgs::Pose2D g_end;
-tf::StampedTransform odom_transform;
 
 void mapCallback(const nav_msgs::OccupancyGrid::ConstPtr& msg)
 {
@@ -55,9 +54,7 @@ void mapCallback(const nav_msgs::OccupancyGrid::ConstPtr& msg)
 
 void poseStartCallback(const nav_msgs::Odometry::ConstPtr& msg)
 {
-	g_start.x = msg->pose.pose.position.x;
-	g_start.y = msg->pose.pose.position.y;
-	g_start.theta = 0;
+	g_start.pose = msg->pose.pose;
 }
 
 void poseEndCallback(const geometry_msgs::Pose2D::ConstPtr& msg)
@@ -301,8 +298,8 @@ int getMovementCost(node_t *start, node_t* end){
  */
 geometry_msgs::Pose2D poseRealToMapTranslator(nav_msgs::OccupancyGrid map, geometry_msgs::Pose2D pose){
 	geometry_msgs::Pose2D translated_pose;
-	translated_pose.x = ((pose.x+odom_transform.getOrigin().x()) - map.info.origin.position.x)/map.info.resolution;
-	translated_pose.y = ((pose.y+odom_transform.getOrigin().y()) - map.info.origin.position.y)/map.info.resolution;
+	translated_pose.x = ((pose.x) - map.info.origin.position.x)/map.info.resolution;
+	translated_pose.y = ((pose.y) - map.info.origin.position.y)/map.info.resolution;
 	return translated_pose;
 }
 
@@ -333,8 +330,8 @@ public:
  * @return                  the next (x,y) position we want to be in to get to the target position 
  */
 pathfinding_info get_next_waypoint(	nav_msgs::OccupancyGrid map, 
-										geometry_msgs::Pose2D current_position, 
-										geometry_msgs::Pose2D target_position)
+									geometry_msgs::Pose2D current_position, 
+									geometry_msgs::Pose2D target_position)
 {
 
 	int width = map.info.width;
@@ -547,9 +544,10 @@ int main(int argc, char** argv){
 	tf::TransformListener listener;
 
 	//initialize in order to avoid segfaults
-	g_start.x = 0;
-	g_start.y = 0;
-	g_start.theta = 0;
+	g_start.pose.position.x = 0;
+	g_start.pose.position.y = 0;
+	g_start.pose.position.z = 0;
+	g_start.header.frame_id = "odom";
 	g_end.x = 0;
 	g_end.y = 0;
 	g_end.theta = 0;
@@ -566,6 +564,7 @@ int main(int argc, char** argv){
 	g_map.info.height = 20;
 	g_map.info.origin = origin;
 
+	/*)
 	tf::Transform placeholder_transform;
 
 
@@ -574,12 +573,13 @@ int main(int argc, char** argv){
 	q.setRPY(0, 0, 0);
 	placeholder_transform.setRotation(q);
 	odom_transform = tf::StampedTransform(placeholder_transform, ros::Time::now(), "odom", "map");
-
+	*/
 	for (int i = 0; i < 20*20; i++){
 		g_map.data.push_back(0);
 	}
-
+	
 	while (nh.ok()){
+		/*
 		try{
 			//Child to parent, not sure if it exists.
 			listener.lookupTransform("/odom", "/map", ros::Time(0), odom_transform);
@@ -587,8 +587,19 @@ int main(int argc, char** argv){
 			ROS_ERROR("%s", ex.what());
 			//Making sure we can humanly read the error
 			ros::Duration(1.0).sleep();
+		}*/
+		geometry_msgs::PoseStamped g_start_frame_map;
+		try{
+			listener.transformPose("/map", g_start, g_start_frame_map);
+		} catch (tf::TransformException ex){
+			ROS_ERROR("%s", ex.what());
+			ros::Duration(1.0).sleep();
 		}
-		pathfinding_info path_info = get_next_waypoint(g_map, g_start, g_end);
+		geometry_msgs::Pose2D init_point;
+		init_point.x = g_start_frame_map.pose.position.x;
+		init_point.y = g_start_frame_map.pose.position.y;
+		init_point.theta = 0;
+		pathfinding_info path_info = get_next_waypoint(g_map, init_point, g_end);
 		pointPub.publish(path_info.waypoint);
 		pathPub.publish(path_info.path);
 		loop_rate.sleep();
