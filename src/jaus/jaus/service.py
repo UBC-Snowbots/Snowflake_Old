@@ -6,6 +6,7 @@ import logging as _logging
 import jaus.messages as _messages
 import jaus.judp as _judp
 import jaus.signal as _signal
+import jaus.list_manager as _list_manager
 
 
 def message_handler(message_code, is_command=False, supports_events=True):
@@ -584,6 +585,92 @@ class Management(Service):
     def on_query_status(self, **kwargs):
         return _messages.ReportStatusMessage(
             status=self.status)
+
+class ListManager(Service):
+    name='list_manager'
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self._impl = _list_manager.ListManager()
+
+    @message_handler(
+        _messages.MessageCode.QueryElement)
+    @_asyncio.coroutine
+    def on_query_element(self, message, **kwargs):
+        element = self._impl.get(message.element_uid)
+        if element is not None:
+            return _messages.ReportElementMessage(
+                uid=element.UID,
+                previous_uid=element.previousUID,
+                next_uid=element.nextUID,
+                data=element.data)
+
+    @message_handler(
+        _messages.MessageCode.QueryElementList)
+    @_asyncio.coroutine
+    def on_query_element_list(self, **kwargs):
+        return _messages.ReportElementListMessage(
+            elements=[
+                element.uid
+                for element in _list_manager.to_list(self._impl)])
+
+    @message_handler(
+        _messages.MessageCode.QueryElementCount)
+    @_asyncio.coroutine
+    def on_query_element_count(self, **kwargs):
+        return _messages.ReportElementCountMessage(
+            element_count=self._impl.count)
+
+    @message_handler(
+        _messages.MessageCode.SetElement,
+        is_command=True)
+    @_asyncio.coroutine
+    def on_set_element(self, message, **kwargs):
+        message = message.body
+        def rejection(response_code):
+            return return _messages.RejectElementRequestMessage(
+                request_id=message.request_id,
+                response_code=response_code)
+        try:
+            self._impl.insert_batch([
+                _list_manager.Element(next=e.next, prev=e.prev, uid=e.uid, data=e.data)
+                for e in message.elements
+            ])
+            return _messages.ConfirmElementRequestMessage(
+                request_id=message.request_id)
+        except _list_manager.BrokenReference as e:
+            if e.uid == e.element.next:
+                return rejection(_messages.RejectEventRequestResponseCode.INVALID_NEXT_ELEMENT)
+            else:
+                return rejection(_messages.RejectEventRequestResponseCode.INVALID_PREVIOUS_ELEMENT)
+        except _list_manager.ElementAlreadyExists:
+            return rejection(_messages.RejectEventRequestResponseCode.INVALID_ELEMENT_ID)
+        except _list_manager.ListError:
+            return rejection(_messages.RejectEventRequestResponseCode.UNSPECIFIED_ERROR)
+
+    @message_handler(
+        _messages.MessageCode.DeleteElement,
+        is_command=True)
+    @_asyncio.coroutine
+    def on_delete_element(self, message, **kwargs):
+        message = message.body
+        def rejection(response_code):
+            return return _messages.RejectElementRequestMessage(
+                request_id=message.request_id,
+                response_code=response_code)
+        try:
+            self._impl.delete_batch(message.element_ids)
+            return _messages.ConfirmElementRequestMessage(
+                request_id=message.request_id)
+        except _list_manager.BrokenReference as e:
+            if e.uid == e.element.next:
+                return rejection(_messages.RejectEventRequestResponseCode.INVALID_NEXT_ELEMENT)
+            else:
+                return rejection(_messages.RejectEventRequestResponseCode.INVALID_PREVIOUS_ELEMENT)
+        except _list_manager.NoSuchElement:
+            return rejection(_messages.RejectEventRequestResponseCode.INVALID_ELEMENT_ID)
+        except _list_manager.ListError:
+            return rejection(_messages.RejectEventRequestResponseCode.UNSPECIFIED_ERROR)
 
 class Liveness(Service):
     name='liveness'

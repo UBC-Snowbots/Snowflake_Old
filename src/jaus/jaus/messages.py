@@ -318,3 +318,56 @@ define_message('ReportStatus', [
     _format.Enum('status', enum=ManagementStatus, bytes=1),
     _format.Int('reserved', bytes=4, endianness='le'),
 ], defaults={'reserved': 0})
+
+### ListManager
+
+ListElement = _format.specification('ListElement', [
+    _format.Int('uid', bytes=2, endianness='le'),
+    _format.Int('prev', bytes=2, endianness='le'),
+    _format.Int('next', bytes=2, endianness='le'),
+    CountedBytes('data', bytes=2, endianness='le'),
+])
+define_message('SetElement', [
+    _format.Int('request_id', bytes=1),
+    _format.Int('element_count', bytes=1),
+    _format.Repeat('elements', ListElement, count=lambda attrs: attrs['element_count']),
+], defaults={'element_count': lambda attrs: len(attrs['elements'])})
+ListElementID = _format.specification('ListElementID', [
+    _format.Int('uid', bytes=2, endianness='le'),
+])
+define_message('DeleteElement', [
+    _format.Int('request_id', bytes=1),
+    _format.Int('element_count', bytes=1),
+    _format.Repeat('element_ids', ListElementID, count=lambda attrs: attrs['element_count']),
+], defaults={'element_count': lambda attrs: len(attrs['element_ids'])})
+define_message('QueryElement', [
+    _format.Int('element_uid', bytes=2, endianness='le'),
+])
+define_message('QueryElementList', [])
+define_message('QueryElementCount', [])
+
+define_message('ConfirmElementRequest', [
+    _format.Int('request_id', bytes=1),
+])
+class RejectElementRequestResponseCode(_enum.Enum):
+    INVALID_ELEMENT_ID = 1
+    INVALID_PREVIOUS_ELEMENT = 2
+    INVALID_NEXT_ELEMENT = 3
+    UNSUPPORTED_ELEMENT_TYPE = 4
+    ELEMENT_ID_NOT_FOUND = 5
+    OUT_OF_MEMORY = 6
+    UNSPECIFIED_ERROR = 7
+define_message('RejectElementRequest', [
+    _format.Int('request_id', bytes=1),
+    _format.Enum('response_code', enum=RejectElementRequestResponseCode, bytes=1),
+])
+define_message('ReportElement', [
+    _format.Instance('element', ListElement),
+])
+define_message('ReportElementList', [
+    _format.Int('element_count', bytes=2, endianness='le'),
+    _format.Repeat('elements', ListElementID, count=lambda attrs: attrs['element_count']),
+], defaults={'element_count': lambda attrs: len(attrs['elements'])})
+define_message('ReportElementCount', [
+    _format.Int('element_count', bytes=2, endianness='le'),
+])
