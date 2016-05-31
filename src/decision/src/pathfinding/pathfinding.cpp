@@ -29,6 +29,7 @@
 
 //ROS MAIN LIBS
 #include <ros/ros.h>
+#include <tf/transform_listener.h>
 
 //The number which we consider to be a minimum for an obstacle
 #define OCCUPANCY_THRESHOLD 0
@@ -43,6 +44,7 @@ using namespace std;
 nav_msgs::OccupancyGrid g_map;
 geometry_msgs::Pose2D g_start;
 geometry_msgs::Pose2D g_end;
+tf::StampedTransform odom_transform;
 
 void mapCallback(const nav_msgs::OccupancyGrid::ConstPtr& msg)
 {
@@ -294,13 +296,13 @@ int getMovementCost(node_t *start, node_t* end){
 /**
  * Returns the translated pose in the frame of the occupancy grid
  * @param  map  the occupancy grid
- * @param  pose the untranslated pose
- * @return      the translated pose
+ * @param  pose the untranslated pose (in the odom frame)
+ * @return      the translated pose (in the map frame, and consequenty the grid frame)
  */
 geometry_msgs::Pose2D poseRealToMapTranslator(nav_msgs::OccupancyGrid map, geometry_msgs::Pose2D pose){
 	geometry_msgs::Pose2D translated_pose;
-	translated_pose.x = (pose.x - map.info.origin.position.x)/map.info.resolution;
-	translated_pose.y = (pose.y - map.info.origin.position.y)/map.info.resolution;
+	translated_pose.x = ((pose.x+odom_transform.getOrigin().x()) - map.info.origin.position.x)/map.info.resolution;
+	translated_pose.y = ((pose.y+odom_transform.getOrigin().y()) - map.info.origin.position.y)/map.info.resolution;
 	return translated_pose;
 }
 
@@ -541,6 +543,9 @@ int main(int argc, char** argv){
 	ros::Publisher pathPub = nh.advertise<nav_msgs::Path>(path_output_topic, 1);
 	ros::Rate loop_rate(1);
 
+	//Transform
+	tf::TransformListener listener;
+
 	//initialize in order to avoid segfaults
 	g_start.x = 0;
 	g_start.y = 0;
@@ -560,11 +565,29 @@ int main(int argc, char** argv){
 	g_map.info.width = 20;
 	g_map.info.height = 20;
 	g_map.info.origin = origin;
+
+	tf::Transform placeholder_transform;
+
+
+	placeholder_transform.setOrigin(tf::Vector3(0.0, 0.0, 0.0));
+	tf::Quaternion q;
+	q.setRPY(0, 0, 0);
+	placeholder_transform.setRotation(q);
+	odom_transform = tf::StampedTransform(placeholder_transform, ros::Time::now(), "odom", "map");
+
 	for (int i = 0; i < 20*20; i++){
 		g_map.data.push_back(0);
 	}
 
 	while (nh.ok()){
+		try{
+			//Child to parent, not sure if it exists.
+			listener.lookupTransform("/odom", "/map", ros::Time(0), odom_transform);
+		} catch (tf::TransformException ex){
+			ROS_ERROR("%s", ex.what());
+			//Making sure we can humanly read the error
+			ros::Duration(1.0).sleep();
+		}
 		pathfinding_info path_info = get_next_waypoint(g_map, g_start, g_end);
 		pointPub.publish(path_info.waypoint);
 		pathPub.publish(path_info.path);
