@@ -34,9 +34,6 @@ using namespace std;
 
 const int NUM_ELTS_SKIPPED = 2;
 const int MAX_HEIGHT = 50;
-const int X_SCALE_FACTOR = 70;
-const int Y_SCALE_FACTOR = 290;
-const int Z_SCALE_FACTOR = 50;
 
 class ImageToCloud {
     public:
@@ -46,10 +43,18 @@ class ImageToCloud {
         Mat inputImage = Mat::zeros(480, 640, CV_8UC1);
 	      ros::Publisher pub;
         image_transport::Subscriber sub;
+        int x_scale_factor = 1;
+        int y_scale_factor = 1;
+        int z_scale_factor = 1;
 };
 
 ImageToCloud::ImageToCloud(){
 	ros::NodeHandle nh;
+    ros::NodeHandle private_nh("~");
+    // Get params
+    private_nh.getParam("x_scale_factor", x_scale_factor);
+    private_nh.getParam("y_scale_factor", y_scale_factor);
+    private_nh.getParam("z_scale_factor", z_scale_factor);
     image_transport::ImageTransport it(nh);
     sub = it.subscribe("image", 1, boost::bind(&ImageToCloud::imageCallBack, this, _1, "image"));
 	string topic = nh.resolveName("point_cloud");
@@ -89,9 +94,9 @@ void ImageToCloud::imageCallBack(const sensor_msgs::ImageConstPtr& msg, std::str
             if (inputImage.at<uchar>(row, col) > 0){
                 for (int i = 0; i < MAX_HEIGHT; i++){
                     pcl::PointXYZ point;
-                    point.y = (float) -(col - (inputImage.cols/2)) /Y_SCALE_FACTOR;
-                    point.x = (float) -(row - inputImage.rows)/X_SCALE_FACTOR;
-                    point.z = (float) i/Z_SCALE_FACTOR;
+                    point.y = (float) -(col - (inputImage.cols/2)) / y_scale_factor;
+                    point.x = (float) -(row - inputImage.rows)/ y_scale_factor;
+                    point.z = (float) i/z_scale_factor;
                     cloud.push_back(point);
                 }
             }
