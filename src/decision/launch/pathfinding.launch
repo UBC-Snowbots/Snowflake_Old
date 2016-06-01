@@ -4,9 +4,10 @@
 
     <node pkg="decision" type="pathfinding" name="pathfinding" output="screen">
 
-        <remap from="initial_pose" to="pose2D"/>
-        <remap from="final_pose" to="destination"/>
-        <remap from="occupancy_grid" to="inflated_map"/>
+        <remap from="initial_pose" to="odom"/>
+        <remap from="final_pose" to="waypoint"/>
+        <remap from="occupancy_grid" to="map"/>
+        <remap from="waypoint" to="waypoint_temp"/>
 
     </node>
 

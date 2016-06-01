@@ -55,6 +55,7 @@ void mapCallback(const nav_msgs::OccupancyGrid::ConstPtr& msg)
 void poseStartCallback(const nav_msgs::Odometry::ConstPtr& msg)
 {
 	g_start.pose = msg->pose.pose;
+    cout << "Quarternion w: " << (float) g_start.pose.orientation.w << endl;
 }
 
 void poseEndCallback(const geometry_msgs::Pose2D::ConstPtr& msg)
