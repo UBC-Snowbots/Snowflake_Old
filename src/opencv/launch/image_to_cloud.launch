@@ -2,9 +2,11 @@
     
     <node pkg="opencv" name="imageToCloud"
     type="imageToCloud" output="screen">
+
         <param name="x_scale_factor" value="70"/>
         <param name="y_scale_factor" value="290"/>
         <param name="z_scale_factor" value="50"/>
+
     </node>
 
 </launch>
