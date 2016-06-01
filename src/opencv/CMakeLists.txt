@@ -45,6 +45,7 @@ add_executable(laserscan_to_pointcloud src/laserscanToPointCloud.cpp)
 
 add_executable(stitcher src/image_stitcher.cpp)
 
+add_executable(stitcher_opt src/image_stitcher_optimized.cpp)
 target_link_libraries(ros_vision ${catkin_LIBRARIES} ${OpenCV_LIBS})
 
 target_link_libraries(image_to_cloud ${PCL_LIBRARIES} ${catkin_LIBRARIES} ${OpenCV_LIBS} ${PCL_COMMON_LIBRARIES} ${PCL_IO_LIBRARIES})
@@ -55,9 +56,11 @@ target_link_libraries(laserscan_to_pointcloud ${catkin_LIBRARIES} ${PCL_LIBRARIE
 
 target_link_libraries(stitcher ${catkin_LIBRARIES} ${OpenCV_LIBS})
 
+target_link_libraries(stitcher_opt ${catkin_LIBRARIES} ${OpenCV_LIBS})
 add_dependencies(ros_vision opencv)
 
 add_dependencies(stitcher opencv)
+add_dependencies(stitcher_opt opencv)
 
 add_dependencies(image_to_cloud opencv)
 

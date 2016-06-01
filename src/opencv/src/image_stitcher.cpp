@@ -22,7 +22,7 @@ void leftCallback(const sensor_msgs::ImageConstPtr& msg){
     {
         ROS_ERROR("Cannot convert '%s' to 'bgr8'", msg->encoding.c_str());
     }
-    ROS_INFO("Recieved left image");
+    //ROS_INFO("Recieved left image");
 }
 
 
@@ -35,7 +35,7 @@ void rightCallback(const sensor_msgs::ImageConstPtr& msg){
     {
         ROS_ERROR("Cannot convert '%s' to 'bgr8'", msg->encoding.c_str());
     }
-    ROS_INFO("Recieved right image");
+    //ROS_INFO("Recieved right image");
 }
 
 int main(int argc, char** argv){
@@ -81,9 +81,9 @@ int main(int argc, char** argv){
         } else {
             imshow(outputWindow, output);
         }
-        imshow(leftWindow, _left);
-        imshow(rightWindow, _right);
-        if (waitKey(25) == 27){
+        //imshow(leftWindow, _left);
+        //imshow(rightWindow, _right);
+        if (waitKey(10) == 27){
             break;
         }
         loop_rate.sleep();
