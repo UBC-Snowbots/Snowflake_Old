@@ -1,0 +1,21 @@
+<launch>
+    <node pkg="opencv" type="ros_vision" name="left_image_filter">
+      <param name="image_topic" value="left_camera/image_raw"/>
+      <param name="output_topic" value="left_image"/>
+     
+      <param name="width" value="640"/>
+      <param name="height" value="480"/>
+      
+      <!--Bottom points, bot left and bot right corners -->
+      <param name="x1" value="0"/>
+      <param name="y1" value="480"/>
+      <param name="x2" value="640"/>
+      <param name="y2" value="480"/>
+
+      <!-- Top points, these are the ones we're most likely adjusting -->
+      <param name="x3" value="640"/>
+      <param name="y3" value="0"/>
+      <param name="x4" value="320"/>
+      <param name="y4" value="0"/>
+    </node>    
+</launch>
