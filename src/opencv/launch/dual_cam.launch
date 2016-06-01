@@ -12,4 +12,74 @@
       <param name="fps" value="60"/>
     </node>
 
+    <!-- ROS Vision 1 -->
+    <node pkg="opencv" type="ros_vision_1" name="left_image_filter">
+      <param name="image_topic" value="camera_1/image_raw"/>
+      <param name="output_topic" value="left_image"/>
+
+      <param name="width" value="640"/>
+      <param name="height" value="480"/>
+
+      <!--Bottom points, bot left and bot right corners -->
+      <param name="x1" value="0"/>
+      <param name="y1" value="480"/>
+      <param name="x2" value="640"/>
+      <param name="y2" value="480"/>
+
+      <!-- Top points, these are the ones we're most likely adjusting -->
+      <param name="x3" value="640"/>
+      <param name="y3" value="0"/>
+      <param name="x4" value="320"/>
+      <param name="y4" value="0"/>
+    </node>
+
+    <!-- ROS Vision 2 -->
+    <node pkg="opencv" type="ros_vision_1" name="left_image_filter">
+      <param name="image_topic" value="camera_2/image_raw"/>
+      <param name="output_topic" value="right_image"/>
+
+      <param name="width" value="640"/>
+      <param name="height" value="480"/>
+
+      <!--Bottom points, bot left and bot right corners -->
+      <param name="x1" value="0"/>
+      <param name="y1" value="480"/>
+      <param name="x2" value="640"/>
+      <param name="y2" value="480"/>
+
+      <!-- Top points, these are the ones we're most likely adjusting -->
+      <param name="x3" value="640"/>
+      <param name="y3" value="0"/>
+      <param name="x4" value="320"/>
+      <param name="y4" value="0"/>
+    </node>
+
+    <arg name="X_SCALE_FACTOR" value="70"/>
+    <arg name="Y_SCALE_FACTOR" value="290"/>
+    <arg name="Z_SCALE_FACTOR" value="50"/>
+
+    <!-- image_to_cloud 1 -->
+    <node pkg="opencv" name="imageToCloud_1"
+    type="image_to_cloud" output="screen">
+
+        <param name="x_scale_factor" value="$(arg X_SCALE_FACTOR)"/>
+        <param name="y_scale_factor" value="$(arg Y_SCALE_FACTOR)"/>
+        <param name="z_scale_factor" value="$(arg Z_SCALE_FACTOR)"/>
+
+        <remap from="image" to="left_image"/>
+
+    </node>
+
+    <!-- image_to_cloud 2 -->
+    <node pkg="opencv" name="imageToCloud_2"
+    type="image_to_cloud" output="screen">
+
+        <param name="x_scale_factor" value="$(arg X_SCALE_FACTOR)"/>
+        <param name="y_scale_factor" value="$(arg Y_SCALE_FACTOR)"/>
+        <param name="z_scale_factor" value="$(arg Z_SCALE_FACTOR)"/>
+
+        <remap from="image" to="right_image"/>
+
+    </node>
+
 </launch>
