@@ -17,7 +17,7 @@
     <arg name="Z_SCALE_FACTOR" value="50"/>
     <!-- image_to_cloud 1 -->
     <node pkg="opencv" name="imageToCloud_1"
-    type="imageToCloud" output="screen">
+    type="image_to_cloud" output="screen">
 
         <param name="x_scale_factor" value="$(arg X_SCALE_FACTOR)"/>
         <param name="y_scale_factor" value="$(arg Y_SCALE_FACTOR)"/>
@@ -27,7 +27,7 @@
 
     <!-- image_to_cloud 2 -->
     <node pkg="opencv" name="imageToCloud_2"
-    type="imageToCloud" output="screen">
+    type="image_to_cloud" output="screen">
 
         <param name="x_scale_factor" value="$(arg X_SCALE_FACTOR)"/>
         <param name="y_scale_factor" value="$(arg Y_SCALE_FACTOR)"/>
