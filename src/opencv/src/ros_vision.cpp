@@ -68,22 +68,43 @@ int main(int argc, char** argv){
     //ROS
     ros::init(argc, argv, "vision_node");
     ros::NodeHandle nh;
+    ros::NodeHandle nh_private("~");
+
+    string image_topic;
+    nh_private.param<std::string>("image_topic", image_topic, "/camera/image_raw");
+
+    string output_topic;
+    nh_private.param<std::string>("output_topic", output_topic, "image");
+
     image_transport::ImageTransport it(nh);
-    image_transport::Subscriber sub = it.subscribe("/camera/image_raw", 1, imageCallback);
-    image_transport::Publisher pub = it.advertise("image", 1);
+    image_transport::Subscriber sub = it.subscribe(image_topic, 1, imageCallback);
+    image_transport::Publisher pub = it.advertise(output_topic, 1);
     ros::Rate loop_rate(5); 
-    //Manual initialization, maybe automate through parameter server
-    int width = 640;
-    int height = 480;
+    
+    int width, height;
+    nh_private.param("width", width, 640);
+    nh_private.param("height", height, 480);
+
+    int x1,x2,x3,x4,y1,y2,y3,y4;
+    nh_private.param("x1", x1, 0);
+    nh_private.param("x2", x2, width);
+    nh_private.param("x3", x3, width/2+132);
+    nh_private.param("x4", x4, width/2-132);
+    nh_private.param("y1", y1, height);
+    nh_private.param("y2", y2, height);
+    nh_private.param("y3", y3, 0);
+    nh_private.param("y4", y4, 0);
+
+    
     cout << "Frame size: " << width << " x " << height << endl;
 
 
     //Manually Setting up the IPM points
     vector<Point2f> origPoints;
-    origPoints.push_back( Point2f(0, height));
-    origPoints.push_back( Point2f(width, height));
-    origPoints.push_back( Point2f(width/2+132, 0));
-    origPoints.push_back( Point2f(width/2-132, 0));
+    origPoints.push_back( Point2f(x1, y1));
+    origPoints.push_back( Point2f(x2, y2));
+    origPoints.push_back( Point2f(x3, y3));
+    origPoints.push_back( Point2f(x4, y4));
 
     vector<Point2f> dstPoints;
     dstPoints.push_back( Point2f(0, height) );
@@ -138,6 +159,8 @@ int main(int argc, char** argv){
             isCalibratingManually = !isCalibratingManually;
             filter.printValues();
         }
+
+        loop_rate.sleep();
         ros::spinOnce();
     }
     return 0;
