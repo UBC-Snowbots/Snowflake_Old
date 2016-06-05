@@ -36,13 +36,13 @@ double distanceBetweenWaypoints(sb_messages::gps waypoint1, sb_messages::gps way
 
 double bearingBetweenWaypoints(sb_messages::gps waypoint1, sb_messages::gps waypoint2){
     double lat1 = waypoint1.lat*M_PI/180;
-    cout << "lat1: " << lat1 << endl;
+    //cout << "lat1: " << lat1 << endl;
     double lon1 = waypoint1.lon*M_PI/180;
-    cout << "lon1: " << lon1 << endl;
+    //cout << "lon1: " << lon1 << endl;
     double lat2 = waypoint2.lat*M_PI/180;
-    cout << "lat2: " << lat2 << endl;
+    //cout << "lat2: " << lat2 << endl;
     double lon2 = waypoint2.lon*M_PI/180;
-    cout << "lon2: " << lon2 << endl;
+    //cout << "lon2: " << lon2 << endl;
     double delta_lon = lon2 - lon1;
     double y = sin(delta_lon) * cos(lat2);
     double x = cos(lat1) * sin(lat2) - sin(lat1) * cos(lat2) * cos(delta_lon);
@@ -122,6 +122,8 @@ void gpsManager::gpsCallBack(const sb_messages::gps::ConstPtr& gps){
     present_location = *gps;
     if (!gps_message_recieved){
         origin = *gps;
+		//Convert to radians
+		origin.head = origin.head*M_PI/180;
         gps_message_recieved = true;
     }
     if (distanceToNextWayPoint() <= tolerance){
@@ -146,6 +148,7 @@ void gpsManager::publishNextWaypoint(){
     present_waypoint_pose.x = cos(origin.head) * gps_x + sin(origin.head) * gps_x;
     present_waypoint_pose.y = -sin(origin.head) * gps_y + cos(origin.head) * gps_y;
     present_waypoint_pose.theta = 0;
+	cout << present_waypoint_pose << endl;
 // Publish the waypoint
     waypoint_pub.publish(present_waypoint_pose);
 }

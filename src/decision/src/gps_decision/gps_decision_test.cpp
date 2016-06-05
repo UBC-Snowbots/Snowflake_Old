@@ -17,9 +17,9 @@ int main(int argc, char **argv){
 
   while(ros::ok()){
       sb_messages::gps gps_msg;
-      gps_msg.lon = -123.248580933;
-      gps_msg.lat = 49.2624282837;
-      gps_msg.head = 255.5;
+      gps_msg.lon = -83.024025;
+      gps_msg.lat = 42.212682;
+      gps_msg.head = 101;
       gps_pub.publish(gps_msg);
       ros::spinOnce();
       loop_rate.sleep();
