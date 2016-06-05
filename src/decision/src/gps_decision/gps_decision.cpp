@@ -38,12 +38,12 @@ double bearingBetweenWaypoints(sb_messages::gps waypoint1, sb_messages::gps wayp
     double lat1 = waypoint1.lat*M_PI/180;
     cout << "lat1: " << lat1 << endl;
     double lon1 = waypoint1.lon*M_PI/180;
-    cout << "lon1: " << lat1 << endl;
+    cout << "lon1: " << lon1 << endl;
     double lat2 = waypoint2.lat*M_PI/180;
-    cout << "lat2: " << lat1 << endl;
+    cout << "lat2: " << lat2 << endl;
     double lon2 = waypoint2.lon*M_PI/180;
-    cout << "lon2: " << lat1 << endl;
-    double delta_lon = lon1 - lon2;
+    cout << "lon2: " << lon2 << endl;
+    double delta_lon = lon2 - lon1;
     double y = sin(delta_lon) * cos(lat2);
     double x = cos(lat1) * sin(lat2) - sin(lat1) * cos(lat2) * cos(delta_lon);
     return atan2(y, x);
