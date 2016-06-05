@@ -146,8 +146,8 @@ void gpsManager::publishNextWaypoint(){
 	cout << "Gps:[ " << gps_x << "," << gps_y << "]" << endl;
     // Local coordinates determined via a matrix algebra rotation matrix
     geometry_msgs::Pose2D present_waypoint_pose; // A pose representing the next waypoint to go to
-    present_waypoint_pose.x = cos(origin.head) * gps_x  - sin(origin.head) * gps_x;
-    present_waypoint_pose.y = sin(origin.head) * gps_y + cos(origin.head) * gps_y;
+    present_waypoint_pose.y = -(sin(origin.head) * gps_x  - cos(origin.head) * gps_y);
+    present_waypoint_pose.x = cos(origin.head) * gps_x + sin(origin.head) * gps_y;
     present_waypoint_pose.theta = 0;
 	cout << present_waypoint_pose << endl;
 // Publish the waypoint
