@@ -1,0 +1,61 @@
+<!--
+    This launch file contains things that should be common to
+    all launches of the ENTIRE system.
+-->
+
+<launch>
+
+     #### publish initial base_link -> laser transform ######################
+    <node pkg="tf" type="static_transform_publisher" 
+    name="base_link_to_laser" args="0.4 0 0 0 0 0 /base_link /laser 40"/>
+
+    #### start slam_gmapping ######################################
+    <node pkg = "gmapping" type="slam_gmapping"
+    name="slam_gmapping" output="screen">
+
+        <param name="map_update_interval" value="0.5"/>
+        <param name="maxUrange" value="4.0"/>
+        <param name="linear_update" value="0.2"/>
+        <param name="angularUpdate" value="0.2"/>
+        <param name="delta" value="0.5"/>
+        <param name="occ_thresh" value="0.1"/>
+        <param name="odom_frame" value="odom"/>
+        <param name="map_frame" value="map"/>
+        <param name="minimum_score" value="600"/>
+        <!--<remap from="scan" to="hokuyoscan"/>-->
+
+    </node>
+
+    <!-- Start encoders -->
+    <include file="$(find ros_arduino_python)/launch/arduino.launch"/>
+
+    <!-- Start ukf_localization -->
+    <include file="$(find drivers)/../launch/ukf_localization.launch"/>
+
+<!--
+    <include file="$(find decision)/launch/gps_decision.launch"/>
+-->
+
+    <!-- Start map_inflater -->
+    <include file="$(find mapping)/launch/map_inflater.launch"/> 
+
+<!--
+     #### start waypoint_creator ####################################
+    <node pkg="decision" type="sb_waypoint_creator"
+    name="sb_waypoint_creator" output="screen">
+
+        <rosparam param="path">[9, 4]</rosparam>
+        
+        <remap from="destination" to="waypoint"/>
+    </node>
+-->
+
+	<node pkg="decision" type="gps_decision"
+    name="gps_decision" output="screen">
+
+		<rosparam param="waypoints">[42.6782470225, -83.1953990408, 42.6785192010, -83.1954101921]</rosparam>
+	    <rosparam param="tolerance">1</rosparam>
+    
+    <remap from="gps_topic" to="GPS"/>
+    </node>
+</launch>
