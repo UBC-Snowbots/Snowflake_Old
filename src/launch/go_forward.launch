@@ -2,17 +2,17 @@
 #### start move_straight_line ##################################
     <node pkg="decision" type="move_straight_line"
     name="move_straight_line" output="screen">
-        
+
         <param name="explicit_turn_threshold" value="0.2"/>
         <remap from="destination" to="temp_waypoint"/>
 
-    </node>	
+    </node>
 	#### start driver_node ########################################
 	<node pkg="drivers" type="sb_driver_elsa"
 	name="sb_driver_elsa" output="screen">
-        
-        <param name="turn_rate_sensitivity" value="50"/>
-        <param name="max_turn_rate" value="2"/>
+
+        <param name="turn_rate_sensitivity" value="160"/>
+        <param name="max_turn_rate" value="1.56"/>
 
     </node>
 

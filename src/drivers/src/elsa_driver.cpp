@@ -33,11 +33,11 @@ static const int SECOND = 1000000;
 
 
 // If rotation is greater or less then (-pi, pi), constrain it
-double bound_rotation(double rotation){
-	if(rotation > M_PI){
-		return M_PI;
-	}else if(rotation < -M_PI){
-		return -M_PI;
+double bound_rotation(double rotation, max_turn_rate){
+	if(rotation > max_turn_rate){
+		return max_turn_rate;
+	}else if(rotation < -max_turn_rate){
+		return -max_turn_rate;
 	}else{
 		return rotation;
 	}
@@ -52,8 +52,8 @@ string commandToAPMCommand (int command){
 }
 
 // Converts a rotation command to an apm command (255 to 000)
-string rotationCommandToAPMCommand(double rotation, double turn_rate_sensitivity){
-    int command = 125 - round(turn_rate_sensitivity * bound_rotation(rotation));
+string rotationCommandToAPMCommand(double rotation, double turn_rate_sensitivity, double max_turn_rate){
+    int command = 125 - round(turn_rate_sensitivity * bound_rotation(rotation, max_turn_rate));
     return commandToAPMCommand(command);
 }
 
@@ -80,22 +80,21 @@ int main(int argc, char** argv) {
 
 // Get any parameters
     // The maximum that the turn rate will go to
-    // (ie. if max_turn_rate = 40, the max command sent to the apm would be 125 +/- 40 )
-    double max_turn_rate = 40;
+    double max_turn_rate = M_PI/2;
     private_nh.param("max_turn_rate", max_turn_rate);
-    
+
     // How sensitive the robot is to a given turn command
     // A higher value means that smaller commands will have a greater effect
     // (ie. if turn_rate_sensitivity = 10, the apm command will be 125 + (turn_rate_sensitivity * given command))
     double turn_rate_sensitivity = 160;
     private_nh.param("turn_rate_sensitivity", turn_rate_sensitivity);
-    
+
     // How sensitive the robot is to a given movement (forward/backward) command
     // A higher value means that smaller commands will have a greater effect
     // (ie. if move_rate_sensitivity = 10, the apm command will be 125 + (move_rate_sensitivity * given command))
     double move_rate_sensitivity = 25;
     private_nh.param("move_rate_sensitivity", move_rate_sensitivity);
-    
+
     // The USB port where the driver will look for the APM
     string port = "/dev/ttyACM";
     private_nh.param("port", port);
@@ -107,7 +106,7 @@ int main(int argc, char** argv) {
       ([&](geometry_msgs::Twist twist){
   		// Write converted velocity and rotate commands to twist_Y and twist_z
   		velocityCommandToAPMCommand(twist.linear.x, move_rate_sensitivity).copy(twist_X, 3, 0);
-  		rotationCommandToAPMCommand(twist.angular.z, turn_rate_sensitivity).copy(twist_z, 3, 0);
+  		rotationCommandToAPMCommand(twist.angular.z, turn_rate_sensitivity, max_turn_rate).copy(twist_z, 3, 0);
       }));
 
 
@@ -128,7 +127,7 @@ int main(int argc, char** argv) {
 	        return 0;
 	    }
 	}
-    
+
 	usleep(10*SECOND);
 
     ROS_INFO("elsa_driver ready");
@@ -154,7 +153,7 @@ int main(int argc, char** argv) {
 
        cout << ss.str() << endl;
 
-	    //publish data	
+	    //publish data
 	    char test[24];
 	    link.readData(24, test);
   	    //cout << test;
