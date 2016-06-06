@@ -1,4 +1,4 @@
-<!--
+!--
     This launch file contains things that should be common to
     all launches of the ENTIRE system.
 -->
@@ -6,7 +6,7 @@
 <launch>
 
      #### publish initial base_link -> laser transform ######################
-    <node pkg="tf" type="static_transform_publisher" 
+    <node pkg="tf" type="static_transform_publisher"
     name="base_link_to_laser" args="0.4 0 0 0 0 0 /base_link /laser 40"/>
 
     #### start slam_gmapping ######################################
@@ -36,21 +36,21 @@
 -->
 
     <!-- Start map_inflater -->
-    <include file="$(find mapping)/launch/map_inflater.launch"/> 
+    <include file="$(find mapping)/launch/map_inflater.launch"/>
 
      #### start waypoint_creator ####################################
     <node pkg="decision" type="sb_waypoint_creator"
     name="sb_waypoint_creator" output="screen">
 
         <rosparam param="path">[9, 4]</rosparam>
-        
+
         <remap from="destination" to="waypoint"/>
     </node>
-    
+
     #### start move_straight_line ##################################
     <node pkg="decision" type="move_straight_line"
     name="move_straight_line" output="screen"/>
-	
+
 <!--
 	#### start driver_node ########################################
 	<node pkg="drivers" type="sb_driver_elsa"
