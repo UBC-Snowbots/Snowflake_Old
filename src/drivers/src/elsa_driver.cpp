@@ -33,7 +33,7 @@ static const int SECOND = 1000000;
 
 
 // If rotation is greater or less then (-pi, pi), constrain it
-double bound_rotation(double rotation, max_turn_rate){
+double bound_rotation(double rotation, double max_turn_rate){
 	if(rotation > max_turn_rate){
 		return max_turn_rate;
 	}else if(rotation < -max_turn_rate){

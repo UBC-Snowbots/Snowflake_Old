@@ -3,7 +3,7 @@
     <node pkg="decision" type="move_straight_line"
     name="move_straight_line" output="screen">
 
-        <param name="explicit_turn_threshold" value="0.2"/>
+        <param name="explicit_turn_threshold" value="0.44"/>
         <remap from="destination" to="temp_waypoint"/>
 
     </node>
