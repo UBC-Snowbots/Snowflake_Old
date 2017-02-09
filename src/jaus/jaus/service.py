@@ -30,9 +30,11 @@ class ServiceMeta(type):
         return super().__init__(name, bases, dct)
 
 class Service(metaclass=ServiceMeta):
-    def __init__(self, component):
+    def __init__(self, component, protocol, loop=None):
         super().__init__()
         self.component = component
+        self.protocol = protocol
+        self.loop = loop
         for message_code in self.message_handlers:
             message_handler = self._get_message_handler(message_code)
             # allow access_control to manipulate messages before we get them
@@ -51,18 +53,26 @@ class Service(metaclass=ServiceMeta):
                 component.events.register_event(message_code, message_handler)
     def _get_message_handler(self, message_code):
         return getattr(self, self.message_handlers[message_code])
+    def bootstrap(self):
+        pass
     def close(self):
         pass
 
 class Component(object):
-    def __init__(self, id, services = [], default_authority=0):
+    def __init__(self, id, protocol, name, node_name, subsystem_name, loop=None, services = [], default_authority=0):
         self.id = id
         self.services = {}
         self.default_authority = default_authority
+        self.name = name
+        self.node_name = node_name
+        self.subsystem_name = subsystem_name
+        self.loop = loop
 
         for service in services:
-            instance = service(component=self)
+            instance = service(component=self, protocol=protocol, loop=self.loop)
             self.services[instance.name] = instance
+        for service in self.services.values():
+            service.bootstrap()
 
     def __getattr__(self, name):
         if name in self.services:
@@ -72,42 +82,34 @@ class Component(object):
 
     def close(self):
         for s in self.services.values():
-            if not isinstance(s, Transport):
-                s.close()
-            else:
-                transport = s
-        transport.close()
+            s.close()
 
 class Transport(Service):
-    name='transport'
+    name = 'transport'
+    uri = 'urn:jaus:jss:core:Transport'
+    version = (1, 0)
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.message_received = _signal.Signal(key='message_code')
-        self.protocol = _judp.JUDPProtocol(
-            message_received=self.on_message_received,
-            own_id=self.component.id)
+        self.protocol.id_map[self.component.id] = self.on_message_received
 
     @_asyncio.coroutine
     def on_message_received(self, source_id, message):
         responses = yield from _asyncio.gather(*self.message_received.send(
             message_code=message.message_code,
             message=message,
-            source_id=source_id))
+            source_id=source_id), loop=self.loop)
         yield from _asyncio.gather(*[
             self.send_message(message=response, destination_id=source_id)
             for response in responses
             # check for none as sometimes no response should be sent
             if response is not None
-        ])
+        ], loop=self.loop)
 
     @_asyncio.coroutine
     def send_message(self, *args, **kwargs):
-        yield from self.protocol.send_message(*args, **kwargs)
-
-    def close(self):
-        super().close()
-        self.protocol.close()
+        yield from self.protocol.send_message(*args, source_id=self.component.id, **kwargs)
 
 def change_watcher(backing, query_codes):
     @property
@@ -117,7 +119,8 @@ def change_watcher(backing, query_codes):
     def prop(self, val):
         if val != getattr(self, backing):
             _asyncio.async(
-                self.component.events.post_change(message_codes=query_codes))
+                self.component.events.post_change(message_codes=query_codes),
+                loop=self.loop)
         setattr(self, backing, val)
     return prop
 
@@ -137,7 +140,9 @@ class Event:
         self.process.cancel()
 
 class Events(Service):
-    name='events'
+    name = 'events'
+    uri = 'urn:jaus:jss:core:Events'
+    version = (1, 0)
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -174,7 +179,7 @@ class Events(Service):
     @_asyncio.coroutine
     def _event_timeout(self, event_id):
         event = self.events[event_id]
-        yield from _asyncio.sleep(self.event_timeout)
+        yield from _asyncio.sleep(self.event_timeout, loop=self.loop)
         event.process.cancel()
         del self.events[event.id]
         yield from self.component.transport.send_message(
@@ -189,7 +194,7 @@ class Events(Service):
         if event.type is _messages.EventType.PERIODIC:
             while True:
                 yield from self._fire_event(event)
-                yield from _asyncio.sleep(1/event.periodic_rate)
+                yield from _asyncio.sleep(1/event.periodic_rate, loop=self.loop)
 
     def _get_event_id(self):
         event_id = self._next_event_id
@@ -225,8 +230,8 @@ class Events(Service):
             message=_messages.Message._instantiate(_bitstring.ConstBitStream(
                 message.query_message)),
             type=message.event_type,
-            timeout=_asyncio.async(self._event_timeout(event_id)),
-            process=_asyncio.async(self._process_event(event_id)),
+            timeout=_asyncio.async(self._event_timeout(event_id), loop=self.loop),
+            process=_asyncio.async(self._process_event(event_id), loop=self.loop),
             periodic_rate=periodic_rate,
             request_id=message.request_id)
         self.events[event_id] = event
@@ -255,8 +260,8 @@ class Events(Service):
             destination_id=source_id,
             message=_messages.Message._instantiate(message.query_message),
             type=message.event_type,
-            timeout=_asyncio.async(timeout),
-            process=_asyncio.async(process),
+            timeout=_asyncio.async(timeout, loop=self.loop),
+            process=_asyncio.async(process, loop=self.loop),
             periodic_rate=periodic_rate,
             request_id=message.request_id)
         self.events[message.event_id].stop()
@@ -324,7 +329,9 @@ class Events(Service):
             timeout=int(self.event_timeout/60))
 
 class AccessControl(Service):
-    name='access_control'
+    name = 'access_control'
+    uri = 'urn:jaus:jss:core:AccessControl'
+    version = (1, 0)
 
     # Watchable attributes
     controlling_component = change_watcher(
@@ -338,7 +345,7 @@ class AccessControl(Service):
         super().__init__(*args, **kwargs)
         self._controlling_component = None
         self._authority = self.component.default_authority
-        self.timeout_routine = _asyncio.async(self._timeout_routine())
+        self.timeout_routine = _asyncio.async(self._timeout_routine(), loop=self.loop)
         self.timeout = 5 # seconds
 
     def close(self):
@@ -354,7 +361,7 @@ class AccessControl(Service):
 
     @_asyncio.coroutine
     def _timeout_routine(self):
-        yield from _asyncio.sleep(self.timeout)
+        yield from _asyncio.sleep(self.timeout, loop=self.loop)
         if self.is_controlled:
             if not self.control_available:
                 self.reset_timeout()
@@ -370,7 +377,7 @@ class AccessControl(Service):
 
     def reset_timeout(self):
         self.timeout_routine.cancel()
-        self.timeout_routine = _asyncio.async(self._timeout_routine())
+        self.timeout_routine = _asyncio.async(self._timeout_routine(), loop=self.loop)
 
     def make_command_proxy(self, handler):
         """Helper to make trivial has-authority-or-ignore-it commands easy to specify."""
@@ -516,7 +523,9 @@ class AccessControl(Service):
             _messages.ManagementStatus.STANDBY)
 
 class Management(Service):
-    name='management'
+    name = 'management'
+    uri = 'urn:jaus:jss:core:Management'
+    version = (1, 0)
 
     status = change_watcher(
         '_status',
@@ -587,7 +596,9 @@ class Management(Service):
             status=self.status)
 
 class ListManager(Service):
-    name='list_manager'
+    name = 'list_manager'
+    uri = 'urn:jaus:jss:core:Liveness'
+    version = (1, 0)
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -628,7 +639,7 @@ class ListManager(Service):
     def on_set_element(self, message, **kwargs):
         message = message.body
         def rejection(response_code):
-            return return _messages.RejectElementRequestMessage(
+            return _messages.RejectElementRequestMessage(
                 request_id=message.request_id,
                 response_code=response_code)
         try:
@@ -655,7 +666,7 @@ class ListManager(Service):
     def on_delete_element(self, message, **kwargs):
         message = message.body
         def rejection(response_code):
-            return return _messages.RejectElementRequestMessage(
+            return _messages.RejectElementRequestMessage(
                 request_id=message.request_id,
                 response_code=response_code)
         try:
@@ -673,7 +684,9 @@ class ListManager(Service):
             return rejection(_messages.RejectEventRequestResponseCode.UNSPECIFIED_ERROR)
 
 class Liveness(Service):
-    name='liveness'
+    name = 'liveness'
+    uri = 'urn:jaus:jss:core:ListManager'
+    version = (1, 0)
 
     @message_handler(_messages.MessageCode.QueryHeartbeatPulse)
     @_asyncio.coroutine
@@ -681,45 +694,225 @@ class Liveness(Service):
         return _messages.ReportHeartbeatPulseMessage()
 
 class Discovery(Service):
-    name='discovery'
+    name = 'discovery'
+    uri = 'urn:jaus:jss:core:Discovery'
+    version = (1, 0)
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.mapping = {}
+
+    def bootstrap(self):
+        super().bootstrap()
+        records = self._get_records_for(self.component.id)
+        records += [
+            _messages.Service(
+                uri=service.uri,
+                major_version=service.version[0],
+                minor_version=service.version[1])
+            for service in self.component.services.values()]
+
+    def _get_records_for(self, component_id):
+        return self.mapping.setdefault(
+            component_id.subsystem, {}).setdefault(
+                component_id.node, {}).setdefault(
+                    component_id.component, [])
+
     @message_handler(
-        _messages.MessageCode.QueryIdentification,
-        is_command=True,
+        _messages.MessageCode.RegisterServices,
         supports_events=False)
     @_asyncio.coroutine
-    def RegisterServices(self, message, URI, majorVersionNumber, minorVersionNumber): # message that allows component to register its capabilities with a discovery service. 
+    def on_register_services(self, source_id, message, **kwargs):
         message = message.body
-        if(id == 1):
-            # Node manager, can provide any number of services in addition to core msg supp.
+        records = self._get_records_for(source_id)
+        records += message.services
+        _logging.debug('SERVICES: {}'.format(self.mapping))
 
     @message_handler(_messages.MessageCode.QueryIdentification)
     @_asyncio.coroutine
-    def on_query_identification():
+    def on_query_identification(self, message, **kwargs):
         message = message.body
+        if message.type is _messages.IdentificationQueryType.SUBSYSTEM:
+            return _messages.ReportIdentificationMessage(
+                query_type=message.type,
+                type=_messages.IdentificationType.VEHICLE,
+                identification=self.component.subsystem_name)
+        elif message.type is _messages.IdentificationQueryType.NODE:
+            return _messages.ReportIdentificationMessage(
+                query_type=message.type,
+                type=_messages.IdentificationType.NODE,
+                identification=self.component.node_name)
+        elif message.type is _messages.IdentificationQueryType.COMPONENT:
+            return _messages.ReportIdentificationMessage(
+                query_type=message.type,
+                type=_messages.IdentificationType.COMPONENT,
+                identification=self.component.name)
 
     @message_handler(_messages.MessageCode.QueryConfiguration)
     @_asyncio.coroutine
-    def on_query_configuration():
-        pass
+    def on_query_configuration(self, message, **kwargs):
+        message = message.body
+        if message.query_type is _messages.ConfigurationQueryType.SUBSYSTEM:
+            selector = lambda id: id.subsystem == self.component.id.subsystem
+        elif message.query_type is _messages.ConfigurationQueryType.NODE:
+            selector = lambda id: id.subsystems == self.component.id.subsystem and id.node == self.component.id.node
+        return _messages.ReportConfigurationMessage(
+            nodes=[
+                _messages.NodeConfigurationReport(
+                    id=node.id,
+                    components=[
+                        _messages.ComponentConfigurationReport(
+                            id=component_id
+                        )
+                        for component_id in components.keys()])
+                for node_id, components in nodes
+                for subsystem_id, nodes in self.mapping
+                if selector(_messages.Id(subsystem=subsystem_id, node=node_id))])
 
     @message_handler(_messages.MessageCode.QuerySubsystemList)
     @_asyncio.coroutine
-    def on_query_subsystem_list():
-        pass
+    def on_query_subsystem_list(self, **kwargs):
+        subsystems = [
+            _messages.Id(subsystem=subsystem, node=node, component=component)
+            for component in components.keys()
+            for node, components in nodes
+            for subsystem, nodes in self.mapping]
+        return _messages.ReportSubsystemListMessage(
+            subsystems=subsystems)
 
     @message_handler(_messages.MessageCode.QueryServices)
     @_asyncio.coroutine
-    def on_query_services():
-        pass
+    def on_query_services(self, message, **kwargs):
+        message = message.body
+        # bow before my nested list comprehensions of glory
+        return _messages.ReportServicesMessage(
+            nodes=[
+                _messages.NodeServiceListReport(
+                    id=node.id,
+                    components=[
+                        _messages.ComponentServiceListReport(
+                            id=component.id,
+                            services=self._get_records_for(_messages.Id(
+                                subsystem=self.component.id.subsystem,
+                                node=node.id,
+                                component=component.id)))
+                        for component in node.components])
+                for node in message.nodes])
 
     @message_handler(_messages.MessageCode.QueryServiceList)
     @_asyncio.coroutine
-    def on_query_service_list():
-        pass
+    def on_query_service_list(self, message, **kwargs):
+        message = message.body
+        # bow more so to the extra level of nesting :P
+        return _messages.ReportServiceListMessage(
+            subsystems=[
+                _messages.SubsystemServiceListReport(
+                    id=subsystem.id,
+                    nodes=[
+                        _messages.NodeServiceListReport(
+                            id=node.id,
+                            components=[
+                                _messages.ComponentServiceListReport(
+                                    id=component.id,
+                                    services=self._get_records_for(_messages.Id(
+                                        subsystem=subsystem.id,
+                                        node=node.id,
+                                        component=component.id)))
+                                for component in node.components])
+                        for node in subsystem.nodes])
+                for subsystem in message.subsystems])
 
-    
-    # basically there are two things to take consideration of,
-    # input data via register actions
-    # return answers from queries, even
-    # Store all info of register actions into a table or map.
-    # Handlers of event class contains info to get info, have dict, set get vals.
+class VelocityStateSensor(Service):
+    name = 'velocity_state_sensor'
+    uri = 'urn:jaus:jss:mobility:VelocityStateSensor'
+    version = (1, 0)
+
+    @message_handler(_messages.MessageCode.QueryVelocityState)
+    @_asyncio.coroutine
+    def on_query_velocity_state(self, message, **kwargs):
+        message = message.body
+        pv = message.presence_vector
+        x = 0 if pv & 2**0 else None
+        yaw_rate = 0 if pv & 2**6 else None
+        timestamp = Timestamp(ms=0, sec=0, min=0, hr=0, day=0) if pv & 2**8 else None
+        return _messages.ReportVelocityStateMessage(
+            x=x,
+            yaw_rate=yaw_rate,
+            timestamp=timestamp)
+
+class LocalPoseSensor(Service):
+    name = 'local_pose_sensor'
+    uri = 'urn:jaus:jss:mobility:LocalPoseSensor'
+    version = (1, 0)
+
+    @message_handler(_messages.MessageCode.QueryLocalPose)
+    @_asyncio.coroutine
+    def on_query_local_pose(self, message, **kwargs):
+        message = message.body
+        pv = message.presence_vector
+        x = 0 if pv & 2**0 else None
+        y = 0 if pv & 2**1 else None
+        yaw = 0 if pv & 2**6 else None
+        timestamp = Timestamp(ms=0, sec=0, min=0, hr=0, day=0) if pv & 2**8 else None
+        return _messages.ReportLocalPoseMessage(
+            pose = _message.LocalPose(
+                x=x,
+                y=y,
+                yaw=yaw,
+                timestamp=timestamp))
+
+class LocalWaypointDriver(Service):
+    name = 'local_waypoint_driver'
+    uri = 'urn:jaus:jss:mobility:LocalWaypointDriver'
+    version = (1, 0)
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.travel_speed = 0
+        self.x = 0
+        self.y = 0
+
+    @message_handler(_messages.MessageCode.SetLocalWaypoint, is_command=True)
+    @_asyncio.coroutine
+    def on_set_local_waypoint(self, message, **kwargs):
+        message = message.body
+        if message.x is not None:
+            self.x = message.x
+        if message.y is not None:
+            self.y = message.y
+
+    @message_handler(_messages.MessageCode.QueryLocalWaypoint)
+    @_asyncio.coroutine
+    def on_query_local_waypoint(self, message, **kwargs):
+        message = message.body
+        pv = message.presence_vector
+        x = self.x if pv & 2**0 else None
+        y = self.y if pv & 2**1 else None
+        return _messages.ReportLocalWaypointMessage(
+            waypoint=_messages.LocalWaypoint(x=x, y=y))
+
+    @message_handler(_messages.MessageCode.SetTravelSpeed, is_command=True)
+    @_asyncio.coroutine
+    def on_set_travel_speed(self, message, **kwargs):
+        message = message.body
+        self.travel_speed = message.speed
+
+    @message_handler(_messages.MessageCode.QueryTravelSpeed)
+    @_asyncio.coroutine
+    def on_query_travel_speed(self, **kwargs):
+        return _messages.ReportTravelSpeedMessage(speed=self.travel_speed)
+
+class LocalWaypointListDriver(Service):
+    name = 'local_waypoint_list_driver'
+    uri = 'urn:jaus:jss:mobility:LocalWaypointListDriver'
+    version = (1, 0)
+
+    @message_handler(_messages.MessageCode.QueryActiveElement)
+    @_asyncio.coroutine
+    def on_query_active_element(self, **kwargs):
+        return _messages.ReportActiveElementMessage(uid=0)
+
+class PrimitiveDriver(Service):
+    name = 'primitive_driver'
+    uri = 'urn:jaus:jss:mobility:PrimitiveDriver'
+    version = (1, 0)

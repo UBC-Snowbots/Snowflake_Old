@@ -1,5 +1,6 @@
 ﻿import enum as _enum
 import bitstring as _bitstring
+import math
 
 import jaus.format as _format
 
@@ -55,6 +56,16 @@ class ScaledFloat(_format.Int):
         encoded_value = round(
             (prop - self.real_lower_limit)/self.real_range*self.max)
         super().write_one(buf, encoded_value, attributes)
+
+class VariableString(CountedBytes):
+    def read_one(self, *args, **kwargs):
+        result = super().read_one(*args, **kwargs)
+        return result.decode(encoding='ascii', errors='replace')
+    def write_one(self, buf, prop, attributes):
+        super().write_one(
+            buf,
+            prop.encode(encoding='ascii', errors='replace'),
+            attributes)
 
 class MessageCode(_enum.Enum):
     QueryHeartbeatPulse = 0x2202
@@ -114,6 +125,50 @@ class MessageCode(_enum.Enum):
     ReportElement = 0x441A
     ReportElementList = 0x441B
     ReportElementCount = 0x441C
+
+    ## Discovery
+
+    RegisterServices = 0x0B00
+    QueryIdentification = 0x2B00
+    QueryConfiguration = 0x2B01
+    QuerySubsystemList = 0x2B02
+    QueryServices = 0x2B03
+    QueryServiceList = 0x2B04
+
+    ReportIdentification = 0x4B00
+    ReportConfiguration = 0x4B01
+    ReportSubsystemList = 0x4B02
+    ReportServices = 0x4B03
+    ReportServiceList = 0x4B04
+
+    ## LocalPoseSensor
+
+    QueryLocalPose = 0x2403
+
+    ReportLocalPose = 0x4403
+
+    ## VelocityStateSensor
+
+    QueryVelocityState = 0x2404
+
+    ReportVelocityState = 0x4404
+
+    ## LocalWaypointDriver
+
+    SetTravelSpeed = 0x040A
+    SetLocalWaypoint = 0x040D
+    QueryTravelSpeed = 0x240A
+    QueryLocalWaypoint = 0x240D
+
+    ReportTravelSpeed = 0x440A
+    ReportLocalWaypoint = 0x440D
+
+    ## LocalWaypointListDriver
+
+    QueryActiveElement = 0x241E
+
+    ReportActiveElement = 0x441E
+
 
 Message = _format.specification('Message', specs=[
         _format.Enum('message_code', MessageCode, bytes=2, endianness='le'),
@@ -325,8 +380,9 @@ ListElement = _format.specification('ListElement', [
     _format.Int('uid', bytes=2, endianness='le'),
     _format.Int('prev', bytes=2, endianness='le'),
     _format.Int('next', bytes=2, endianness='le'),
+    _format.Int('format', bytes=1), # this is a variable format field apparently...
     CountedBytes('data', bytes=2, endianness='le'),
-])
+], defaults={'format': 0})
 define_message('SetElement', [
     _format.Int('request_id', bytes=1),
     _format.Int('element_count', bytes=1),
@@ -370,4 +426,236 @@ define_message('ReportElementList', [
 ], defaults={'element_count': lambda attrs: len(attrs['elements'])})
 define_message('ReportElementCount', [
     _format.Int('element_count', bytes=2, endianness='le'),
+])
+
+### Discovery
+
+Service = _format.specification('Service', [
+    VariableString('uri', bytes=1),
+    _format.Int('major_version', bytes=1),
+    _format.Int('minor_version', bytes=1),
+])
+define_message('RegisterServices', [
+    _format.Int('count', bytes=1),
+    _format.Repeat('services', Service, count=lambda attrs: attrs['count']),
+], defaults={'count': lambda attrs: len(attrs['services'])})
+class IdentificationQueryType(_enum.Enum):
+    SYSTEM = 1
+    SUBSYSTEM = 2
+    NODE = 3
+    COMPONENT = 4
+define_message('QueryIdentification', [
+    _format.Enum('type', enum=IdentificationQueryType, bytes=1),
+])
+class ConfigurationQueryType(_enum.Enum):
+    SUBSYSTEM = 2
+    NODE = 3
+define_message('QueryConfiguration', [
+    _format.Enum('type', enum=ConfigurationQueryType, bytes=1),
+])
+define_message('QuerySubsystemList', [])
+ComponentRequest = _format.specification('ComponentRequest', [
+    _format.Int('id', bytes=1),
+])
+NodeRequest = _format.specification('NodeRequest', [
+    _format.Int('id', bytes=1),
+    _format.Int('component_count', bytes=1),
+    _format.Repeat('components', ComponentRequest, count=lambda attrs: attrs['component_count']),
+], defaults={'component_count': lambda attrs: len(attrs['components'])})
+define_message('QueryServices', [
+    _format.Int('node_count', bytes=1),
+    _format.Repeat('nodes', NodeRequest, count=lambda attrs: attrs['node_count']),
+], defaults={'node_count': lambda attrs: len(attrs['nodes'])})
+ComponentListRequest = _format.specification('ComponentListRequest', [
+    _format.Int('presence_vector', bytes=1),
+    _format.Int('id', bytes=1),
+    _format.Optional(lambda attrs: attrs['presence_vector'] == 1, [
+        VariableString('search_filter', bytes=1),
+    ])
+], defaults={
+    'search_filter': None,
+    'presence_vector': lambda attrs: 1 if attrs['search_filter'] is not None else 0,
+})
+NodeListRequest = _format.specification('NodeListRequest', [
+    _format.Int('id', bytes=1),
+    _format.Int('component_count', bytes=1),
+    _format.Repeat('components', ComponentListRequest, count=lambda attrs: attrs['component_count']),
+], defaults={'component_count': lambda attrs: len(attrs['components'])})
+SubsystemListRequest = _format.specification('SubsystemListRequest', [
+    _format.Int('id', bytes=2, endianness='le'),
+    _format.Int('node_count', bytes=1),
+    _format.Repeat('nodes', NodeListRequest, count=lambda attrs: attrs['node_count']),
+], defaults={'node_count': lambda attrs: len(attrs['nodes'])})
+define_message('QueryServiceList', [
+    _format.Int('subsystem_count', bytes=2, endianness='le'),
+    _format.Repeat('subsystems', SubsystemListRequest, count=lambda attrs: attrs['subsystem_count']),
+], defaults={'subsystem_count': lambda attrs: len(attrs['subsystems'])})
+
+class IdentificationType(_enum.Enum):
+    VEHICLE = 10001
+    OCU = 20001
+    OTHER_SUBSYSTEM = 30001
+    NODE = 40001
+    PAYLOAD = 50001
+    COMPONENT = 60001
+define_message('ReportIdentification', [
+    _format.Enum('query_type', enum=IdentificationQueryType, bytes=1),
+    _format.Enum('type', enum=IdentificationType, bytes=2, endianness='le'),
+    VariableString('identification', bytes=2, endianness='le'),
+])
+ComponentConfigurationReport = _format.specification('ComponentConfigurationReport', [
+    _format.Int('id', bytes=1),
+    _format.Int('instance_id', bytes=1),
+], defaults={'instance_id': 0})
+NodeConfigurationReport = _format.specification('NodeConfigurationReport', [
+    _format.Int('id', bytes=1),
+    _format.Int('component_count', bytes=1),
+    _format.Repeat('components', ComponentConfigurationReport, count=lambda attrs: attrs['component_count']),
+], defaults={'component_count': lambda attrs: len(attrs['components'])})
+define_message('ReportConfiguration', [
+    _format.Int('node_count', bytes=1),
+    _format.Repeat('nodes', NodeConfigurationReport, count=lambda attrs: attrs['node_count']),
+], defaults={'node_count': lambda attrs: len(attrs['nodes'])})
+define_message('ReportSubsystemList', [
+    _format.Int('subsystem_count', bytes=1),
+    _format.Repeat('subsystems', Id, count=lambda attrs: attrs['subsystem_count']),
+], defaults={'subsystem_count': lambda attrs: len(attrs['subsystems'])})
+ServiceReport = _format.specification('ServiceReport', [
+    VariableString('uri', bytes=1),
+    _format.Int('major_version', bytes=1),
+    _format.Int('minor_version', bytes=1),
+])
+ComponentServiceListReport = _format.specification('ComponentServiceListReport', [
+    _format.Int('id', bytes=1),
+    _format.Int('instance_id', bytes=1),
+    _format.Int('service_count', bytes=1),
+    _format.Repeat('services', ServiceReport, count=lambda attrs: attrs['service_count']),
+], defaults={
+    'instance_id': 0,
+    'service_count': lambda attrs: len(attrs['services']),
+})
+NodeServiceListReport = _format.specification('NodeServiceListReport', [
+    _format.Int('id', bytes=1),
+    _format.Int('component_count', bytes=1),
+    _format.Repeat('components', ComponentServiceListReport, count=lambda attrs: attrs['component_count']),
+], defaults={'component_count': lambda attrs: len(attrs['components'])})
+define_message('ReportServices', [
+    _format.Int('node_count', bytes=1),
+    _format.Repeat('nodes', NodeServiceListReport, count=lambda attrs: attrs['node_count']),
+], defaults={'node_count': lambda attrs: len(attrs['nodes'])})
+SubsystemServiceListReport = _format.specification('SubsystemServiceListReport', [
+    _format.Int('id', bytes=2, endianness='le'),
+    _format.Int('node_count', bytes=1),
+    _format.Repeat('nodes', NodeServiceListReport, count=lambda attrs: attrs['node_count']),
+], defaults={'node_count': lambda attrs: len(attrs['nodes'])})
+define_message('ReportServiceList', [
+    _format.Int('subsystem_count', bytes=2, endianness='le'),
+    _format.Repeat('subsystems', SubsystemServiceListReport, count=lambda attrs: attrs['subsystem_count']),
+], defaults={'subsystem_count': lambda attrs: len(attrs['subsystems'])})
+
+### VelocityStateSensor
+def presence_vectored(pv, specs):
+    bit = 1
+    results = [pv]
+    for spec in specs:
+        results.append(_format.Optional(lambda attrs, bit=bit: attrs['presence_vector'] & bit, [
+            spec
+        ]))
+        bit *= 2
+    return results
+def make_presence_vector(attrs):
+    bit = 1
+    mask = 0
+    for spec in specs:
+        if attrs[spec.name] is not None:
+            mask |= bit
+        bit *= 2
+    return mask
+
+Timestamp = _format.specification('Timestamp', [
+    ScaledFloat('ms', bits=10, real_lower_limit=0, real_upper_limit=999),
+    ScaledFloat('sec', bits=6, real_lower_limit=0, real_upper_limit=59),
+    ScaledFloat('min', bits=6, real_lower_limit=0, real_upper_limit=59),
+    ScaledFloat('hr', bits=5, real_lower_limit=0, real_upper_limit=23),
+    ScaledFloat('day', bits=5, real_lower_limit=1, real_upper_limit=31),
+])
+define_message('QueryVelocityState', [
+    _format.Int('presence_vector', bytes=2, endianness='le'),
+])
+define_message('ReportVelocityState', presence_vectored(
+        _format.Int('presence_vector', bytes=2, endianness='le'),
+        [
+            ScaledFloat('x', bytes=4, endianness='le', real_lower_limit=-327.68, real_upper_limit=327.67),
+            ScaledFloat('y', bytes=4, endianness='le', real_lower_limit=-327.68, real_upper_limit=327.67),
+            ScaledFloat('z', bytes=4, endianness='le', real_lower_limit=-327.68, real_upper_limit=327.67),
+            ScaledFloat('velocity_rms', bytes=4, endianness='le', real_lower_limit=0, real_upper_limit=100),
+            ScaledFloat('roll', bytes=2, endianness='le', real_lower_limit=-32.768, real_upper_limit=32.767),
+            ScaledFloat('pitch', bytes=2, endianness='le', real_lower_limit=-32.768, real_upper_limit=32.767),
+            ScaledFloat('yaw_rate', bytes=2, endianness='le', real_lower_limit=-32.768, real_upper_limit=32.767),
+            ScaledFloat('angular_rms', bytes=2, endianness='le', real_lower_limit=0, real_upper_limit=math.pi),
+            _format.Instance('timestamp', Timestamp),
+        ]),
+        defaults={
+            'presence_vector': make_presence_vector
+        })
+
+### LocalPoseSensor
+
+LocalPose = _format.specification('LocalPose', presence_vectored(
+    _format.Int('presence_vector', bytes=2, endianness='le'),
+    [
+        ScaledFloat('x', bytes=4, endianness='le', real_lower_limit=-100000, real_upper_limit=100000),
+        ScaledFloat('y', bytes=4, endianness='le', real_lower_limit=-100000, real_upper_limit=100000),
+        ScaledFloat('z', bytes=4, endianness='le', real_lower_limit=-100000, real_upper_limit=100000),
+        ScaledFloat('position_rms', bytes=4, endianness='le', real_lower_limit=0, real_upper_limit=100),
+        ScaledFloat('roll', bytes=2, endianness='le', real_lower_limit=-math.pi, real_upper_limit=math.pi),
+        ScaledFloat('pitch', bytes=2, endianness='le', real_lower_limit=-math.pi, real_upper_limit=math.pi),
+        ScaledFloat('yaw', bytes=2, endianness='le', real_lower_limit=-math.pi, real_upper_limit=math.pi),
+        ScaledFloat('attitude_rms', bytes=2, endianness='le', real_lower_limit=0, real_upper_limit=math.pi),
+        _format.Instance('timestamp', Timestamp),
+    ]), defaults={'presence_vector': make_presence_vector})
+define_message('QueryLocalPose', [
+    _format.Int('presence_vector', bytes=2, endianness='le'),
+])
+define_message('ReportLocalPose', [
+    _format.Instance('pose', LocalPose),
+])
+
+### LocalWaypointDriver
+
+LocalWaypoint = _format.specification('LocalWaypoint', presence_vectored(
+    _format.Int('presence_vector', bytes=1),
+    [
+        ScaledFloat('x', bytes=4, endianness='le', real_lower_limit=-100000, real_upper_limit=100000),
+        ScaledFloat('y', bytes=4, endianness='le', real_lower_limit=-100000, real_upper_limit=100000),
+        ScaledFloat('z', bytes=4, endianness='le', real_lower_limit=-100000, real_upper_limit=100000),
+        ScaledFloat('roll', bytes=2, endianness='le', real_lower_limit=-math.pi, real_upper_limit=math.pi),
+        ScaledFloat('pitch', bytes=2, endianness='le', real_lower_limit=-math.pi, real_upper_limit=math.pi),
+        ScaledFloat('yaw', bytes=2, endianness='le', real_lower_limit=-math.pi, real_upper_limit=math.pi),
+        ScaledFloat('waypoint_tolerance', bytes=2, endianness='le', real_lower_limit=0, real_upper_limit=100),
+        ScaledFloat('path_tolerance', bytes=4, endianness='le', real_lower_limit=0, real_upper_limit=100000)
+    ]), defaults={'presence_vector': make_presence_vector})
+
+define_message('SetLocalWaypoint', [
+    _format.Instance('waypoint', LocalWaypoint),
+])
+define_message('QueryLocalWaypoint', [
+    _format.Int('presence_vector', bytes=1),
+])
+define_message('ReportLocalWaypoint', [
+    _format.Instance('waypoint', LocalWaypoint),
+])
+define_message('SetTravelSpeed', [
+    ScaledFloat('speed', bytes=4, endianness='le', real_lower_limit=0, real_upper_limit=327.67),
+])
+define_message('QueryTravelSpeed', [])
+define_message('ReportTravelSpeed', [
+    ScaledFloat('speed', bytes=4, endianness='le', real_lower_limit=0, real_upper_limit=327.67),
+])
+
+### LocalWaypointListDriver
+
+define_message('QueryActiveElement', [])
+define_message('ReportActiveElement', [
+    _format.Int('uid', bytes=2, endianness='le'),
 ])

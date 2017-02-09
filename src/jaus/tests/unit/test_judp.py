@@ -147,10 +147,24 @@ class TestJUDPProtocol(object):
             pass
         return Mock(name='message_received', wraps=message_received)
     @pytest.fixture
-    def tp(selfconnection, message_received):
-        return judp.JUDPProtocol(
-            message_received=message_received,
-            own_id=sentinel.own_id)
+    def own_id(self):
+        return Mock(
+            name='own_id',
+            subsystem=sentinel.own_subsystem,
+            node=sentinel.own_node,
+            component=sentinel.own_component)
+    @pytest.fixture
+    def other_id(self):
+        return Mock(
+            name='other_id',
+            subsystem=sentinel.other_subsystem,
+            node=sentinel.other_node,
+            component=sentinel.other_component)
+    @pytest.fixture
+    def tp(selfconnection, message_received, own_id, event_loop):
+        return judp.JUDPProtocol({
+            own_id: message_received
+        }, loop=event_loop)
 
     @pytest.mark.asyncio
     def test__instance_received__unsupported_transport_version(self,
@@ -163,19 +177,19 @@ class TestJUDPProtocol(object):
         assert message_received.call_args_list == []
         assert 'incorrect transport version' in caplog.text
 
-    @pytest.mark.asyncio
-    def test__instance_received(self, message_received, tp, connection, caplog):
+    @pytest.mark.asyncio(forbid_global_loop=True)
+    def test__instance_received(self, message_received, tp, connection, caplog, own_id, other_id, event_loop):
         packet1 = Mock(
             name='packet1',
-            destination_id=tp.own_id,
+            destination_id=own_id,
             source_id=sentinel.source_id1)
         packet2 = Mock(
             name='packet2',
-            destination_id=sentinel.other_id,
+            destination_id=other_id,
             source_id=sentinel.source_id2)
         packet3 = Mock(
             name='packet3',
-            destination_id=tp.own_id,
+            destination_id=own_id,
             source_id=sentinel.source_id3)
         payload = judp.JUDPPayload(
             transport_version=2,
@@ -195,14 +209,16 @@ class TestJUDPProtocol(object):
 
         yield from tp.instance_received(payload, sentinel.sender)
 
-        assert tp.connection_map == {
-            packet1.source_id: connection_instance,
-            packet3.source_id: connection_instance,
+        assert tp.connection_map_map == {
+            own_id:{
+                packet1.source_id: connection_instance,
+                packet3.source_id: connection_instance,
+            },
         }
 
         assert connection.call_args_list == [
-            call(address=sentinel.sender, protocol=tp),
-            call(address=sentinel.sender, protocol=tp),
+            call(address=sentinel.sender, protocol=tp, loop=event_loop),
+            call(address=sentinel.sender, protocol=tp, loop=event_loop),
         ]
 
         assert message_received.call_args_list == [
@@ -212,7 +228,7 @@ class TestJUDPProtocol(object):
             call(message=sentinel.message2, source_id= packet3.source_id),
         ]
 
-        assert 'Ignoring packet sent to sentinel.other_id' in caplog.text
+        assert 'Ignoring packet sent to {}'.format(other_id) in caplog.text
 
     @pytest.mark.asyncio
     def test__send_message(self, tp, connection):
@@ -224,14 +240,17 @@ class TestJUDPProtocol(object):
 
         with pytest.raises(ValueError):
             yield from tp.send_message(
-                sentinel.unknown_id,
+                destination_id=sentinel.unknown_id,
+                source_id=sentinel.own_id,
                 message=sentinel.message)
 
-        tp.connection_map.add_connection(
+        tp.connection_map_map[sentinel.own_id] = judp.ConnectionMap(tp)
+        tp.connection_map_map[sentinel.own_id].add_connection(
             sentinel.known_id, sentinel.address)
 
         yield from tp.send_message(
-            sentinel.known_id,
+            destination_id=sentinel.known_id,
+            source_id=sentinel.own_id,
             message=sentinel.message,
             foo='bar')
 
@@ -392,9 +411,9 @@ def connection(protocol, event_loop, monkeypatch):
         judp,
         'MessageReassembler',
         Mock(name='MessageReassembler'))
-    return judp.Connection(sentinel.address, protocol)
+    return judp.Connection(sentinel.address, protocol, loop=event_loop)
 
-@pytest.mark.asyncio
+@pytest.mark.asyncio(forbid_global_loop=True)
 def test__connection__send(connection, monkeypatch):
     @asyncio.coroutine
     def send_packet_fn(packet):
@@ -421,7 +440,7 @@ def test__connection__send(connection, monkeypatch):
     finally:
         connection.close()
 
-@pytest.mark.asyncio
+@pytest.mark.asyncio(forbid_global_loop=True)
 def test__connection__send_packet__without_ack(connection):
     anf = judp.JUDPPacketACKNACKFlags
     connection.close()
@@ -432,8 +451,8 @@ def test__connection__send_packet__without_ack(connection):
     yield from connection.send_packet(packet)
     assert connection.packets_to_send == [packet]
 
-@pytest.mark.asyncio
-def test__connection__send_packet__with_ack(connection, protocol):
+@pytest.mark.asyncio(forbid_global_loop=True)
+def test__connection__send_packet__with_ack(connection, protocol, event_loop):
     anf = judp.JUDPPacketACKNACKFlags
     connection.close()
 
@@ -453,32 +472,32 @@ def test__connection__send_packet__with_ack(connection, protocol):
     responses = [anf.NACK]*3 + [anf.ACK]
     yield from asyncio.gather(
         connection.send_packet(packet),
-        mock_dispatcher())
+        mock_dispatcher(), loop=event_loop)
     assert connection.packets_to_send == [packet]*4
 
     with pytest.raises(judp.SendError) as e:
         responses = [anf.NACK]*5
         yield from asyncio.gather(
             connection.send_packet(packet),
-            mock_dispatcher())
+            mock_dispatcher(), loop=event_loop)
     assert e.value.packet is packet
 
-@pytest.mark.asyncio
-def test__connection__receive_packet__ack_nack(connection):
+@pytest.mark.asyncio(forbid_global_loop=True)
+def test__connection__receive_packet__ack_nack(connection, event_loop):
     anf = judp.JUDPPacketACKNACKFlags
     connection.close()
 
     packet = Mock(
         name='packet',
         ack_nack=anf.ACK)
-    recv = asyncio.Future()
+    recv = asyncio.Future(loop=event_loop)
     connection.ack_nack[packet.sequence_number] = recv
     result = yield from connection.receive_packet(packet)
     assert result == []
     assert packet.sequence_number not in connection.ack_nack
     assert recv.result() is anf.ACK
 
-@pytest.mark.asyncio
+@pytest.mark.asyncio(forbid_global_loop=True)
 def test__connection__receive_packet__no_response_required(connection):
     anf = judp.JUDPPacketACKNACKFlags
     connection.close()
@@ -491,7 +510,7 @@ def test__connection__receive_packet__no_response_required(connection):
     assert result == message_reassembler.pop_messages.return_value
     assert message_reassembler.add_packet.call_args == call(packet)
 
-@pytest.mark.asyncio
+@pytest.mark.asyncio(forbid_global_loop=True)
 def test__connection__receive_packet__response_required(connection, monkeypatch):
     anf = judp.JUDPPacketACKNACKFlags
     connection.close()
@@ -518,8 +537,8 @@ def test__connection__receive_packet__response_required(connection, monkeypatch)
     assert result == message_reassembler.pop_messages.return_value
     assert message_reassembler.add_packet.call_args == call(packet)
 
-@pytest.mark.asyncio
-def test__connection___send_batching_loop(connection, protocol, monkeypatch):
+@pytest.mark.asyncio(forbid_global_loop=True)
+def test__connection___send_batching_loop(connection, protocol, monkeypatch, event_loop):
     connection.close()
     split_payloads = Mock(name='split_payloads')
     monkeypatch.setattr(judp, 'split_payloads', split_payloads)
@@ -532,7 +551,7 @@ def test__connection___send_batching_loop(connection, protocol, monkeypatch):
         payload2 = Mock(name='payload2')
         split_payloads.return_value = [payload1, payload2]
 
-        yield from asyncio.sleep(0.5)
+        yield from asyncio.sleep(0.5, loop=event_loop)
         assert protocol.transport.sendto.call_args_list == [
             call(payload1._serialize_to_bytes.return_value, connection.address),
             call(payload2._serialize_to_bytes.return_value, connection.address),
@@ -542,27 +561,29 @@ def test__connection___send_batching_loop(connection, protocol, monkeypatch):
         send_batching_loop.cancel()
 
     send_batching_loop = asyncio.async(
-        connection._send_batching_loop())
+        connection._send_batching_loop(), loop=event_loop)
     cancelled, result = yield from asyncio.gather(
         send_batching_loop,
         test(),
-        return_exceptions=True)
+        return_exceptions=True,
+        loop=event_loop)
 
     assert isinstance(cancelled, asyncio.CancelledError)
     if result is not None:
         raise result
 
 @patch.object(judp, 'Connection')
-def test__connectionmap__add_connection(Connection):
+def test__connectionmap__add_connection(Connection, event_loop):
     protocol = sentinel.protocol
     connection = Connection.return_value
-    cm = judp.ConnectionMap(protocol)
+    cm = judp.ConnectionMap(protocol, loop=event_loop)
 
     assert cm.add_connection(
         sentinel.source_id,
         sentinel.address) is connection
     assert Connection.call_args == call(
         address=sentinel.address,
-        protocol=protocol)
+        protocol=protocol,
+        loop=event_loop)
 
     assert cm[sentinel.source_id] is connection

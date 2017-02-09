@@ -4,7 +4,7 @@ import pytest
 import jaus.messages as messages
 from util import slow
 
-@pytest.mark.asyncio
+@pytest.mark.asyncio(forbid_global_loop=True)
 def test__query_control__not_controlled(connection):
     yield from connection.send_message(
         messages.QueryControlMessage())
@@ -14,7 +14,7 @@ def test__query_control__not_controlled(connection):
         id=messages.Id(0,0,0),
         authority_code=0)]
 
-@pytest.mark.asyncio
+@pytest.mark.asyncio(forbid_global_loop=True)
 def test__query_control__controlled(control_connection, test_id):
     connection = control_connection
 
@@ -26,7 +26,7 @@ def test__query_control__controlled(control_connection, test_id):
         id=test_id,
         authority_code=5)]
 
-@pytest.mark.asyncio
+@pytest.mark.asyncio(forbid_global_loop=True)
 def test__preemption__insufficient_authority(control_connection, connection2):
     yield from connection2.send_message(messages.RequestControlMessage(
         authority_code=4))
@@ -50,7 +50,7 @@ def release_control(connection):
     assert results == [messages.RejectControlMessage(
         response_code=messages.RejectControlResponseCode.CONTROL_RELEASED)]
 
-@pytest.mark.asyncio
+@pytest.mark.asyncio(forbid_global_loop=True)
 def test__preemption__sufficient_authority(control_connection, connection2):
     yield from connection2.send_message(messages.RequestControlMessage(
         authority_code=6))
@@ -66,7 +66,7 @@ def test__preemption__sufficient_authority(control_connection, connection2):
     yield from reacquire_control(control_connection)
 
 @slow
-@pytest.mark.asyncio
+@pytest.mark.asyncio(forbid_global_loop=True)
 def test__control_timeout(control_connection):
     # wait for timeout_routine
     results = yield from control_connection.receive_messages(
@@ -76,7 +76,7 @@ def test__control_timeout(control_connection):
 
     yield from reacquire_control(control_connection)
 
-@pytest.mark.asyncio
+@pytest.mark.asyncio(forbid_global_loop=True)
 def test__query_timeout(connection):
     yield from connection.send_message(
         messages.QueryTimeoutMessage())
@@ -84,7 +84,7 @@ def test__query_timeout(connection):
     results = yield from connection.receive_messages(types=(messages.MessageCode.ReportTimeout,))
     assert results == [messages.ReportTimeoutMessage(timeout=5)]
 
-@pytest.mark.asyncio
+@pytest.mark.asyncio(forbid_global_loop=True)
 def test__query_authority(control_connection):
     connection = control_connection
     yield from connection.send_message(
@@ -99,7 +99,7 @@ def test__query_authority(control_connection):
     (5, 0),
     (10, 0),
 ])
-@pytest.mark.asyncio
+@pytest.mark.asyncio(forbid_global_loop=True)
 def test__set_authority__no_control(connection, code, response):
     yield from connection.send_message(
         messages.SetAuthorityMessage(authority_code=code))
@@ -115,7 +115,7 @@ def test__set_authority__no_control(connection, code, response):
     (5, 5),
     (10, 5),
 ])
-@pytest.mark.asyncio
+@pytest.mark.asyncio(forbid_global_loop=True)
 def test__set_authority__control(control_connection, code, response):
     connection = control_connection
     yield from connection.send_message(

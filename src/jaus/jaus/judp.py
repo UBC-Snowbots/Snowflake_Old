@@ -230,16 +230,18 @@ class SendError(Exception):
         self.packet = packet
 
 class Connection:
-    def __init__(self, address, protocol):
+    def __init__(self, address, protocol, loop=None):
         self.protocol = protocol
         self.address = address
         self.message_reassembler = MessageReassembler()
         self.ack_nack = {}
         self.packets_to_send = []
         self.sequence_number = 0
+        self.loop = loop
 
         self.batching_loop = _asyncio.async(
-            self._send_batching_loop())
+            self._send_batching_loop(),
+            loop=loop)
 
     @_asyncio.coroutine
     def _send_batching_loop(self):
@@ -261,7 +263,7 @@ class Connection:
             **kwargs)
         self.sequence_number += len(packets)
         yield from _asyncio.gather(
-            *[self.send_packet(packet) for packet in packets])
+            *[self.send_packet(packet) for packet in packets], loop=self.loop)
 
     @_asyncio.coroutine
     def send_packet(self, packet):
@@ -271,7 +273,7 @@ class Connection:
             assert packet.sequence_number not in self.ack_nack
             tries = 0
             while tries < 5:
-                sent = _asyncio.Future()
+                sent = _asyncio.Future(loop=self.loop)
                 self.ack_nack[packet.sequence_number] = sent
                 result = yield from sent
                 if result is JUDPPacketACKNACKFlags.ACK:
@@ -299,35 +301,71 @@ class Connection:
         self.batching_loop.cancel()
 
 class ConnectionMap(_collections.UserDict):
-    def __init__(self, protocol, *args, **kwargs):
+    def __init__(self, protocol, *args, loop=None, **kwargs):
         super().__init__(*args, **kwargs)
         self.protocol = protocol
+        self.loop = loop
     def add_connection(self, source_id, address):
         if source_id not in self.data:
             self.data[source_id] = Connection(
                 address=address,
-                protocol=self.protocol)
+                protocol=self.protocol,
+                loop=self.loop)
         return self.data[source_id]
 
 class FormatSpecificationProtocol(metaclass=_abc.ABCMeta):
-    def __init__(self, specification):
+    def __init__(self, specification, loop=None):
         self.specification = specification
+        self.loop = loop
     def datagram_received(self, data, address):
+        _logging.debug('Received payload from {}'.format(address))
         instance = self.specification._instantiate(
             _bitstring.ConstBitStream(bytes=data))
-        _asyncio.async(self.instance_received(instance, address))
+        _asyncio.async(self.instance_received(instance, address), loop=self.loop)
     @_abc.abstractmethod
     def instance_received(self, instance, address):
         pass
 
 class JUDPProtocol(FormatSpecificationProtocol):
-    def __init__(self, own_id, message_received):
-        super().__init__(specification=JUDPPayload)
-        self.connection_map = ConnectionMap(self)
-        self.message_received = message_received
-        self.own_id = own_id
+    def __init__(self, id_map=None, loop=None):
+        super().__init__(specification=JUDPPayload, loop=loop)
+        if id_map is None:
+            id_map = {}
+        self.connection_map_map = {}
+        self.id_map = id_map
     def connection_made(self, transport):
         self.transport = transport
+    def _compare_ids(self, id1, id2):
+        if 65535 in (id1.subsystem, id2.subsystem):
+            subsystem = True
+        else:
+            subsystem = id1.subsystem == id2.subsystem
+        if 255 in (id1.node, id2.node):
+            node = True
+        else:
+            node = id1.node == id2.node
+        if 255 in (id1.component, id2.component):
+            component = True
+        else:
+            component = id1.component == id2.component
+        return subsystem and component and node
+    def _get_connection(self, destination_id, source_id, address):
+        connection_map_map = self.connection_map_map
+        if destination_id not in connection_map_map:
+            connection_map = ConnectionMap(self, loop=self.loop)
+            connection_map_map[destination_id] = connection_map
+        else:
+            connection_map = connection_map_map[destination_id]
+        connection = connection_map.add_connection(
+            source_id=source_id,
+            address=address)
+        return connection
+    def _find_connection_handlers(self, destination_id, source_id, address):
+        result = []
+        for key, val in self.id_map.items():
+            if self._compare_ids(key, destination_id):
+                result.append((val, self._get_connection(key, source_id, address)))
+        return result
     @_asyncio.coroutine
     def instance_received(self, instance, address):
         payload = instance
@@ -335,26 +373,29 @@ class JUDPProtocol(FormatSpecificationProtocol):
         if payload.transport_version == 2:
             for packet in payload.packets:
                 source_id = packet.source_id
-                if packet.destination_id != self.own_id:
+                destination_id = packet.destination_id
+                handlers = self._find_connection_handlers(
+                    destination_id,
+                    source_id,
+                    address)
+                if not handlers:
                     _logging.info(
                         'Ignoring packet sent to %s, we are %s',
                         str(packet.destination_id),
-                        str(self.own_id))
+                        str(self.id_map.keys()))
                     continue
-                connection = self.connection_map.add_connection(
-                    source_id=source_id,
-                    address=address)
-                messages = yield from connection.receive_packet(packet)
-                for message in messages:
+
+                for handler, connection in handlers:
+                    messages = yield from connection.receive_packet(packet)
                     _logging.info(
-                        'Received message {} from {}/{}'
-                        .format(message, address, source_id))
-                yield from _asyncio.gather(*[
-                    self.message_received(
-                        message=message,
-                        source_id=source_id)
-                    for message in messages
-                ])
+                        'Received messages {} from {}/{} to {}'
+                        .format(messages, address, source_id, destination_id))
+                    yield from _asyncio.gather(*[
+                        handler(
+                            message=message,
+                            source_id=source_id)
+                        for message in messages
+                    ], loop=self.loop)
         else:
             _logging.warning(
                 'Received payload with incorrect'
@@ -362,13 +403,15 @@ class JUDPProtocol(FormatSpecificationProtocol):
                 str(address), payload.transport_version)
 
     @_asyncio.coroutine
-    def send_message(self, destination_id, message, *args, **kwargs):
+    def send_message(self, source_id, destination_id, message, *args, **kwargs):
         try:
-            connection = self.connection_map[destination_id]
+            connection_map = self.connection_map_map[source_id]
+            connection = connection_map[destination_id]
         except KeyError:
             raise ValueError(
-                'No record of {}'.format(destination_id))
-        _logging.info('Send message {} to {}/{}'
+                'No record of {}:{}'.format(source_id,destination_id))
+        _logging.info(
+            'Send message {} to {}/{}'
             .format(
                 message,
                 connection.address,
@@ -376,13 +419,14 @@ class JUDPProtocol(FormatSpecificationProtocol):
         yield from connection.send(
             *args,
             destination_id=destination_id,
-            source_id=self.own_id,
+            source_id=source_id,
             message=message,
             **kwargs)
 
     def close(self):
-        for connection in self.connection_map.values():
-            connection.close()
+        for connection_map in self.connection_map_map.values():
+            for connection in connection_map.values():
+                connection.close()
 
     def connection_lost(self, exc):
         self.close()

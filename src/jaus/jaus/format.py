@@ -113,6 +113,8 @@ class Group(Spec):
             try:
                 attrs = spec.read(buf, combined_attributes)
             except _bitstring.ReadError:
+                _logging.debug('Specs: {}'.format({getattr(spc, 'name', '<>'): spc for spc in self.specs}))
+                _logging.debug('Spec: {} {}\nAttributes till error: {} {} {}'.format(getattr(spec, 'name', '<>'), spec, buf, attrs, new_attributes))
                 raise
             new_attributes.update(attrs)
         return new_attributes
